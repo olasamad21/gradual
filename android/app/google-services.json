@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "263590322064",
+    "project_id": "gradual-852ea",
+    "storage_bucket": "gradual-852ea.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:263590322064:android:d0fc33d234807a12949d15",
+        "android_client_info": {
+          "package_name": "com.samad.gradual"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaRYC82_NiCAzn3k00ULQlz6_pxHCxAWk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
