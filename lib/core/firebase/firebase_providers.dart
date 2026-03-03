@@ -30,21 +30,36 @@ final contentRepositoryProvider = Provider<ContentRepository>((ref) {
 });
 
 /// Auth state as a stream of Firebase [User?].
+/// Firebase restores the cached session automatically on app restart —
+/// this stream will emit null briefly, then the restored User once ready.
 final authStateChangesProvider = StreamProvider<User?>((ref) {
   final auth = ref.watch(firebaseAuthProvider);
   return auth.authStateChanges();
 });
 
 /// The current [AppUser] document for the signed-in Firebase user.
+///
+/// FIXED: Now listens to authStateChanges instead of reading currentUser
+/// directly. This prevents the race condition where currentUser is null
+/// for ~500ms on cold start while Firebase restores the cached token.
 final appUserProvider = StreamProvider<AppUser?>((ref) {
-  final auth = ref.watch(firebaseAuthProvider);
   final repo = ref.watch(userRepositoryProvider);
 
-  final user = auth.currentUser;
-  if (user == null) {
-    return const Stream<AppUser?>.empty();
-  }
+  // Watch the auth stream — when Firebase restores the session after
+  // a cold start, this automatically re-fires with the correct user.
+  final authAsync = ref.watch(authStateChangesProvider);
 
-  return repo.userStream(user.uid);
+  return authAsync.when(
+    // Still loading — keep the stream open, emit nothing yet
+    loading: () => const Stream.empty(),
+
+    // Auth error — emit null safely
+    error: (_, __) => Stream.value(null),
+
+    // Auth resolved — if user exists, stream their Firestore document
+    data: (user) {
+      if (user == null) return Stream.value(null);
+      return repo.userStream(user.uid);
+    },
+  );
 });
-

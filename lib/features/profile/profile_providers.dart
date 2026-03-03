@@ -5,7 +5,5 @@ import '../../core/models/user_model.dart';
 
 /// Exposes the current [AppUser] along with loading/error state.
 final profileUserProvider = Provider<AsyncValue<AppUser?>>((ref) {
-  final appUserAsync = ref.watch(appUserProvider);
-  return appUserAsync;
+  return ref.watch(appUserProvider);
 });
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/auth/root_gatekeeper.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/daily_word/daily_word_screen.dart';
@@ -7,14 +8,13 @@ import '../features/quiz/quiz_screen.dart';
 import '../shared/widgets/placeholder_screen.dart';
 
 abstract final class AppRoutes {
-  static const root = '/';
-
+  static const root       = '/';
   static const onboarding = '/onboarding';
-  static const home = '/home';
-  static const profile = '/profile';
-
-  static const learning = '/learning';
-  static const quiz = '/quiz';
+  // No /sign-in — onboarding screen IS the sign-in screen
+  static const home       = '/home';
+  static const profile    = '/profile';
+  static const learning   = '/learning';
+  static const quiz       = '/quiz';
 }
 
 abstract final class AppRouter {
@@ -23,10 +23,7 @@ abstract final class AppRouter {
       case AppRoutes.root:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => const PlaceholderScreen(
-            title: 'Gradual',
-            message: 'App bootstrap screen (coming next).',
-          ),
+          builder: (_) => const RootGatekeeper(),
         );
       case AppRoutes.onboarding:
         return MaterialPageRoute(
@@ -52,9 +49,7 @@ abstract final class AppRouter {
           ),
         );
       case AppRoutes.quiz:
-      // Extract the difficulty level passed from the Home Screen Bottom Sheet
         final difficulty = settings.arguments as String? ?? 'junior';
-
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => QuizScreen(difficulty: difficulty),
@@ -70,4 +65,3 @@ abstract final class AppRouter {
     }
   }
 }
-

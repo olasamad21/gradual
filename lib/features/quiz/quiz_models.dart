@@ -8,7 +8,8 @@ class QuizQuestion {
     required this.options,
     required this.correctIndex,
     required this.difficulty,
-    required this.isReview,
+    required this.explanation,
+    required this.type,
   });
 
   final String id;
@@ -16,29 +17,43 @@ class QuizQuestion {
   final List<String> options;
   final int correctIndex;
   final DifficultyLevel difficulty;
-  final bool isReview;
+  final String explanation;
+  final String type; // mcq | true_false | fill_blank
 }
 
-List<QuizQuestion> buildQuizFromContent(DailyContent content) {
-  final questions = <QuizQuestion>[];
+/// Tracks a user's answer for a single question during a quiz session.
+class QuizAnswer {
+  QuizAnswer({
+    required this.question,
+    required this.selectedIndex,
+  });
 
-  for (final entry in content.quizzes.entries) {
-    final level = entry.key;
-    final quiz = entry.value;
-    final correctIndex = quiz.options.indexOf(quiz.answer);
+  final QuizQuestion question;
+  final int selectedIndex;
 
-    questions.add(
-      QuizQuestion(
-        id: '${content.dateId}-${level.id}',
-        text: quiz.question,
-        options: quiz.options,
-        correctIndex: correctIndex < 0 ? 0 : correctIndex,
-        difficulty: level,
-        isReview: false,
-      ),
+  bool get isCorrect => selectedIndex == question.correctIndex;
+}
+
+/// Builds a flat list of questions for a given difficulty from DailyContent.
+List<QuizQuestion> buildQuizFromContent(
+    DailyContent content,
+    DifficultyLevel difficulty,
+    ) {
+  final questions = content.questionsFor(difficulty);
+
+  return questions.asMap().entries.map((entry) {
+    final i = entry.key;
+    final item = entry.value;
+    final correctIndex = item.options.indexOf(item.answer);
+
+    return QuizQuestion(
+      id: '${content.dateId}-${difficulty.id}-$i',
+      text: item.question,
+      options: item.options,
+      correctIndex: correctIndex < 0 ? 0 : correctIndex,
+      difficulty: difficulty,
+      explanation: item.explanation,
+      type: item.type,
     );
-  }
-
-  return questions;
+  }).toList();
 }
-
