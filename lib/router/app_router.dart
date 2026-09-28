@@ -49,10 +49,9 @@ abstract final class AppRouter {
           ),
         );
       case AppRoutes.quiz:
-        final difficulty = settings.arguments as String? ?? 'junior';
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => QuizScreen(difficulty: difficulty),
+          builder: (_) => const QuizScreen(),
         );
       default:
         return MaterialPageRoute(

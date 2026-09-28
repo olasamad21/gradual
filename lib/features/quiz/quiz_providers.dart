@@ -2,11 +2,36 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/enums/difficulty_level.dart';
+import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
 import '../../core/repositories/user_repository.dart';
+import '../../core/models/weekly_quiz_model.dart';
 import '../streak/streak_providers.dart';
 import 'quiz_models.dart';
+
+final weeklyQuizProvider = FutureProvider<WeeklyQuiz?>((ref) async {
+  final user = ref.watch(
+    appUserProvider.select(
+      (asyncUser) => asyncUser.when(
+        data: (d) => d,
+        loading: () => null,
+        error: (_, __) => null,
+      ),
+    ),
+  );
+  if (user == null) return null;
+
+  final contentRepo = ref.read(contentRepositoryProvider);
+  final now = DateTime.now().toUtc();
+  try {
+    return await contentRepo.getWeeklyQuiz(
+      fieldOfStudy: user.fieldOfStudy,
+      date: now,
+    );
+  } catch (e, st) {
+    throw FirestoreErrors.toAppException(e, st);
+  }
+});
 
 class QuizState {
   const QuizState({
@@ -14,14 +39,12 @@ class QuizState {
     required this.currentIndex,
     required this.correctCount,
     required this.completed,
-    required this.selectedDifficulty,
   });
 
   final List<QuizQuestion> questions;
   final int currentIndex;
   final int correctCount;
   final bool completed;
-  final DifficultyLevel selectedDifficulty;
 
   QuizQuestion? get currentQuestion =>
       currentIndex < questions.length ? questions[currentIndex] : null;
@@ -31,14 +54,12 @@ class QuizState {
     int? currentIndex,
     int? correctCount,
     bool? completed,
-    DifficultyLevel? selectedDifficulty,
   }) {
     return QuizState(
       questions: questions ?? this.questions,
       currentIndex: currentIndex ?? this.currentIndex,
       correctCount: correctCount ?? this.correctCount,
       completed: completed ?? this.completed,
-      selectedDifficulty: selectedDifficulty ?? this.selectedDifficulty,
     );
   }
 }
@@ -62,28 +83,25 @@ class QuizController extends AsyncNotifier<QuizState> {
       currentIndex: 0,
       correctCount: 0,
       completed: false,
-      selectedDifficulty: DifficultyLevel.junior,
     );
   }
 
-  Future<void> finalizeResults({
-    required DifficultyLevel difficulty,
+  Future<int> finalizeResults({
     required int correctCount,
     required int totalQuestions,
   }) async {
     final user = _auth.currentUser;
-    if (user == null) return;
+    if (user == null) return 0;
 
-    await _userRepository.recordActivity(
+    final newStreak = await _userRepository.recordWeeklyQuiz(
       uid: user.uid,
       serverNow: DateTime.now().toUtc(),
-      status: 'completed',
-      difficulty: difficulty.id,
       score: correctCount,
       totalQuestions: totalQuestions,
     );
 
     ref.invalidate(streakCountProvider);
     ref.invalidate(appUserProvider);
+    return newStreak;
   }
 }

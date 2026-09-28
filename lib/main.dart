@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // TODO(samad): Configure Firebase options using flutterfire CLI and pass
-  // DefaultFirebaseOptions.currentPlatform to initializeApp when available.
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(
     const ProviderScope(

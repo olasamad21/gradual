@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../errors/firestore_errors.dart';
 import '../models/daily_content_model.dart';
+import '../models/weekly_quiz_model.dart';
 import '../utils/date_utils.dart';
 
 class ContentRepository {
@@ -17,13 +19,21 @@ class ContentRepository {
     return _firestore.collection('content_$key');
   }
 
+  CollectionReference<Map<String, dynamic>> _quizzesCollectionForField(
+    String fieldOfStudy,
+  ) {
+    final key = fieldOfStudy.toLowerCase().replaceAll(' ', '_');
+    return _firestore.collection('quizzes_$key');
+  }
+
   Future<DailyContent?> getContentForDate({
     required String fieldOfStudy,
     required DateTime date,
   }) async {
     final dateId = DateUtilsGradual.toDateId(date);
-    final snapshot =
-        await _collectionForField(fieldOfStudy).doc(dateId).get();
+    final snapshot = await FirestoreErrors.guardFuture(
+      _collectionForField(fieldOfStudy).doc(dateId).get(),
+    );
     if (!snapshot.exists) return null;
     final data = snapshot.data();
     if (data == null) return null;
@@ -33,14 +43,31 @@ class ContentRepository {
     return DailyContent.fromJson(data);
   }
 
+  Future<WeeklyQuiz?> getWeeklyQuiz({
+    required String fieldOfStudy,
+    required DateTime date,
+  }) async {
+    final dateId = DateUtilsGradual.toDateId(date);
+    final snapshot = await FirestoreErrors.guardFuture(
+      _quizzesCollectionForField(fieldOfStudy).doc(dateId).get(),
+    );
+    if (!snapshot.exists) return null;
+    final data = snapshot.data();
+    if (data == null) return null;
+
+    return WeeklyQuiz.fromJson(data);
+  }
+
   Future<List<DailyContent>> getHistory({
     required String fieldOfStudy,
     int limit = 30,
   }) async {
-    final querySnapshot = await _collectionForField(fieldOfStudy)
-        .orderBy('date_id', descending: true)
-        .limit(limit)
-        .get();
+    final querySnapshot = await FirestoreErrors.guardFuture(
+      _collectionForField(fieldOfStudy)
+          .orderBy('date_id', descending: true)
+          .limit(limit)
+          .get(),
+    );
 
     return querySnapshot.docs.map((doc) {
       final data = doc.data();

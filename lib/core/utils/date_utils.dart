@@ -37,5 +37,35 @@ abstract final class DateUtilsGradual {
         tsDate.month == target.month &&
         tsDate.day == target.day;
   }
+
+  /// Saturday at the end of the Sun–Sat week containing [date] (local calendar).
+  static DateTime saturdayOfWeekContaining(DateTime date) {
+    final local = DateTime(date.year, date.month, date.day);
+    var daysToSaturday = DateTime.saturday - local.weekday;
+    if (daysToSaturday < 0) daysToSaturday += 7;
+    return local.add(Duration(days: daysToSaturday));
+  }
+
+  /// The Saturday immediately before [saturday] (must be a Saturday date).
+  static DateTime previousSaturday(DateTime saturday) {
+    final d = DateTime(saturday.year, saturday.month, saturday.day);
+    return d.subtract(const Duration(days: 7));
+  }
+
+  /// True when [date] is the Saturday of its Sun–Sat week.
+  static bool isSaturday(DateTime date) => date.weekday == DateTime.saturday;
+
+  /// End of [date]'s calendar day (local), for deadline comparisons.
+  static DateTime endOfDay(DateTime date) {
+    final d = DateTime(date.year, date.month, date.day);
+    return d.add(const Duration(hours: 23, minutes: 59, seconds: 59));
+  }
+
+  /// Days between two calendar dates (UTC-truncated), for week-gap checks.
+  static int daysBetween(DateTime earlier, DateTime later) {
+    final a = DateTime.utc(earlier.year, earlier.month, earlier.day);
+    final b = DateTime.utc(later.year, later.month, later.day);
+    return b.difference(a).inDays;
+  }
 }
 

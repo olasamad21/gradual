@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // User profile: only the signed-in user can read/write their own document.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Daily content and weekly quizzes (content_*, quizzes_* collections).
+    match /{collectionId}/{docId} {
+      allow read: if request.auth != null
+        && (collectionId.matches('content_.*') || collectionId.matches('quizzes_.*'));
+      allow write: if false;
+    }
+  }
+}

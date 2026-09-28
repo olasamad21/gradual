@@ -25,7 +25,9 @@ class StreakSuccessModal extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'You are on a $streakCount day streak.',
+              streakCount == 1
+                  ? 'You are on a 1 week streak.'
+                  : 'You are on a $streakCount week streak.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -54,7 +56,7 @@ class StreakSuccessModal extends StatelessWidget {
             const SizedBox(height: 24),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('See you tomorrow'),
+              child: const Text('See you Saturday'),
             ),
           ],
         ),

@@ -50,13 +50,11 @@ final appUserProvider = StreamProvider<AppUser?>((ref) {
   final authAsync = ref.watch(authStateChangesProvider);
 
   return authAsync.when(
-    // Still loading — keep the stream open, emit nothing yet
-    loading: () => const Stream.empty(),
+    // Emit null while auth resolves so dependents stay in data state (no flicker).
+    loading: () => Stream.value(null),
 
-    // Auth error — emit null safely
     error: (_, __) => Stream.value(null),
 
-    // Auth resolved — if user exists, stream their Firestore document
     data: (user) {
       if (user == null) return Stream.value(null);
       return repo.userStream(user.uid);

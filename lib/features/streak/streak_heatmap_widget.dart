@@ -1,67 +1,70 @@
 import 'package:flutter/material.dart';
+
 import '../../core/models/user_model.dart';
 
 class StreakHeatmapWidget extends StatelessWidget {
   const StreakHeatmapWidget({
     super.key,
     required this.activityLog,
-    this.daysToShow = 365, // Kept for your app's compatibility
+    required this.liveStreak,
+    this.daysToShow = 365,
   });
 
   final ActivityLog activityLog;
+  final int liveStreak;
   final int daysToShow;
 
-  // I kept your awesome color logic intact for when we use real data!
-  Color _colorForEntry(ActivityLogEntry? entry) {
-    if (entry == null) {
-      return const Color(0xFFEAECEF); // Empty gray
+  String _formatDateKey(DateTime date) {
+    return '${date.year}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  Color _colorForDate(DateTime date, ActivityLogEntry? entry) {
+    if (entry != null) {
+      if (entry.isLegacyEntry) return WeeklyScoreTier.legacy.color;
+      if (entry.isWeeklyQuiz) return entry.tier.color;
     }
-    switch (entry.difficulty) {
-      case 'junior':
-        return const Color(0xFFC8E6C9); // light green
-      case 'senior':
-        return const Color(0xFF81C784); // medium green
-      case 'lead':
-      case 'tech_lead':
-        return const Color(0xFF388E3C); // dark green
-      default:
-        return const Color(0xFFC8E6C9);
+
+    if (date.weekday != DateTime.saturday) {
+      return const Color(0xFFEAECEF);
     }
+
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    if (dateOnly.isAfter(todayOnly)) {
+      return const Color(0xFFEAECEF);
+    }
+
+    return WeeklyScoreTier.missed.color;
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calculate exactly how many boxes fit on the user's screen
         const double boxSize = 14.0;
         const double spacing = 4.0;
-        final double maxWidth = constraints.maxWidth == double.infinity ? 300 : constraints.maxWidth;
-        final int columnCount = (maxWidth / (boxSize + spacing)).floor();
-        final int totalDaysToShow = columnCount * 2; // Exactly 2 Rows
+        final double maxWidth = constraints.maxWidth == double.infinity
+            ? 300
+            : constraints.maxWidth;
+        final int columnCount =
+            (maxWidth / (boxSize + spacing)).floor();
+        final int totalDaysToShow = columnCount * 2;
 
-        final today = DateTime.now().toUtc();
+        final today = DateTime.now();
         final dates = List.generate(
           totalDaysToShow,
-              (i) => today.subtract(Duration(days: totalDaysToShow - 1 - i)),
+          (i) => today.subtract(Duration(days: i)),
         );
 
-        // --- 🧪 PLACEHOLDER DATA FOR UI TESTING ---
-        // Simulating a 5-day streak and random past activity with different shades of green
-        final Map<String, Color> dummyColors = {};
-        for (int i = 0; i < totalDaysToShow; i++) {
-          final d = dates[i];
-          final dateStr = '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-          if (i > totalDaysToShow - 6) {
-            dummyColors[dateStr] = const Color(0xFF388E3C); // Fake 5-day streak at tech_lead difficulty!
-          } else if (i % 7 == 0) {
-            dummyColors[dateStr] = const Color(0xFF81C784); // occasional senior difficulty
-          } else if (i % 3 == 0) {
-            dummyColors[dateStr] = const Color(0xFFC8E6C9); // frequent junior difficulty
-          }
-        }
-        // ------------------------------------------
+        final streakLabel = liveStreak == 0
+            ? 'No active streak'
+            : liveStreak == 1
+                ? '1 week streak 🔥'
+                : '$liveStreak week streak 🔥';
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,27 +73,54 @@ class StreakHeatmapWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Recent Activity",
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                  'Recent Activity',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
                 ),
                 Row(
-                  children: const [
-                    Icon(Icons.local_fire_department, size: 16, color: Colors.orange),
-                    SizedBox(width: 4),
+                  children: [
+                    Icon(
+                      Icons.local_fire_department,
+                      size: 16,
+                      color: liveStreak > 0
+                          ? Colors.orange
+                          : Colors.grey.shade400,
+                    ),
+                    const SizedBox(width: 4),
                     Text(
-                      "5 Day Streak!",
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange),
+                      streakLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: liveStreak > 0
+                            ? Colors.orange
+                            : Colors.grey.shade400,
+                      ),
                     ),
                   ],
-                )
+                ),
               ],
             ),
             const SizedBox(height: 10),
-
-            // No more SizedBox height restriction!
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                _legendDot(const Color(0xFFEAECEF), 'None'),
+                _legendDot(WeeklyScoreTier.missed.color, 'Missed'),
+                _legendDot(WeeklyScoreTier.fair.color, 'Fair'),
+                _legendDot(WeeklyScoreTier.good.color, 'Good'),
+                _legendDot(WeeklyScoreTier.excellent.color, 'Excellent'),
+                _legendDot(WeeklyScoreTier.failed.color, 'Failed'),
+              ],
+            ),
+            const SizedBox(height: 8),
             GridView.builder(
-              shrinkWrap: true, // Tells the grid to take exactly the space it needs
-              padding: EdgeInsets.zero, // Removes invisible default padding
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columnCount,
@@ -101,19 +131,22 @@ class StreakHeatmapWidget extends StatelessWidget {
               itemCount: totalDaysToShow,
               itemBuilder: (context, index) {
                 final date = dates[index];
-                final key = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-
-                // For the UI test, we use the dummyColors map.
-                // Later, we will switch this back to: final entry = activityLog[key];
-                final Color boxColor = dummyColors[key] ?? const Color(0xFFEAECEF);
-
-                return Container(
-                  decoration: BoxDecoration(
-                    color: boxColor,
-                    borderRadius: BorderRadius.circular(3),
-                    border: Border.all(
-                      color: Colors.black.withOpacity(0.05),
-                      width: 1,
+                final key = _formatDateKey(date);
+                final entry = activityLog[key];
+                final color = _colorForDate(date, entry);
+                final isToday = key == _formatDateKey(today);
+                return Tooltip(
+                  message: _tooltipFor(date, entry),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(
+                        color: isToday
+                            ? const Color(0xFF388E3C)
+                            : Colors.black.withOpacity(0.05),
+                        width: isToday ? 1.5 : 1,
+                      ),
                     ),
                   ),
                 );
@@ -123,5 +156,62 @@ class StreakHeatmapWidget extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget _legendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+            border: Border.all(
+              color: Colors.black.withOpacity(0.08),
+              width: 1,
+            ),
+          ),
+        ),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 9,
+            color: Color(0xFF9CA3AF),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _tooltipFor(DateTime date, ActivityLogEntry? entry) {
+    final dateStr = '${date.day}/${date.month}/${date.year}';
+    final dayLabel = date.weekday == DateTime.saturday ? 'Saturday' : '';
+
+    if (entry == null) {
+      if (date.weekday == DateTime.saturday) {
+        final today = DateTime.now();
+        final dateOnly = DateTime(date.year, date.month, date.day);
+        final todayOnly = DateTime(today.year, today.month, today.day);
+        if (dateOnly.isBefore(todayOnly) || dateOnly == todayOnly) {
+          return '$dateStr — Missed weekly quiz';
+        }
+      }
+      return '$dateStr — No quiz';
+    }
+
+    if (entry.isLegacyEntry) {
+      return '$dateStr — Legacy activity';
+    }
+
+    if (entry.isWeeklyQuiz) {
+      final prefix = dayLabel.isNotEmpty ? '$dateStr ($dayLabel)' : dateStr;
+      return '$prefix — ${entry.tier.label}: ${entry.score}/${entry.totalQuestions}';
+    }
+
+    return '$dateStr — No activity';
   }
 }

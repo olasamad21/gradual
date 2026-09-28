@@ -1,57 +1,176 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+
+import '../utils/date_utils.dart';
 
 typedef ActivityLog = Map<String, ActivityLogEntry>;
 
+/// Score tier for weekly Saturday quizzes (0–10 correct).
+enum WeeklyScoreTier {
+  excellent,
+  good,
+  fair,
+  failed,
+  missed,
+  legacy,
+}
+
+extension WeeklyScoreTierX on WeeklyScoreTier {
+  String get id {
+    switch (this) {
+      case WeeklyScoreTier.excellent:
+        return 'excellent';
+      case WeeklyScoreTier.good:
+        return 'good';
+      case WeeklyScoreTier.fair:
+        return 'fair';
+      case WeeklyScoreTier.failed:
+        return 'failed';
+      case WeeklyScoreTier.missed:
+        return 'missed';
+      case WeeklyScoreTier.legacy:
+        return 'legacy';
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case WeeklyScoreTier.excellent:
+        return 'Excellent';
+      case WeeklyScoreTier.good:
+        return 'Good';
+      case WeeklyScoreTier.fair:
+        return 'Fair';
+      case WeeklyScoreTier.failed:
+        return 'Failed';
+      case WeeklyScoreTier.missed:
+        return 'Missed';
+      case WeeklyScoreTier.legacy:
+        return 'Legacy';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case WeeklyScoreTier.excellent:
+        return const Color(0xFF22C55E);
+      case WeeklyScoreTier.good:
+        return const Color(0xFFF59E0B);
+      case WeeklyScoreTier.fair:
+        return const Color(0xFFF97316);
+      case WeeklyScoreTier.failed:
+        return const Color(0xFFEF4444);
+      case WeeklyScoreTier.missed:
+        return const Color(0xFF9CA3AF);
+      case WeeklyScoreTier.legacy:
+        return const Color(0xFFEAECEF);
+    }
+  }
+}
+
+WeeklyScoreTier tierFromScore(int score) {
+  if (score >= 8) return WeeklyScoreTier.excellent;
+  if (score >= 5) return WeeklyScoreTier.good;
+  if (score >= 3) return WeeklyScoreTier.fair;
+  return WeeklyScoreTier.failed;
+}
+
+bool qualifiesForStreak(int score) => score >= 3;
+
+WeeklyScoreTier tierFromId(String? raw) {
+  switch (raw) {
+    case 'excellent':
+      return WeeklyScoreTier.excellent;
+    case 'good':
+      return WeeklyScoreTier.good;
+    case 'fair':
+      return WeeklyScoreTier.fair;
+    case 'failed':
+      return WeeklyScoreTier.failed;
+    case 'missed':
+      return WeeklyScoreTier.missed;
+    default:
+      return WeeklyScoreTier.legacy;
+  }
+}
+
 class ActivityLogEntry {
   ActivityLogEntry({
-    required this.status,
-    required this.difficulty,
+    required this.quizType,
     required this.score,
-    required this.completedDifficulties,
-    required this.streakCounted,
-    required this.totalCorrect,
     required this.totalQuestions,
+    required this.tier,
+    required this.streakCounted,
+    this.completedDifficulties = const [],
   });
 
-  final String status;
-  final String difficulty;
+  final String quizType;
   final int score;
-  final List<String> completedDifficulties;
+  final int totalQuestions;
+  final WeeklyScoreTier tier;
   final bool streakCounted;
 
-  /// Accumulated correct answers across all difficulties submitted today.
-  final int totalCorrect;
+  /// Legacy daily difficulty entries (read-only compat).
+  final List<String> completedDifficulties;
 
-  /// Accumulated total questions across all difficulties submitted today.
-  final int totalQuestions;
+  bool get isWeeklyQuiz => quizType == 'weekly';
 
-  bool hasCompleted(String difficultyId) =>
-      completedDifficulties.contains(difficultyId);
+  bool get isLegacyEntry =>
+      !isWeeklyQuiz && completedDifficulties.isNotEmpty;
 
   factory ActivityLogEntry.fromJson(Map<String, dynamic> json) {
+    final quizType = json['quiz_type'] as String?;
     final rawList =
         json['completed_difficulties'] as List<dynamic>? ?? <dynamic>[];
+    final completedDifficulties = rawList.map((e) => e.toString()).toList();
+
+    if (quizType == 'weekly') {
+      final score = (json['score'] as num?)?.toInt() ?? 0;
+      final tierRaw = json['tier'] as String?;
+      return ActivityLogEntry(
+        quizType: 'weekly',
+        score: score,
+        totalQuestions: (json['total_questions'] as num?)?.toInt() ?? 10,
+        tier: tierRaw != null ? tierFromId(tierRaw) : tierFromScore(score),
+        streakCounted: json['streak_counted'] as bool? ?? false,
+      );
+    }
+
+    // Legacy daily/difficulty entries
+    final score = (json['total_correct'] as num?)?.toInt() ??
+        (json['score'] as num?)?.toInt() ??
+        0;
     return ActivityLogEntry(
-      status: json['status'] as String? ?? 'unknown',
-      difficulty: json['difficulty'] as String? ?? 'junior',
-      score: (json['score'] as num?)?.toInt() ?? 0,
-      completedDifficulties:
-      rawList.map((e) => e.toString()).toList(),
+      quizType: json['difficulty'] as String? ?? 'legacy',
+      score: score,
+      totalQuestions: (json['total_questions'] as num?)?.toInt() ?? 3,
+      tier: WeeklyScoreTier.legacy,
       streakCounted: json['streak_counted'] as bool? ?? false,
-      totalCorrect: (json['total_correct'] as num?)?.toInt() ?? 0,
-      totalQuestions: (json['total_questions'] as num?)?.toInt() ?? 0,
+      completedDifficulties: completedDifficulties.isNotEmpty
+          ? completedDifficulties
+          : json['difficulty'] != null
+              ? [json['difficulty'].toString()]
+              : <String>[],
     );
   }
 
   Map<String, dynamic> toJson() {
+    if (isWeeklyQuiz) {
+      return <String, dynamic>{
+        'quiz_type': 'weekly',
+        'score': score,
+        'total_questions': totalQuestions,
+        'tier': tier.id,
+        'streak_counted': streakCounted,
+      };
+    }
     return <String, dynamic>{
-      'status': status,
-      'difficulty': difficulty,
+      'quiz_type': quizType,
       'score': score,
-      'completed_difficulties': completedDifficulties,
-      'streak_counted': streakCounted,
-      'total_correct': totalCorrect,
       'total_questions': totalQuestions,
+      'tier': tier.id,
+      'streak_counted': streakCounted,
+      'completed_difficulties': completedDifficulties,
     };
   }
 }
@@ -73,24 +192,51 @@ class AppUser {
   final Timestamp? lastActivityDate;
   final ActivityLog activityLog;
 
-  /// Returns today's activity log entry if it exists.
-  ActivityLogEntry? get todayEntry {
-    final todayId = _todayId();
-    return activityLog[todayId];
+  /// Live weekly streak: 0 if the user missed this week's Saturday deadline.
+  int get liveStreak {
+    if (currentStreak == 0 && lastActivityDate == null) return 0;
+
+    final now = DateTime.now();
+    final thisSaturday = DateUtilsGradual.saturdayOfWeekContaining(now);
+    final thisSaturdayId = DateUtilsGradual.toDateId(thisSaturday);
+    final deadline = DateUtilsGradual.endOfDay(thisSaturday);
+
+    final thisWeekEntry = activityLog[thisSaturdayId];
+
+    if (now.isAfter(deadline)) {
+      if (thisWeekEntry != null &&
+          thisWeekEntry.isWeeklyQuiz &&
+          qualifiesForStreak(thisWeekEntry.score)) {
+        return currentStreak;
+      }
+      return 0;
+    }
+
+    // Mon–Fri (or Saturday before deadline): streak alive if last qualifying week exists
+    if (lastActivityDate == null) return 0;
+
+    final lastQualifying = DateUtilsGradual.toDateOnly(lastActivityDate);
+    if (lastQualifying == null) return 0;
+
+    final prevSaturday = DateUtilsGradual.previousSaturday(thisSaturday);
+    final gap = DateUtilsGradual.daysBetween(lastQualifying, thisSaturday);
+
+    if (gap == 7 || gap == 0) return currentStreak;
+    if (gap > 7) return 0;
+
+    return currentStreak;
   }
 
-  /// Whether a specific difficulty has been completed today.
-  bool hasCompletedToday(String difficultyId) {
-    return todayEntry?.hasCompleted(difficultyId) ?? false;
+  /// Entry for this week's Saturday quiz, keyed by Saturday date id.
+  ActivityLogEntry? get thisWeekEntry {
+    final saturday = DateUtilsGradual.saturdayOfWeekContaining(DateTime.now());
+    return activityLog[DateUtilsGradual.toDateId(saturday)];
   }
 
-  /// Whether any quiz has been submitted today.
-  bool get hasQuizzedToday => todayEntry != null &&
-      todayEntry!.completedDifficulties.isNotEmpty;
-
-  String _todayId() {
-    final now = DateTime.now().toUtc();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  /// Whether the user has already submitted this week's weekly quiz.
+  bool hasCompletedThisWeek() {
+    final entry = thisWeekEntry;
+    return entry != null && entry.isWeeklyQuiz;
   }
 
   factory AppUser.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -113,7 +259,7 @@ class AppUser {
       uid: uid,
       email: json['email'] as String? ?? '',
       fieldOfStudy:
-      json['field_of_study'] as String? ?? 'software_engineering',
+          json['field_of_study'] as String? ?? 'software_engineering',
       currentStreak: (json['current_streak'] as num?)?.toInt() ?? 0,
       lastActivityDate: json['last_activity_date'] as Timestamp?,
       activityLog: log,

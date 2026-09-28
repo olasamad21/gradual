@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:gradual/core/enums/difficulty_level.dart';
-import 'package:gradual/features/daily_word/daily_word_providers.dart';
+import 'package:gradual/core/models/user_model.dart';
 import 'package:gradual/features/daily_word/daily_word_screen.dart';
+import 'package:gradual/features/streak/streak_success_modal.dart';
 import 'package:gradual/features/quiz/quiz_providers.dart';
 import 'package:gradual/features/quiz/quiz_result_cache_provider.dart';
 import 'quiz_models.dart';
@@ -13,8 +13,7 @@ import 'quiz_models.dart';
 // ─────────────────────────────────────────────────────────────
 
 class QuizScreen extends ConsumerStatefulWidget {
-  const QuizScreen({super.key, required this.difficulty});
-  final String difficulty;
+  const QuizScreen({super.key});
 
   @override
   ConsumerState<QuizScreen> createState() => _QuizScreenState();
@@ -22,7 +21,6 @@ class QuizScreen extends ConsumerStatefulWidget {
 
 class _QuizScreenState extends ConsumerState<QuizScreen>
     with SingleTickerProviderStateMixin {
-  late final DifficultyLevel _level;
   List<QuizQuestion> _questions = [];
   int _currentIndex = 0;
   final Map<int, int> _selections = {};
@@ -34,11 +32,6 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
   @override
   void initState() {
     super.initState();
-    _level = DifficultyLevel.values.firstWhere(
-          (e) => e.name ==
-          (widget.difficulty == 'tech_lead' ? 'techLead' : widget.difficulty),
-      orElse: () => DifficultyLevel.junior,
-    );
     _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -98,18 +91,18 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 
     final correctCount = answers.where((a) => a.isCorrect).length;
 
-    // Save to Firestore
-    await ref.read(quizControllerProvider.notifier).finalizeResults(
-      difficulty: _level,
+    final newStreak = await ref.read(quizControllerProvider.notifier).finalizeResults(
       correctCount: correctCount,
       totalQuestions: _questions.length,
     );
 
-    // Cache answers so result screen can be reopened later
-    final cache = Map<String, List<QuizAnswer>>.from(
-        ref.read(quizResultCacheProvider));
-    cache[_level.id] = answers;
-    ref.read(quizResultCacheProvider.notifier).state = cache;
+    // Cache answers persistently so result screen survives app restart
+    await ref
+        .read(quizResultCacheProvider.notifier)
+        .saveAnswers('weekly', answers);
+
+    // Read updated cache for result screen
+    final cache = ref.read(quizResultCacheProvider).value ?? {};
 
     if (!mounted) return;
 
@@ -118,7 +111,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       MaterialPageRoute(
         builder: (_) => QuizResultScreen(
           allAnswers: cache,
-          initialDifficultyId: _level.id,
+          initialDifficultyId: 'weekly',
+          streakCountForModal: correctCount >= 3 ? newStreak : null,
         ),
       ),
     );
@@ -126,7 +120,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 
   @override
   Widget build(BuildContext context) {
-    final contentAsync = ref.watch(todayContentProvider);
+    final contentAsync = ref.watch(weeklyQuizProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
@@ -137,10 +131,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (content) {
           if (content == null) {
-            return const Center(child: Text('No quiz available for today.'));
+            return const Center(child: Text('No quiz available.'));
           }
 
-          final questions = buildQuizFromContent(content, _level);
+          final questions = buildQuizFromWeekly(content);
           _loadQuestions(questions);
 
           final displayQuestions =
@@ -205,10 +199,6 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
   }
 
   Widget _buildHeader(BuildContext context) {
-    final levelLabel = widget.difficulty == 'tech_lead'
-        ? 'Tech Lead'
-        : '${widget.difficulty[0].toUpperCase()}${widget.difficulty.substring(1)}';
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
       child: Row(
@@ -225,9 +215,9 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
               color: const Color(0xFF388E3C).withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(
-              levelLabel,
-              style: const TextStyle(
+            child: const Text(
+              'Weekly Quiz',
+              style: TextStyle(
                 color: Color(0xFF388E3C),
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
@@ -500,68 +490,58 @@ class QuizResultScreen extends StatefulWidget {
     super.key,
     required this.allAnswers,
     required this.initialDifficultyId,
+    this.streakCountForModal,
   });
 
-  /// All submitted answers keyed by difficulty id.
   final Map<String, List<QuizAnswer>> allAnswers;
-
-  /// Which tab to open first.
   final String initialDifficultyId;
+  final int? streakCountForModal;
 
   @override
   State<QuizResultScreen> createState() => _QuizResultScreenState();
 }
 
 class _QuizResultScreenState extends State<QuizResultScreen> {
-  late String _activeDifficultyId;
-
-  static const _order = ['junior', 'senior', 'lead'];
-  static const _labels = {
-    'junior': 'Junior',
-    'senior': 'Senior',
-    'lead': 'Tech Lead',
-  };
-  static const _colors = {
-    'junior': Color(0xFF22C55E),
-    'senior': Color(0xFF3B82F6),
-    'lead': Color(0xFF8B5CF6),
-  };
-
   @override
   void initState() {
     super.initState();
-    _activeDifficultyId = widget.initialDifficultyId;
+    final count = widget.streakCountForModal;
+    if (count != null && count > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => StreakSuccessModal(streakCount: count),
+        );
+      });
+    }
   }
-
-  List<String> get _submittedIds => _order
-      .where((id) => widget.allAnswers.containsKey(id))
-      .toList();
 
   @override
   Widget build(BuildContext context) {
-    final answers = widget.allAnswers[_activeDifficultyId] ?? [];
+    final answers = widget.allAnswers['weekly'] ?? [];
     final correct = answers.where((a) => a.isCorrect).length;
     final total = answers.length;
     final percent = total == 0 ? 0 : (correct / total * 100).round();
-    final color = _colors[_activeDifficultyId] ?? const Color(0xFF388E3C);
+    const color = Color(0xFF388E3C);
 
-    final Color scoreColor;
-    final String scoreLabel;
-    final IconData scoreIcon;
-
-    if (percent >= 80) {
-      scoreColor = const Color(0xFF22C55E);
-      scoreLabel = 'Excellent!';
-      scoreIcon = Icons.emoji_events_rounded;
-    } else if (percent >= 50) {
-      scoreColor = const Color(0xFFF59E0B);
-      scoreLabel = 'Good effort!';
-      scoreIcon = Icons.thumb_up_rounded;
-    } else {
-      scoreColor = const Color(0xFFEF4444);
-      scoreLabel = 'Keep practicing!';
-      scoreIcon = Icons.refresh_rounded;
-    }
+    final tier = tierFromScore(correct);
+    final scoreColor = tier.color;
+    final scoreLabel = switch (tier) {
+      WeeklyScoreTier.excellent => 'Excellent!',
+      WeeklyScoreTier.good => 'Good effort!',
+      WeeklyScoreTier.fair => 'Fair — streak saved',
+      WeeklyScoreTier.failed => 'Streak broken',
+      _ => 'Results',
+    };
+    final scoreIcon = switch (tier) {
+      WeeklyScoreTier.excellent => Icons.emoji_events_rounded,
+      WeeklyScoreTier.good => Icons.thumb_up_rounded,
+      WeeklyScoreTier.fair => Icons.trending_up_rounded,
+      WeeklyScoreTier.failed => Icons.refresh_rounded,
+      _ => Icons.quiz_rounded,
+    };
+    final streakBroken = correct <= 2;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
@@ -592,85 +572,6 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                   ],
                 ),
               ),
-
-              // ── Category tab bars ────────────────────────────
-              if (_submittedIds.length > 1) ...[
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: _submittedIds.asMap().entries.map((entry) {
-                      final id = entry.value;
-                      final isActive = id == _activeDifficultyId;
-                      final barColor = _colors[id] ?? const Color(0xFF388E3C);
-
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () =>
-                              setState(() => _activeDifficultyId = id),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: EdgeInsets.only(
-                              right: entry.key < _submittedIds.length - 1
-                                  ? 8
-                                  : 0,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 8),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? barColor.withOpacity(0.1)
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isActive
-                                    ? barColor
-                                    : const Color(0xFFE5E7EB),
-                                width: isActive ? 2 : 1,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  _labels[id] ?? id,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: isActive
-                                        ? barColor
-                                        : const Color(0xFF9CA3AF),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                // Score mini bar
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(2),
-                                  child: LinearProgressIndicator(
-                                    value: () {
-                                      final a = widget.allAnswers[id] ?? [];
-                                      if (a.isEmpty) return 0.0;
-                                      return a
-                                          .where((x) => x.isCorrect)
-                                          .length /
-                                          a.length;
-                                    }(),
-                                    backgroundColor:
-                                    const Color(0xFFE5E7EB),
-                                    valueColor:
-                                    AlwaysStoppedAnimation<Color>(
-                                        barColor),
-                                    minHeight: 4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
 
               // ── Score content ────────────────────────────────
               Expanded(
@@ -723,6 +624,18 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
+                            if (streakBroken) ...[
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Score 3+ to keep your weekly streak. Try again next Saturday.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFFEF4444),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 20),
                             Stack(
                               alignment: Alignment.center,
