@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
+import '../../router/app_router.dart';
 import '../../core/models/user_model.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_state_widget.dart';
@@ -91,11 +92,13 @@ class _ProfileBody extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () async {
+              final nav = Navigator.of(context);
               Navigator.pop(ctx);
               if (!kIsWeb) {
                 await GoogleSignIn().signOut();
               }
               await ref.read(firebaseAuthProvider).signOut();
+              nav.pushNamedAndRemoveUntil(AppRoutes.root, (_) => false);
             },
             child: const Text('Sign Out',
                 style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w700)),

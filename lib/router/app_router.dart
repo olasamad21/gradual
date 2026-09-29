@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../features/auth/root_gatekeeper.dart';
 import '../features/onboarding/onboarding_screen.dart';
@@ -19,6 +20,18 @@ abstract final class AppRoutes {
 
 abstract final class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    // Protect authenticated routes. If a user lands here via a direct URL on web
+    // while signed out (or while Firebase is still initializing), reroute them 
+    // to the RootGatekeeper to handle auth state.
+    final isAuthRoute = settings.name == AppRoutes.home ||
+        settings.name == AppRoutes.profile ||
+        settings.name == AppRoutes.learning ||
+        settings.name == AppRoutes.quiz;
+
+    if (isAuthRoute && FirebaseAuth.instance.currentUser == null) {
+      return MaterialPageRoute(builder: (_) => const RootGatekeeper());
+    }
+
     switch (settings.name) {
       case AppRoutes.root:
         return MaterialPageRoute(

@@ -41,7 +41,11 @@ class RootGatekeeper extends ConsumerWidget {
 
           // Not logged in — go to onboarding.
           // Phase 2 complete: Firebase Auth handles persistence natively.
-          Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.onboarding,
+            (_) => false,
+          );
         });
 
         return const _SplashView();

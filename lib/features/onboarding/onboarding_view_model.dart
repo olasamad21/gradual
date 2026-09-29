@@ -17,9 +17,11 @@ final onboardingControllerProvider =
 class OnboardingController extends AsyncNotifier<void> {
   late final FirebaseAuth _auth;
   late final UserRepository _userRepository;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: <String>['email'],
-  );
+  late final GoogleSignIn? _googleSignIn = kIsWeb
+      ? null
+      : GoogleSignIn(
+          scopes: <String>['email'],
+        );
 
   @override
   Future<void> build() async {
@@ -39,7 +41,7 @@ class OnboardingController extends AsyncNotifier<void> {
         userCred = await _auth.signInWithPopup(provider);
       } else {
         // MOBILE: Existing google_sign_in flow.
-        final googleUser = await _googleSignIn.signIn();
+        final googleUser = await _googleSignIn!.signIn();
         if (googleUser == null) {
           state = const AsyncData(null);
           return null;
