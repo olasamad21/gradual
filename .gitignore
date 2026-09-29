@@ -46,3 +46,6 @@ app.*.map.json
 
 # Firebase service account key — NEVER commit
 serviceAccountKey.json
+
+# Firebase
+.firebase/
