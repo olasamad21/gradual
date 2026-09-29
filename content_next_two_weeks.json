@@ -1,0 +1,436 @@
+[
+  {
+    "date_id": "2026-09-29",
+    "word": "Variable Scope",
+    "definition": "The region of a computer program where a particular variable is accessible.",
+    "analogy": "Like a house key - it only works for specific doors (functions/blocks) and is useless outside that house.",
+    "code_snippet": "// Dart: Variable Scope\nint global = 1;\nvoid main() {\n  void inner() {\n    int local = 2;\n    print(global + local);\n  }\n  // print(local); // Error: local is undefined here\n}",
+    "quiz_questions": [
+      {
+        "question": "What happens if you try to access a local variable outside of its defining function?",
+        "options": [
+          "It returns null",
+          "It causes a compile-time or runtime error",
+          "It is automatically made global",
+          "It returns 0"
+        ],
+        "answer": "It causes a compile-time or runtime error",
+        "explanation": "Local variables are only accessible within the block they are declared in."
+      },
+      {
+        "question": "Which term describes a variable that is accessible from anywhere in the file?",
+        "options": [
+          "Local variable",
+          "Hidden variable",
+          "Global variable",
+          "Static variable"
+        ],
+        "answer": "Global variable",
+        "explanation": "Global variables are declared outside of functions, making them widely accessible."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-09-30",
+    "word": "Type Casting",
+    "definition": "The process of converting a variable from one data type to another.",
+    "analogy": "Like melting down a gold coin and pouring it into a mould to make a gold ring - the raw material is the same, but the shape changes.",
+    "code_snippet": "// Dart: Type Casting\nvoid main() {\n  double myDouble = 9.78;\n  int myInt = myDouble.toInt();\n  print(myInt); // Output: 9\n}",
+    "quiz_questions": [
+      {
+        "question": "What is the purpose of type casting?",
+        "options": [
+          "To rename a variable",
+          "To convert data from one type to another",
+          "To encrypt data",
+          "To delete a variable"
+        ],
+        "answer": "To convert data from one type to another",
+        "explanation": "Type casting forces a value to be treated as a different data type."
+      },
+      {
+        "question": "If you cast the floating-point number 9.78 to an integer, what is typically the result?",
+        "options": [
+          "9",
+          "10",
+          "9.78",
+          "Error"
+        ],
+        "answer": "9",
+        "explanation": "Casting to an integer typically truncates the decimal portion."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-01",
+    "word": "Closure",
+    "definition": "A function that has access to the variables from its outer (enclosing) lexical scope, even after the outer function has returned.",
+    "analogy": "Like a person moving to a new country but keeping a photo album of their old neighborhood - they still have access to their past environment.",
+    "code_snippet": "// Dart: Closure\nFunction makeAdder(int addBy) {\n  return (int i) => addBy + i;\n}\nvoid main() {\n  var add2 = makeAdder(2);\n  print(add2(3)); // Output: 5\n}",
+    "quiz_questions": [
+      {
+        "question": "What distinguishes a closure from a regular function?",
+        "options": [
+          "It cannot return values",
+          "It remembers the environment in which it was created",
+          "It runs faster",
+          "It takes no arguments"
+        ],
+        "answer": "It remembers the environment in which it was created",
+        "explanation": "Closures capture and retain access to variables in their surrounding scope."
+      },
+      {
+        "question": "In the context of a closure, what happens to the local variables of the outer function when it finishes executing?",
+        "options": [
+          "They are immediately destroyed",
+          "They are retained in memory for the closure to use",
+          "They are converted to global variables",
+          "They are saved to a database"
+        ],
+        "answer": "They are retained in memory for the closure to use",
+        "explanation": "The closure keeps a reference to those variables, preventing them from being garbage collected."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-02",
+    "word": "Callback Function",
+    "definition": "A function passed as an argument to another function, which is then invoked inside the outer function to complete a routine or action.",
+    "analogy": "Like giving a friend your phone number and asking them to call you back when they finish a task.",
+    "code_snippet": "// Dart: Callback\nvoid processData(String data, Function(String) onComplete) {\n  print('Processing $data...');\n  onComplete('Done');\n}\nvoid main() {\n  processData('Image', (result) => print(result));\n}",
+    "quiz_questions": [
+      {
+        "question": "What is the primary use of a callback function?",
+        "options": [
+          "To style user interfaces",
+          "To execute code after a specific task has finished",
+          "To declare global variables",
+          "To compile code faster"
+        ],
+        "answer": "To execute code after a specific task has finished",
+        "explanation": "Callbacks allow you to dictate what happens immediately after an asynchronous or complex task completes."
+      },
+      {
+        "question": "How is a callback function provided to the executing code?",
+        "options": [
+          "It is passed as an argument",
+          "It is downloaded from an API",
+          "It is generated by the compiler",
+          "It is typed by the user at runtime"
+        ],
+        "answer": "It is passed as an argument",
+        "explanation": "Functions are first-class citizens in many languages, meaning they can be passed around like regular variables."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-03",
+    "word": "Event Loop",
+    "definition": "A programming construct that waits for and dispatches events or messages in a program.",
+    "analogy": "Like a restaurant host constantly checking for new arrivals, seating them, and then immediately checking the door again.",
+    "code_snippet": "// JavaScript: Event Loop concept\nconsole.log('Start');\nsetTimeout(() => console.log('Timeout'), 0);\nconsole.log('End');\n// Output: Start, End, Timeout",
+    "quiz_questions": [
+      {
+        "question": "What is the main role of the event loop?",
+        "options": [
+          "To compile source code into machine code",
+          "To continuously monitor the call stack and message queue",
+          "To encrypt network traffic",
+          "To render 3D graphics"
+        ],
+        "answer": "To continuously monitor the call stack and message queue",
+        "explanation": "The event loop pushes tasks from the queue to the call stack whenever the stack is empty."
+      },
+      {
+        "question": "Why does a 0-millisecond timeout still execute after synchronous code?",
+        "options": [
+          "Because the timer is broken",
+          "Because synchronous code blocks the event loop until it finishes",
+          "Because 0 means infinity",
+          "Because it is ignored"
+        ],
+        "answer": "Because synchronous code blocks the event loop until it finishes",
+        "explanation": "The timeout callback is placed in the message queue, which the event loop only processes after the main execution stack clears."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-04",
+    "word": "Middleware",
+    "definition": "Software that acts as a bridge between an operating system or database and applications, often used to intercept and process network requests.",
+    "analogy": "Like a bouncer at a club who checks your ID before letting you talk to the bartender.",
+    "code_snippet": "// Node.js Express: Middleware\napp.use((req, res, next) => {\n  console.log('Request received at', Date.now());\n  next(); // Pass control to the next handler\n});",
+    "quiz_questions": [
+      {
+        "question": "What is a common use case for middleware in web development?",
+        "options": [
+          "Styling HTML pages",
+          "Intercepting requests for authentication or logging",
+          "Compiling CSS",
+          "Managing local state"
+        ],
+        "answer": "Intercepting requests for authentication or logging",
+        "explanation": "Middleware sits between the incoming request and the final route handler, making it perfect for checks like auth."
+      },
+      {
+        "question": "What happens if a middleware function fails to call 'next()'?",
+        "options": [
+          "The application crashes immediately",
+          "The request hangs and is never completed",
+          "The database is deleted",
+          "The code runs twice"
+        ],
+        "answer": "The request hangs and is never completed",
+        "explanation": "If 'next()' is not called (and a response isn't sent), the request is left hanging indefinitely."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-05",
+    "word": "Webhook",
+    "definition": "A method of augmenting or altering the behaviour of a web page or application with custom callbacks, triggered by specific events.",
+    "analogy": "Like subscribing to a magazine - instead of going to the store every day to check if it's out, the store delivers it to your house when it's ready.",
+    "code_snippet": "// Node.js: Handling a Webhook\napp.post('/webhook', (req, res) => {\n  const event = req.body;\n  if (event.type === 'payment.success') {\n    console.log('Payment received!');\n  }\n  res.sendStatus(200);\n});",
+    "quiz_questions": [
+      {
+        "question": "How does a webhook differ from a traditional API request?",
+        "options": [
+          "Webhooks are slower",
+          "Traditional APIs are push; Webhooks are pull",
+          "Traditional APIs are pull; Webhooks are push",
+          "Webhooks do not use HTTP"
+        ],
+        "answer": "Traditional APIs are pull; Webhooks are push",
+        "explanation": "With an API, you ask for data (pull). With a webhook, the server automatically sends you data when an event occurs (push)."
+      },
+      {
+        "question": "What must you provide to a service in order to receive webhooks from them?",
+        "options": [
+          "A database password",
+          "A URL endpoint that can accept HTTP POST requests",
+          "A local file path",
+          "A CSS file"
+        ],
+        "answer": "A URL endpoint that can accept HTTP POST requests",
+        "explanation": "The external service needs a public URL to send the payload to whenever the event triggers."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-06",
+    "word": "Caching",
+    "definition": "Storing copies of frequently accessed data in a temporary storage location so future requests for that data can be served faster.",
+    "analogy": "Like keeping your most-used tools on your workbench instead of walking to the shed every time you need a hammer.",
+    "code_snippet": "// Dart: Simple in-memory cache\nMap<String, String> cache = {};\nString getData(String key) {\n  if (cache.containsKey(key)) return cache[key]!;\n  String data = 'Expensive fetch for $key';\n  cache[key] = data;\n  return data;\n}",
+    "quiz_questions": [
+      {
+        "question": "What is the primary benefit of caching?",
+        "options": [
+          "It encrypts sensitive data",
+          "It reduces latency and server load",
+          "It prevents syntax errors",
+          "It automatically writes code"
+        ],
+        "answer": "It reduces latency and server load",
+        "explanation": "By returning saved data instead of computing it again or fetching it from a database, responses are much faster."
+      },
+      {
+        "question": "What is a 'cache miss'?",
+        "options": [
+          "When a user forgets their password",
+          "When the requested data is not found in the cache",
+          "When the cache is deleted successfully",
+          "When the server crashes"
+        ],
+        "answer": "When the requested data is not found in the cache",
+        "explanation": "A cache miss requires the system to fetch the data from the original, slower source."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-07",
+    "word": "Load Balancing",
+    "definition": "The process of distributing network or application traffic across multiple servers to ensure no single server becomes overwhelmed.",
+    "analogy": "Like a supermarket opening multiple checkout lanes to ensure no single cashier is overwhelmed by a long line of customers.",
+    "code_snippet": "# Nginx: Simple Load Balancer config\nupstream myapp {\n  server 10.0.0.1;\n  server 10.0.0.2;\n}\nserver {\n  location / {\n    proxy_pass http://myapp;\n  }\n}",
+    "quiz_questions": [
+      {
+        "question": "Why is load balancing important for high-traffic applications?",
+        "options": [
+          "It compresses image files",
+          "It prevents a single server from becoming a bottleneck and crashing",
+          "It writes database queries faster",
+          "It translates code to machine language"
+        ],
+        "answer": "It prevents a single server from becoming a bottleneck and crashing",
+        "explanation": "By spreading the load, the system remains responsive and highly available."
+      },
+      {
+        "question": "Which of these is a common load balancing algorithm?",
+        "options": [
+          "Round-robin",
+          "Square-dance",
+          "Merge sort",
+          "Binary search"
+        ],
+        "answer": "Round-robin",
+        "explanation": "Round-robin simply routes each incoming request to the next server in the list, sequentially."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-08",
+    "word": "Microservices",
+    "definition": "An architectural style that structures an application as a collection of loosely coupled, independently deployable services.",
+    "analogy": "Like an orchestra - instead of one person trying to play every instrument (monolith), each musician plays a specific instrument independently.",
+    "code_snippet": "// Concept: Microservices communicating via HTTP\n// User Service\napp.get('/users/1', (req, res) => res.json({ id: 1, name: 'Alice' }));\n\n// Order Service (calls User Service)\nconst user = await fetch('http://user-service/users/1');",
+    "quiz_questions": [
+      {
+        "question": "What is the opposite of a microservices architecture?",
+        "options": [
+          "A macroservice",
+          "A monolith",
+          "A distributed cache",
+          "A virtual machine"
+        ],
+        "answer": "A monolith",
+        "explanation": "A monolithic architecture combines all application components into a single, cohesive codebase and deployment unit."
+      },
+      {
+        "question": "What is a major advantage of microservices?",
+        "options": [
+          "They are easier to debug",
+          "They can be deployed and scaled independently",
+          "They don't require a network",
+          "They compile instantly"
+        ],
+        "answer": "They can be deployed and scaled independently",
+        "explanation": "If one service needs more resources or a bug fix, you don't have to redeploy the entire application."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-09",
+    "word": "Containerisation",
+    "definition": "The packaging of software code with just the OS libraries and dependencies required to run the code into a single lightweight executable (a container).",
+    "analogy": "Like a standardized shipping container - whether it holds clothes or electronics, it fits perfectly on any cargo ship or truck.",
+    "code_snippet": "# Dockerfile\nFROM node:22\nWORKDIR /app\nCOPY package.json .\nRUN npm install\nCOPY . .\nCMD [\"node\", \"server.js\"]",
+    "quiz_questions": [
+      {
+        "question": "How do containers differ from traditional Virtual Machines (VMs)?",
+        "options": [
+          "Containers are slower",
+          "Containers share the host OS kernel and are much lighter",
+          "Containers require a dedicated hard drive",
+          "Containers can only run Windows"
+        ],
+        "answer": "Containers share the host OS kernel and are much lighter",
+        "explanation": "VMs run a full, heavy guest OS for each instance, while containers share the host's OS kernel."
+      },
+      {
+        "question": "Which tool is the industry standard for containerisation?",
+        "options": [
+          "Git",
+          "Docker",
+          "Jenkins",
+          "NPM"
+        ],
+        "answer": "Docker",
+        "explanation": "Docker popularised containerisation and remains the most widely used tool for building and running containers."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-10",
+    "word": "Serverless Computing",
+    "definition": "A cloud computing execution model where the cloud provider dynamically manages the allocation and provisioning of servers, executing code on demand.",
+    "analogy": "Like a taxi - you don't buy or maintain the car, you just pay for the exact distance you ride.",
+    "code_snippet": "// Node.js: AWS Lambda Serverless Function\nexports.handler = async (event) => {\n  return {\n    statusCode: 200,\n    body: JSON.stringify('Hello from Serverless!'),\n  };\n};",
+    "quiz_questions": [
+      {
+        "question": "Does 'serverless' mean there are literally no servers?",
+        "options": [
+          "Yes, the code runs on magic",
+          "No, servers still exist but the cloud provider manages them completely",
+          "Yes, it runs on the user's local machine",
+          "No, it means the servers are free"
+        ],
+        "answer": "No, servers still exist but the cloud provider manages them completely",
+        "explanation": "The term 'serverless' means the developer doesn't have to manage, provision, or scale the servers."
+      },
+      {
+        "question": "How is billing typically handled in serverless computing?",
+        "options": [
+          "A flat monthly fee",
+          "You pay for the actual compute time and resources used during execution",
+          "You pay per line of code",
+          "It is entirely free"
+        ],
+        "answer": "You pay for the actual compute time and resources used during execution",
+        "explanation": "Serverless is highly cost-effective because you only pay when your function is actually running."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-11",
+    "word": "WebSocket",
+    "definition": "A communications protocol providing full-duplex communication channels over a single, long-held TCP connection.",
+    "analogy": "Like a phone call - once connected, both people can talk and listen simultaneously until they hang up.",
+    "code_snippet": "// JavaScript: Connecting to a WebSocket\nconst socket = new WebSocket('ws://example.com/socket');\nsocket.onmessage = (event) => {\n  console.log('Message from server:', event.data);\n};",
+    "quiz_questions": [
+      {
+        "question": "How does WebSocket differ from standard HTTP?",
+        "options": [
+          "It is slower",
+          "HTTP is request-response; WebSockets keep a persistent two-way connection",
+          "WebSockets only send text",
+          "WebSockets don't use TCP"
+        ],
+        "answer": "HTTP is request-response; WebSockets keep a persistent two-way connection",
+        "explanation": "HTTP requires a new request for every response. WebSockets keep the connection open for continuous two-way traffic."
+      },
+      {
+        "question": "What is a common use case for WebSockets?",
+        "options": [
+          "Serving static HTML pages",
+          "Real-time chat applications",
+          "Storing user passwords",
+          "Compressing images"
+        ],
+        "answer": "Real-time chat applications",
+        "explanation": "Because WebSockets allow the server to push messages to the client instantly, they are perfect for live chat and real-time updates."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-10-12",
+    "word": "GraphQL",
+    "definition": "A query language for APIs that allows clients to request exactly the data they need, and nothing more.",
+    "analogy": "Like ordering at a restaurant - you pick exactly what you want on your plate, instead of getting a pre-set meal (REST).",
+    "code_snippet": "# GraphQL Query\nquery {\n  user(id: 1) {\n    name\n    email\n  }\n}",
+    "quiz_questions": [
+      {
+        "question": "What problem does GraphQL primarily solve compared to REST?",
+        "options": [
+          "Over-fetching and under-fetching of data",
+          "Server crashes",
+          "Slow internet connections",
+          "Database management"
+        ],
+        "answer": "Over-fetching and under-fetching of data",
+        "explanation": "With REST, an endpoint returns fixed data. With GraphQL, the client asks for exactly the fields it needs, saving bandwidth."
+      },
+      {
+        "question": "How many endpoints does a typical GraphQL API expose?",
+        "options": [
+          "One for each resource",
+          "Usually just one",
+          "Hundreds",
+          "Zero"
+        ],
+        "answer": "Usually just one",
+        "explanation": "Unlike REST which has many endpoints (e.g., /users, /posts), a GraphQL API typically handles all queries through a single /graphql endpoint."
+      }
+    ]
+  }
+]
