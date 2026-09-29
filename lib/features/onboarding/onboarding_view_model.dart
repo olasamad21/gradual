@@ -1,6 +1,7 @@
 // lib/features/onboarding/onboarding_view_model.dart
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -30,23 +31,34 @@ class OnboardingController extends AsyncNotifier<void> {
     try {
       state = const AsyncLoading();
 
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        state = const AsyncData(null);
-        return null;
+      final UserCredential userCred;
+
+      if (kIsWeb) {
+        // WEB: Call popup directly. No awaits precede this call to avoid popup blockers.
+        final provider = GoogleAuthProvider()..addScope('email');
+        userCred = await _auth.signInWithPopup(provider);
+      } else {
+        // MOBILE: Existing google_sign_in flow.
+        final googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) {
+          state = const AsyncData(null);
+          return null;
+        }
+
+        final googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        userCred = await _auth.signInWithCredential(credential);
       }
 
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final userCred = await _auth.signInWithCredential(credential);
       state = const AsyncData(null);
       return userCred.user;
-    } catch (e, st) {
-      state = AsyncError(e, st);
+    } catch (_) {
+      // Return to a clean state so the user can try again (e.g., if popup closed)
+      state = const AsyncData(null);
       rethrow;
     }
   }

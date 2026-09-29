@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
@@ -88,9 +90,12 @@ class _ProfileBody extends ConsumerWidget {
             child: const Text('Cancel', style: TextStyle(color: Color(0xFF6B7280))),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              ref.read(firebaseAuthProvider).signOut();
+              if (!kIsWeb) {
+                await GoogleSignIn().signOut();
+              }
+              await ref.read(firebaseAuthProvider).signOut();
             },
             child: const Text('Sign Out',
                 style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w700)),

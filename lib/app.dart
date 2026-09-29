@@ -16,6 +16,22 @@ class GradualApp extends StatelessWidget {
       // FIXED: Always start at root so RootGatekeeper decides where to go.
       // Never read auth state here — it's always loading on cold start.
       initialRoute: AppRoutes.root,
+      // NEW: Wrap the entire Navigator (including dialogs/bottom sheets)
+      builder: (context, child) {
+        return Container(
+          // Background color for the empty space on wide web screens
+          color: const Color(0xFFE5E7EB),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              // ClipRect ensures nothing bleeds outside the 500px column
+              child: ClipRect(
+                child: child!,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
