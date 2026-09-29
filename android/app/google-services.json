@@ -12,7 +12,20 @@
           "package_name": "com.samad.gradual"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "263590322064-r413adnr0kkl1rbgtql58e2mgrujnkdc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.samad.gradual",
+            "certificate_hash": "9b40a87effd474b6e248497ad22f8f91c76b530f"
+          }
+        },
+        {
+          "client_id": "263590322064-s54u844qpddga6tr7n3onb1fikuoq4vq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCaRYC82_NiCAzn3k00ULQlz6_pxHCxAWk"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "263590322064-s54u844qpddga6tr7n3onb1fikuoq4vq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
