@@ -3,7 +3,7 @@
     "date_id": "2026-05-24",
     "word": "Algorithm",
     "definition": "A step-by-step procedure for solving a problem or accomplishing a task.",
-    "analogy": "Like a recipe — it tells you exactly what ingredients to use and in what order to produce a dish.",
+    "analogy": "Like a recipe \u2014 it tells you exactly what ingredients to use and in what order to produce a dish.",
     "code_snippet": "// Dart: Simple linear search algorithm\nint linearSearch(List<int> arr, int target) {\n  for (int i = 0; i < arr.length; i++) {\n    if (arr[i] == target) return i;\n  }\n  return -1; // Not found\n}",
     "quiz_questions": [
       {
@@ -34,7 +34,7 @@
     "date_id": "2026-05-25",
     "word": "Variable",
     "definition": "A named storage location in memory that holds a value which can change during program execution.",
-    "analogy": "Like a labelled box — you can put something in it, take it out, or swap it for something else.",
+    "analogy": "Like a labelled box \u2014 you can put something in it, take it out, or swap it for something else.",
     "code_snippet": "// Dart: Declaring and reassigning a variable\nvoid main() {\n  int score = 0;   // declare\n  score = 42;      // reassign\n  print(score);    // Output: 42\n}",
     "quiz_questions": [
       {
@@ -54,7 +54,7 @@
     "date_id": "2026-05-26",
     "word": "Function",
     "definition": "A reusable block of code that performs a specific task and can be called multiple times.",
-    "analogy": "Like a vending machine — you press a button (call it), it does its job, and gives you back a result.",
+    "analogy": "Like a vending machine \u2014 you press a button (call it), it does its job, and gives you back a result.",
     "code_snippet": "// Dart: A function that adds two numbers\nint add(int a, int b) {\n  return a + b;\n}\n\nvoid main() {\n  print(add(3, 4)); // Output: 7\n}",
     "quiz_questions": [
       {
@@ -105,12 +105,17 @@
     "date_id": "2026-05-28",
     "word": "Array",
     "definition": "A collection of elements stored at contiguous memory locations, accessed by index.",
-    "analogy": "Like a row of numbered lockers — each locker holds one item and you access it by its number.",
+    "analogy": "Like a row of numbered lockers \u2014 each locker holds one item and you access it by its number.",
     "code_snippet": "// Dart: Creating and accessing an array (List)\nvoid main() {\n  List<String> fruits = ['Apple', 'Banana', 'Cherry'];\n  print(fruits[0]); // Output: Apple\n  print(fruits[2]); // Output: Cherry\n}",
     "quiz_questions": [
       {
         "question": "What index does the first element of an array have?",
-        "options": ["1", "0", "-1", "Depends on the language"],
+        "options": [
+          "1",
+          "0",
+          "-1",
+          "Depends on the language"
+        ],
         "answer": "0",
         "explanation": "Most programming languages use zero-based indexing, so the first element is at index 0."
       }
@@ -120,8 +125,8 @@
     "date_id": "2026-05-29",
     "word": "Debugging",
     "definition": "The process of finding and fixing errors (bugs) in source code.",
-    "analogy": "Like a doctor diagnosing a patient — you look at symptoms (errors), trace the cause, and apply a fix.",
-    "code_snippet": "// Dart: Using print statements to debug\nvoid main() {\n  int x = 10;\n  int y = 0;\n  print('Before division: x=$x, y=$y');\n  // y = 0 would cause division by zero — caught by debugging!\n  if (y != 0) print(x ~/ y);\n}",
+    "analogy": "Like a doctor diagnosing a patient \u2014 you look at symptoms (errors), trace the cause, and apply a fix.",
+    "code_snippet": "// Dart: Using print statements to debug\nvoid main() {\n  int x = 10;\n  int y = 0;\n  print('Before division: x=$x, y=$y');\n  // y = 0 would cause division by zero \u2014 caught by debugging!\n  if (y != 0) print(x ~/ y);\n}",
     "quiz_questions": [
       {
         "question": "What is a 'bug' in software?",
@@ -150,8 +155,8 @@
   {
     "date_id": "2026-05-30",
     "word": "API",
-    "definition": "Application Programming Interface — a set of rules that allows different software applications to communicate with each other.",
-    "analogy": "Like a waiter in a restaurant — you (the app) tell the waiter (API) what you want, and it brings back what the kitchen (server) prepared.",
+    "definition": "Application Programming Interface \u2014 a set of rules that allows different software applications to communicate with each other.",
+    "analogy": "Like a waiter in a restaurant \u2014 you (the app) tell the waiter (API) what you want, and it brings back what the kitchen (server) prepared.",
     "code_snippet": "// Dart: Calling a REST API with http package\nimport 'package:http/http.dart' as http;\n\nFuture<void> fetchData() async {\n  final response = await http.get(\n    Uri.parse('https://api.example.com/data'),\n  );\n  if (response.statusCode == 200) {\n    print(response.body);\n  }\n}",
     "quiz_questions": [
       {
@@ -171,7 +176,7 @@
     "date_id": "2026-05-31",
     "word": "Recursion",
     "definition": "A technique where a function calls itself to solve smaller instances of the same problem.",
-    "analogy": "Like standing between two mirrors — you see a reflection of a reflection, getting smaller each time until it disappears (the base case).",
+    "analogy": "Like standing between two mirrors \u2014 you see a reflection of a reflection, getting smaller each time until it disappears (the base case).",
     "code_snippet": "// Dart: Factorial using recursion\nint factorial(int n) {\n  if (n <= 1) return 1;          // Base case\n  return n * factorial(n - 1);   // Recursive call\n}",
     "quiz_questions": [
       {
@@ -201,8 +206,8 @@
   {
     "date_id": "2026-06-01",
     "word": "Object-Oriented Programming",
-    "definition": "A programming paradigm that organises code into objects — bundles of data (properties) and behaviour (methods).",
-    "analogy": "Like a blueprint for a house — the blueprint (class) defines the structure, and each actual house built from it is an object (instance).",
+    "definition": "A programming paradigm that organises code into objects \u2014 bundles of data (properties) and behaviour (methods).",
+    "analogy": "Like a blueprint for a house \u2014 the blueprint (class) defines the structure, and each actual house built from it is an object (instance).",
     "code_snippet": "// Dart: A simple class with properties and a method\nclass Car {\n  String brand;\n  int speed;\n\n  Car(this.brand, this.speed);\n\n  void describe() {\n    print('$brand goes $speed km/h');\n  }\n}\n\nvoid main() {\n  Car myCar = Car('Toyota', 120);\n  myCar.describe(); // Output: Toyota goes 120 km/h\n}",
     "quiz_questions": [
       {
@@ -222,7 +227,7 @@
     "date_id": "2026-06-02",
     "word": "Version Control",
     "definition": "A system that tracks changes to code over time, allowing teams to collaborate and revert to previous versions.",
-    "analogy": "Like Google Docs revision history — you can see every change ever made and restore any previous version.",
+    "analogy": "Like Google Docs revision history \u2014 you can see every change ever made and restore any previous version.",
     "code_snippet": "# Common Git commands\ngit init              # Start a new repo\ngit add .             # Stage all changes\ngit commit -m 'msg'   # Save a snapshot\ngit push              # Upload to remote\ngit pull              # Download latest changes",
     "quiz_questions": [
       {
@@ -238,7 +243,12 @@
       },
       {
         "question": "Which version control system is most widely used today?",
-        "options": ["SVN", "Mercurial", "Git", "CVS"],
+        "options": [
+          "SVN",
+          "Mercurial",
+          "Git",
+          "CVS"
+        ],
         "answer": "Git",
         "explanation": "Git is the industry standard, used by platforms like GitHub, GitLab, and Bitbucket."
       }
@@ -248,7 +258,7 @@
     "date_id": "2026-06-03",
     "word": "Database",
     "definition": "An organised collection of structured data that can be easily accessed, managed, and updated.",
-    "analogy": "Like a filing cabinet with labelled drawers — everything is organised so you can find what you need quickly.",
+    "analogy": "Like a filing cabinet with labelled drawers \u2014 everything is organised so you can find what you need quickly.",
     "code_snippet": "-- SQL: Create a table and insert a record\nCREATE TABLE users (\n  id INTEGER PRIMARY KEY,\n  name TEXT,\n  email TEXT\n);\n\nINSERT INTO users (name, email)\nVALUES ('Samad', 'samad@example.com');",
     "quiz_questions": [
       {
@@ -268,8 +278,8 @@
     "date_id": "2026-06-04",
     "word": "Abstraction",
     "definition": "Hiding complex implementation details and showing only the essential features of an object or system.",
-    "analogy": "Like driving a car — you use the steering wheel and pedals without needing to understand how the engine works internally.",
-    "code_snippet": "// Dart: Abstract class hiding implementation details\nabstract class Shape {\n  double area(); // What it does — not how\n}\n\nclass Circle extends Shape {\n  double radius;\n  Circle(this.radius);\n\n  @override\n  double area() => 3.14159 * radius * radius;\n}",
+    "analogy": "Like driving a car \u2014 you use the steering wheel and pedals without needing to understand how the engine works internally.",
+    "code_snippet": "// Dart: Abstract class hiding implementation details\nabstract class Shape {\n  double area(); // What it does \u2014 not how\n}\n\nclass Circle extends Shape {\n  double radius;\n  Circle(this.radius);\n\n  @override\n  double area() => 3.14159 * radius * radius;\n}",
     "quiz_questions": [
       {
         "question": "What is the main goal of abstraction in software design?",
@@ -299,12 +309,17 @@
     "date_id": "2026-06-05",
     "word": "Inheritance",
     "definition": "A mechanism where a child class acquires the properties and methods of a parent class.",
-    "analogy": "Like a child inheriting traits from a parent — they share common features but can also have their own unique ones.",
+    "analogy": "Like a child inheriting traits from a parent \u2014 they share common features but can also have their own unique ones.",
     "code_snippet": "// Dart: Inheritance example\nclass Animal {\n  void breathe() => print('Breathing...');\n}\n\nclass Dog extends Animal {\n  void bark() => print('Woof!');\n}\n\nvoid main() {\n  Dog d = Dog();\n  d.breathe(); // Inherited from Animal\n  d.bark();    // Dog's own method\n}",
     "quiz_questions": [
       {
         "question": "In Dart, which keyword is used to inherit from a parent class?",
-        "options": ["implements", "extends", "inherits", "super"],
+        "options": [
+          "implements",
+          "extends",
+          "inherits",
+          "super"
+        ],
         "answer": "extends",
         "explanation": "The 'extends' keyword creates a child class that inherits from the specified parent class."
       }
@@ -314,7 +329,7 @@
     "date_id": "2026-06-06",
     "word": "State Management",
     "definition": "The practice of managing and synchronising the data (state) that drives a user interface in an application.",
-    "analogy": "Like a scoreboard at a match — whenever a goal is scored (state changes), the board updates immediately for everyone to see.",
+    "analogy": "Like a scoreboard at a match \u2014 whenever a goal is scored (state changes), the board updates immediately for everyone to see.",
     "code_snippet": "// Flutter: Simple state management with setState\nclass CounterWidget extends StatefulWidget {\n  @override\n  _CounterWidgetState createState() => _CounterWidgetState();\n}\n\nclass _CounterWidgetState extends State<CounterWidget> {\n  int _count = 0;\n\n  @override\n  Widget build(BuildContext context) {\n    return Column(children: [\n      Text('Count: $_count'),\n      ElevatedButton(\n        onPressed: () => setState(() => _count++),\n        child: Text('Increment'),\n      ),\n    ]);\n  }\n}",
     "quiz_questions": [
       {
@@ -330,9 +345,294 @@
       },
       {
         "question": "Which of these is a popular state management solution in Flutter beyond setState?",
-        "options": ["Redux only", "Provider / Riverpod", "setState is the only option", "XML binding"],
+        "options": [
+          "Redux only",
+          "Provider / Riverpod",
+          "setState is the only option",
+          "XML binding"
+        ],
         "answer": "Provider / Riverpod",
         "explanation": "Provider and Riverpod are widely used in Flutter for scalable state management beyond basic setState."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-07",
+    "word": "Polymorphism",
+    "definition": "The ability of different objects to respond to the same method call in their own specific way.",
+    "analogy": "Like pressing 'Play' \u2014 it plays a movie on Netflix, a song on Spotify, or a game on a console, depending on the app.",
+    "code_snippet": "// Dart: Polymorphism example\nabstract class Animal {\n  void makeSound();\n}\nclass Cat extends Animal {\n  void makeSound() => print('Meow');\n}\nclass Dog extends Animal {\n  void makeSound() => print('Woof');\n}",
+    "quiz_questions": [
+      {
+        "question": "What does polymorphism allow you to do?",
+        "options": [
+          "Hide data inside a class",
+          "Use a single interface for different data types",
+          "Inherit multiple classes at once",
+          "Create infinite loops"
+        ],
+        "answer": "Use a single interface for different data types",
+        "explanation": "Polymorphism means 'many forms', allowing different classes to implement the same method interface differently."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-08",
+    "word": "Encapsulation",
+    "definition": "Bundling data and methods that operate on that data within a single unit (class), restricting direct access to some components.",
+    "analogy": "Like a capsule \u2014 the medicine (data) is safely enclosed inside the shell (class) and can only be accessed as intended.",
+    "code_snippet": "// Dart: Encapsulation with private variables\nclass BankAccount {\n  double _balance = 0; // Private\n\n  void deposit(double amount) {\n    if (amount > 0) _balance += amount;\n  }\n  double get balance => _balance;\n}",
+    "quiz_questions": [
+      {
+        "question": "How is encapsulation usually achieved in OOP?",
+        "options": [
+          "Using public global variables",
+          "Making fields private and providing getters/setters",
+          "Deleting variables after use",
+          "Creating multiple identical classes"
+        ],
+        "answer": "Making fields private and providing getters/setters",
+        "explanation": "By making fields private, you prevent external code from modifying them directly, ensuring data integrity."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-09",
+    "word": "Compilation",
+    "definition": "The process of translating human-readable source code into machine code that a computer can execute.",
+    "analogy": "Like a translator converting an English book into Japanese before anyone reads it.",
+    "code_snippet": "# Compiling a C program\ngcc main.c -o program\n# Running the compiled machine code\n./program",
+    "quiz_questions": [
+      {
+        "question": "What is the difference between a compiler and an interpreter?",
+        "options": [
+          "A compiler translates line-by-line; an interpreter translates all at once",
+          "A compiler translates all code before execution; an interpreter translates line-by-line during execution",
+          "Compilers are only for web dev",
+          "Interpreters are faster than compilers"
+        ],
+        "answer": "A compiler translates all code before execution; an interpreter translates line-by-line during execution",
+        "explanation": "Compilers produce a standalone executable ahead of time, while interpreters run the source code directly on the fly."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-10",
+    "word": "Asynchronous",
+    "definition": "A programming pattern that allows a program to initiate a potentially long-running task and continue executing other code without waiting for the task to finish.",
+    "analogy": "Like ordering food at a restaurant \u2014 you place the order and chat with your friends instead of freezing until the food arrives.",
+    "code_snippet": "// Dart: Asynchronous function\nFuture<void> fetchUserData() async {\n  print('Fetching...');\n  await Future.delayed(Duration(seconds: 2)); // Simulating network\n  print('Done!');\n}",
+    "quiz_questions": [
+      {
+        "question": "Why is asynchronous programming important for UI applications?",
+        "options": [
+          "It makes the code shorter",
+          "It prevents the UI from freezing during long tasks like network requests",
+          "It uses less battery",
+          "It compiles faster"
+        ],
+        "answer": "It prevents the UI from freezing during long tasks like network requests",
+        "explanation": "If long tasks run synchronously on the main thread, the app becomes unresponsive until the task finishes."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-11",
+    "word": "Future / Promise",
+    "definition": "An object representing the eventual completion (or failure) of an asynchronous operation and its resulting value.",
+    "analogy": "Like a restaurant buzzer \u2014 it's a promise that you will eventually get your food or be told they ran out.",
+    "code_snippet": "// Dart: Handling a Future\nFuture<String> getOrder() => Future.delayed(Duration(seconds: 1), () => 'Pizza');\n\nvoid main() {\n  getOrder().then((value) => print(value)); // Prints 'Pizza' later\n}",
+    "quiz_questions": [
+      {
+        "question": "What are the two common states a Future/Promise resolves to?",
+        "options": [
+          "Start and Stop",
+          "Completed (Success) and Error (Failure)",
+          "True and False",
+          "Null and Void"
+        ],
+        "answer": "Completed (Success) and Error (Failure)",
+        "explanation": "An asynchronous operation either finishes successfully with a value, or fails with an error."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-12",
+    "word": "JSON",
+    "definition": "JavaScript Object Notation \u2014 a lightweight, text-based data interchange format that is easy for humans to read and for machines to parse.",
+    "analogy": "Like a universal shipping container \u2014 it standardises how data is packaged so any system can transport and unpack it.",
+    "code_snippet": "// Example JSON payload\n{\n  \"name\": \"Gradual\",\n  \"version\": 1.0,\n  \"is_active\": true,\n  \"features\": [\"quizzes\", \"streaks\"]\n}",
+    "quiz_questions": [
+      {
+        "question": "Which of these is a valid JSON data type?",
+        "options": [
+          "Function",
+          "Class",
+          "Boolean",
+          "Undefined"
+        ],
+        "answer": "Boolean",
+        "explanation": "JSON supports strings, numbers, booleans, null, arrays (lists), and objects (dictionaries)."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-13",
+    "word": "REST API",
+    "definition": "Representational State Transfer \u2014 an architectural style for designing networked applications, commonly using HTTP methods (GET, POST, PUT, DELETE).",
+    "analogy": "Like a library counter \u2014 GET to borrow a book, POST to donate one, PUT to update its cover, DELETE to remove it.",
+    "code_snippet": "// Dart: Simple REST GET request\nfinal response = await http.get(Uri.parse('https://api.example.com/users/1'));\nif (response.statusCode == 200) {\n  print('Success!');\n}",
+    "quiz_questions": [
+      {
+        "question": "Which HTTP method is conventionally used in REST to create a new resource?",
+        "options": [
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE"
+        ],
+        "answer": "POST",
+        "explanation": "POST is used to submit new data to the server, while PUT is typically used for updating."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-14",
+    "word": "Authentication",
+    "definition": "The process of verifying the identity of a user, device, or system.",
+    "analogy": "Like showing your ID card at the building entrance to prove who you are.",
+    "code_snippet": "// Dart: Firebase Authentication\nfinal userCred = await FirebaseAuth.instance.signInWithEmailAndPassword(\n  email: 'user@example.com',\n  password: 'supersecret'\n);",
+    "quiz_questions": [
+      {
+        "question": "What is the difference between Authentication and Authorisation?",
+        "options": [
+          "They are exactly the same",
+          "Authentication is who you are; Authorisation is what you are allowed to do",
+          "Authentication is about permissions; Authorisation is about identity",
+          "Authentication is only for admins"
+        ],
+        "answer": "Authentication is who you are; Authorisation is what you are allowed to do",
+        "explanation": "Authentication checks your identity (logging in), while authorisation checks your permissions (can you edit this file?)."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-15",
+    "word": "Authorisation",
+    "definition": "The process of determining whether an authenticated user has permission to access a specific resource or perform an action.",
+    "analogy": "Like having a backstage pass \u2014 the security guard knows who you are (authenticated), but checks your pass to see if you're allowed backstage.",
+    "code_snippet": "// Firebase Rules: Authorisation example\nmatch /admin_data/{docId} {\n  allow read, write: if request.auth.token.admin == true;\n}",
+    "quiz_questions": [
+      {
+        "question": "Which of these is an example of authorisation?",
+        "options": [
+          "Typing a password",
+          "Scanning a fingerprint",
+          "Checking if a user is an admin before letting them delete a database",
+          "Clicking 'Sign in with Google'"
+        ],
+        "answer": "Checking if a user is an admin before letting them delete a database",
+        "explanation": "Verifying role/permissions to perform a dangerous action is authorisation."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-16",
+    "word": "Refactoring",
+    "definition": "The process of restructuring existing computer code without changing its external behaviour, usually to improve readability or reduce complexity.",
+    "analogy": "Like reorganising your closet \u2014 you don't throw anything away or buy new clothes, you just make it easier to find things.",
+    "code_snippet": "// Before Refactoring\nint calc(int a, int b) { return a * b; }\n\n// After Refactoring (better names)\nint calculateArea(int width, int height) {\n  return width * height;\n}",
+    "quiz_questions": [
+      {
+        "question": "What is a primary rule of refactoring?",
+        "options": [
+          "Always add new features at the same time",
+          "Do not change the external behaviour of the code",
+          "Delete old code permanently",
+          "Make the code as complex as possible"
+        ],
+        "answer": "Do not change the external behaviour of the code",
+        "explanation": "Refactoring improves internal structure (cleanliness) while keeping the external outputs exactly the same."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-17",
+    "word": "Syntax",
+    "definition": "The set of rules that defines the combinations of symbols that are considered to be correctly structured in a programming language.",
+    "analogy": "Like grammar in a spoken language \u2014 if you put the words in the wrong order, people (or the compiler) won't understand you.",
+    "code_snippet": "// Dart: Missing a semicolon is a syntax error\nvoid main() {\n  print('Hello World') // Error: Expected ';'\n}",
+    "quiz_questions": [
+      {
+        "question": "What happens if a program contains a syntax error?",
+        "options": [
+          "It runs slowly",
+          "It gets fixed automatically",
+          "The compiler or interpreter will refuse to run it",
+          "It deletes your files"
+        ],
+        "answer": "The compiler or interpreter will refuse to run it",
+        "explanation": "Syntax errors violate the language rules, preventing the code from being successfully parsed and executed."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-18",
+    "word": "Exception",
+    "definition": "An event that occurs during the execution of a program that disrupts the normal flow of instructions.",
+    "analogy": "Like a fire alarm going off in an office \u2014 normal work stops, and everyone follows an emergency procedure (the catch block).",
+    "code_snippet": "// Dart: Catching an exception\ntry {\n  int result = 10 ~/ 0; // Division by zero\n} catch (e) {\n  print('Caught an error: $e');\n}",
+    "quiz_questions": [
+      {
+        "question": "What block is used to handle an exception and prevent a crash?",
+        "options": [
+          "if / else",
+          "switch / case",
+          "try / catch",
+          "for / while"
+        ],
+        "answer": "try / catch",
+        "explanation": "The 'try' block runs risky code, and the 'catch' block handles any exceptions that are thrown."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-19",
+    "word": "Dependency Injection",
+    "definition": "A design pattern where an object receives its dependencies (like a database connection) from an external source rather than creating them itself.",
+    "analogy": "Like a chef being handed their ingredients by a prep cook, rather than having to grow the vegetables themselves.",
+    "code_snippet": "// Dart: Dependency Injection via constructor\nclass UserService {\n  final Database db;\n  // db is injected, not created inside\n  UserService(this.db);\n}",
+    "quiz_questions": [
+      {
+        "question": "What is a major benefit of Dependency Injection?",
+        "options": [
+          "It makes code harder to read",
+          "It makes classes tightly coupled",
+          "It makes testing easier by allowing mock dependencies",
+          "It removes the need for variables"
+        ],
+        "answer": "It makes testing easier by allowing mock dependencies",
+        "explanation": "Because dependencies are injected, you can easily pass a fake/mock database during unit testing."
+      }
+    ]
+  },
+  {
+    "date_id": "2026-06-20",
+    "word": "CI/CD",
+    "definition": "Continuous Integration and Continuous Deployment \u2014 the practice of automating the building, testing, and deployment of code changes.",
+    "analogy": "Like an assembly line in a factory \u2014 code goes in, gets automatically tested, assembled, and shipped out to users without manual intervention.",
+    "code_snippet": "# Example GitHub Actions workflow\nsteps:\n  - run: flutter test\n  - run: flutter build web\n  - run: firebase deploy",
+    "quiz_questions": [
+      {
+        "question": "What does the 'Continuous Integration' part of CI/CD primarily ensure?",
+        "options": [
+          "That code is immediately deleted",
+          "That new code changes are automatically tested and merged without breaking the build",
+          "That users pay for the app",
+          "That servers never crash"
+        ],
+        "answer": "That new code changes are automatically tested and merged without breaking the build",
+        "explanation": "CI automatically tests every commit to ensure it integrates safely with the main codebase."
       }
     ]
   }
