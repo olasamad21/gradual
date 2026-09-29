@@ -1,16 +1,22 @@
-# gradual
+# Gradual
 
-A new Flutter project.
+A micro-learning app for Software Engineering, built with Flutter and Firebase.
 
-## Getting Started
+**Live Demo:** [https://gradual-852ea.web.app](https://gradual-852ea.web.app)
 
-This project is a starting point for a Flutter application.
+*(Insert screenshot here)*
 
-A few resources to get you started if this is your first Flutter project:
+## Tech Stack
+- **Framework:** Flutter (Web & Mobile)
+- **State Management:** Riverpod
+- **Authentication:** Firebase Auth (Google Sign-In)
+- **Database:** Cloud Firestore
+- **Hosting:** Firebase Hosting
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Bringing Gradual to the Web
+Gradual was originally built for mobile. Migrating it to a fully functioning web app involved several architectural considerations:
+1. **Compatibility Audit:** First, we scanned the codebase to ensure no direct dependencies on `dart:io` or native mobile plugins would block the web build. 
+2. **Platform-Split Authentication:** Browsers frequently block popups that aren't tied directly to user gestures. We split the Google Sign-In logic using `kIsWeb`: retaining the `google_sign_in` plugin for Android, but invoking `FirebaseAuth.instance.signInWithPopup()` synchronously on the button press for the Web.
+3. **Responsive Constraints:** We wrapped the root `MaterialApp.builder` in a centered `ConstrainedBox` with a max width of 500px to prevent the UI from stretching uncomfortably on wide desktop monitors.
+4. **Direct URL Routing Guard:** On the web, users can navigate directly to protected routes (e.g., `/#/profile`). We implemented a route guard in `AppRouter` that bounces unauthenticated users back to the `RootGatekeeper` to resolve their session before granting access.
+5. **Firebase Web Registration:** Configured `firebase_options.dart` and deployed securely to Firebase Hosting with SPA rewrite rules.
