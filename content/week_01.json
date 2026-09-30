@@ -1,0 +1,636 @@
+{
+  "field": "software_engineering",
+  "concepts": [
+    {
+      "id": "process",
+      "term": "Process",
+      "category": "operating-systems",
+      "level": "beginner",
+      "definition": "A process is a running instance of a program, with its own private memory space and system resources. The operating system isolates processes from each other, so one crashing process usually does not corrupt another. Every app you open on your computer or phone runs as at least one process.",
+      "analogy": "A separate kitchen in its own building: it has its own stove, fridge and ingredients, and the cook inside cannot touch anything in the other kitchens.",
+      "real_world_example": "Google Chrome typically runs browser tabs in separate processes, so when one misbehaving tab crashes, the others keep working.",
+      "confused_with": "Program: a program is the file stored on disk, while a process is that program actively running in memory. Opening the same app twice creates two processes from one program.",
+      "related": [
+        "thread",
+        "context-switching"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You open a messaging app on your laptop. What does the operating system create to run it?",
+        "options": [
+          "A program: a stored file that gets copied each time you click",
+          "A thread that shares memory with every other app on the machine",
+          "A process: a running instance of the app with its own memory space",
+          "A compiler that translates the app again on every launch"
+        ],
+        "answer_index": 2,
+        "explanation": "A process is a running instance of a program with its own memory. The program itself is just the stored file."
+      }
+    },
+    {
+      "id": "thread",
+      "term": "Thread",
+      "category": "operating-systems",
+      "level": "beginner",
+      "definition": "A thread is the smallest unit of execution the operating system can schedule, and it lives inside a process. Threads in the same process share that process's memory, which makes communication fast but also risky. A single process can run many threads to do several things at once, such as loading data while keeping the screen responsive.",
+      "analogy": "Several cooks working in the same kitchen: they share the same stove and ingredients, so they cooperate quickly, but they can also get in each other's way.",
+      "real_world_example": "A music app uses one thread to play audio, another to download the next song, and another to keep the buttons responsive on screen.",
+      "confused_with": "Process: processes have separate memory and are isolated, while threads inside one process share memory. That sharing is why threads are faster to coordinate but easier to break.",
+      "related": [
+        "process",
+        "race-condition",
+        "concurrency-vs-parallelism"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A video editor must export a file without freezing its interface. Which design fits best?",
+        "options": [
+          "Run the export on a background thread so the interface thread stays free",
+          "Pause all button clicks until the export has completely finished",
+          "Start a second operating system to perform the export work",
+          "Recompile the editor each time the user clicks the export button"
+        ],
+        "answer_index": 0,
+        "explanation": "Threads let one process do several things at once, so the heavy export runs apart from the thread that keeps the screen responsive."
+      }
+    },
+    {
+      "id": "concurrency-vs-parallelism",
+      "term": "Concurrency vs Parallelism",
+      "category": "concurrency",
+      "level": "beginner",
+      "definition": "Two related ideas: concurrency means handling several tasks whose execution overlaps in time, while parallelism means running several tasks at the exact same instant on multiple processors. A single-core machine can be concurrent by switching quickly between tasks, but it cannot be parallel. Concurrency is a way of structuring a program, whereas parallelism is a way of running it faster on suitable hardware.",
+      "analogy": "One barista juggling several orders by switching between them is concurrent. Two baristas each making a drink at the same moment is parallel.",
+      "real_world_example": "A single-core phone plays music while downloading a file by switching rapidly between the two jobs, whereas a video render split across eight CPU cores runs in parallel.",
+      "confused_with": "Multithreading: using several threads does not guarantee parallelism, because on a single core the threads simply take turns.",
+      "related": [
+        "thread",
+        "context-switching",
+        "asynchronous-programming"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A server with one CPU core serves thousands of users by rapidly switching between their requests. What is this?",
+        "options": [
+          "Parallelism, because many users are being served at the same moment",
+          "Neither, because one core can only ever handle a single request",
+          "Parallelism, because switching quickly is identical to running simultaneously",
+          "Concurrency without parallelism: tasks overlap but never run at the same instant"
+        ],
+        "answer_index": 3,
+        "explanation": "Overlapping tasks on one core is concurrency. True parallelism needs multiple cores running work at the same instant."
+      }
+    },
+    {
+      "id": "context-switching",
+      "term": "Context Switching",
+      "category": "operating-systems",
+      "level": "intermediate",
+      "definition": "A context switch happens when the operating system pauses one thread or process, saves its current state, and loads the saved state of another so it can run. This creates the illusion that many tasks run at once on a limited number of cores. Each switch has a cost, because time spent saving and restoring state is time not spent doing useful work.",
+      "analogy": "A student with several subjects who must bookmark the page, note where they stopped, and reopen another textbook each time they switch. The bookmarking itself takes time.",
+      "real_world_example": "When your laptop runs a browser, a music player and a chat app on a few cores, the operating system keeps switching among them many times per second.",
+      "confused_with": "Concurrency: context switching is one mechanism the operating system uses to achieve concurrency on limited cores, not a synonym for it.",
+      "related": [
+        "process",
+        "thread",
+        "concurrency-vs-parallelism"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A program creates 10,000 threads on a 4-core machine and runs slower, not faster. Which cost most likely explains this?",
+        "options": [
+          "The cores refuse to run more than four threads in total",
+          "Time lost to constant context switching between the many threads",
+          "Threads automatically delete each other's memory after creation",
+          "The operating system converts extra threads into separate programs"
+        ],
+        "answer_index": 1,
+        "explanation": "Every switch costs time to save and restore state, so far too many threads can spend more time switching than working."
+      }
+    },
+    {
+      "id": "shared-resource",
+      "term": "Shared Resource",
+      "category": "concurrency",
+      "level": "beginner",
+      "definition": "A shared resource is any piece of data or hardware that more than one thread or process can access at the same time, such as a variable in memory, a file, or a database row. Sharing saves memory and lets tasks cooperate, but it is the root cause of most concurrency bugs. Whenever a shared resource can be changed, access to it needs to be coordinated.",
+      "analogy": "A single whiteboard in an office that several people write on. Without a rule about who writes when, the notes quickly turn into a mess.",
+      "real_world_example": "In an online store, the stock count of a popular item is shared by every shopper's request, so the system must coordinate how it is updated.",
+      "confused_with": "Private data: a thread's local variables live on its own stack and are not shared, so they generally need no coordination.",
+      "related": [
+        "race-condition",
+        "critical-section",
+        "thread-safety"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Which of these is a shared resource in a web server handling many requests at once?",
+        "options": [
+          "A temporary variable created and used only inside one request handler",
+          "A loop index that exists only within one thread's own function call",
+          "A visitor counter in memory that every request updates",
+          "A private local value that never leaves the thread that made it"
+        ],
+        "answer_index": 2,
+        "explanation": "Anything several threads can reach and modify is shared. Thread-local values are private and need no coordination."
+      }
+    },
+    {
+      "id": "race-condition",
+      "term": "Race Condition",
+      "category": "pitfalls",
+      "level": "intermediate",
+      "definition": "A race condition is a bug in which the result depends on the unpredictable timing or ordering of events, usually when several threads read and update the same data without coordination. The outcome can change from run to run, which makes these bugs notoriously hard to reproduce and debug. They appear whenever two operations effectively race to touch the same shared resource.",
+      "analogy": "Two people edit the same shared document offline, then sync. Each worked from the old version, so one person's changes silently overwrite the other's.",
+      "real_world_example": "Two buyers click purchase on the last concert ticket at the same moment. Both checks see one ticket left, both succeed, and the venue sells the same seat twice.",
+      "confused_with": "Deadlock: a race condition produces wrong results, while a deadlock produces no results because everything is stuck waiting.",
+      "related": [
+        "shared-resource",
+        "critical-section",
+        "mutex"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Two threads each read a counter holding 5, add 1, and write it back. The final value is 6 instead of 7. What is this?",
+        "options": [
+          "A deadlock: both threads waited forever for each other",
+          "Starvation: one thread never received any processor time",
+          "A context switch failure that corrupted the operating system",
+          "A race condition: the updates interleaved on a shared value"
+        ],
+        "answer_index": 3,
+        "explanation": "Both threads read the old value before either wrote, so one update was lost. The result depends on timing."
+      }
+    },
+    {
+      "id": "critical-section",
+      "term": "Critical Section",
+      "category": "synchronization",
+      "level": "intermediate",
+      "definition": "A critical section is a part of a program that touches a shared resource and therefore must not be executed by more than one thread at a time. Protecting it keeps the shared data consistent. The goal is to keep critical sections as short as possible, since every thread waiting to enter is time wasted.",
+      "analogy": null,
+      "real_world_example": "The code that deducts money from a bank account balance is a critical section, because two withdrawals running at the same instant could both see the old balance.",
+      "confused_with": "Mutex: the critical section is the code that needs protection, while a mutex is the tool used to provide that protection.",
+      "related": [
+        "mutex",
+        "race-condition",
+        "atomic-operation"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Which piece of logic is best treated as a critical section?",
+        "options": [
+          "Updating the shared seat-availability count when a ticket is booked",
+          "Formatting a price string for display on one user's screen",
+          "Reading a constant configuration value that never changes",
+          "Drawing a button using only the current thread's local data"
+        ],
+        "answer_index": 0,
+        "explanation": "Code that modifies shared data must not run in two threads at once. The other options touch only private or unchanging data."
+      }
+    },
+    {
+      "id": "mutex",
+      "term": "Mutex",
+      "category": "synchronization",
+      "level": "intermediate",
+      "definition": "A mutex, short for mutual exclusion, is a lock that only one thread can hold at a time. A thread acquires the mutex before entering a critical section and releases it afterward, forcing other threads to wait their turn. Forgetting to release a mutex, or acquiring several in the wrong order, can freeze a program.",
+      "analogy": "A key to a single-stall restroom. Whoever holds the key is inside, everyone else waits outside, and the key must be handed back when done.",
+      "real_world_example": "A payment service holds a lock on an account's balance record while applying a withdrawal, so two simultaneous withdrawals cannot both read the same balance.",
+      "confused_with": "Semaphore: a mutex lets exactly one thread in and is normally released by the thread that locked it, while a semaphore allows a fixed number of threads in.",
+      "related": [
+        "critical-section",
+        "semaphore",
+        "deadlock"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Why would a developer wrap a shared counter update in a mutex?",
+        "options": [
+          "So the counter updates run faster across many cores",
+          "So only one thread at a time can modify the counter",
+          "So every thread gets its own private copy of the counter",
+          "So the counter is automatically saved to disk each time"
+        ],
+        "answer_index": 1,
+        "explanation": "A mutex enforces mutual exclusion: one thread in the critical section, all others waiting. It protects correctness rather than speed."
+      }
+    },
+    {
+      "id": "atomic-operation",
+      "term": "Atomic Operation",
+      "category": "synchronization",
+      "level": "intermediate",
+      "definition": "An atomic operation is one that completes entirely or not at all, with no other thread able to observe it half done. Hardware and languages offer atomic versions of simple actions, such as incrementing a counter, that are safe without a separate lock. Atomicity is also a core idea in databases, where a transaction must fully succeed or fully roll back.",
+      "analogy": "A bank transfer that moves money out of one account and into another as a single step. You never see a moment where the money has left one but not arrived in the other.",
+      "real_world_example": "A video site counts views with an atomic increment, so a million simultaneous viewers never cause two increments to overwrite each other.",
+      "confused_with": "Mutex: a mutex blocks other threads from a whole block of code, whereas an atomic operation makes one small action indivisible without making others wait.",
+      "related": [
+        "mutex",
+        "race-condition",
+        "thread-safety"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A counter is incremented by many threads using an atomic increment. What does this guarantee?",
+        "options": [
+          "Every thread waits its turn in a fixed alphabetical order",
+          "The program can never deadlock under any circumstances",
+          "The counter's value is stored permanently in a database",
+          "Each increment happens as one indivisible step, so none are lost"
+        ],
+        "answer_index": 3,
+        "explanation": "Atomic means indivisible: no thread can see or interrupt the increment midway, so no updates are lost."
+      }
+    },
+    {
+      "id": "semaphore",
+      "term": "Semaphore",
+      "category": "synchronization",
+      "level": "intermediate",
+      "definition": "A semaphore is a counter-based mechanism that controls how many threads can use a limited resource at once. A thread takes a permit before proceeding and gives it back when done, and if no permits remain it waits. A semaphore set to one behaves much like a mutex, while larger values allow controlled sharing.",
+      "analogy": "A parking garage with 50 spaces and a sign showing spaces left. Cars enter while spaces remain, and must wait at the gate once the sign reads zero.",
+      "real_world_example": "A server limits itself to five simultaneous connections to a fragile database by handing out five permits and making extra requests wait.",
+      "confused_with": "Mutex: a mutex admits exactly one thread, while a semaphore can admit any fixed number of threads.",
+      "related": [
+        "mutex",
+        "thread-pool",
+        "producer-consumer"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "An app may run at most 3 simultaneous downloads. Which tool models this limit most naturally?",
+        "options": [
+          "A semaphore initialized with three permits",
+          "A mutex that only one download can hold at a time",
+          "A race condition that randomly picks three downloads",
+          "A context switch that pauses the fourth download forever"
+        ],
+        "answer_index": 0,
+        "explanation": "A semaphore counts available permits, so three permits allow exactly three downloads and make the rest wait."
+      }
+    },
+    {
+      "id": "deadlock",
+      "term": "Deadlock",
+      "category": "pitfalls",
+      "level": "intermediate",
+      "definition": "A deadlock occurs when two or more threads each hold a resource the other needs and all wait forever, so none can continue. It typically requires four conditions together: exclusive access, holding one resource while waiting for another, no forced release, and a circular chain of waiting. Unlike a crash, a deadlock leaves the program alive but frozen.",
+      "analogy": "Two cars meet face to face on a one-lane bridge. Neither will reverse, so both wait forever.",
+      "real_world_example": "One money transfer locks account A then waits for B, while another locks B then waits for A, so both stall indefinitely.",
+      "confused_with": "Race condition: a deadlock produces no progress at all, while a race condition produces wrong results.",
+      "related": [
+        "mutex",
+        "livelock",
+        "starvation"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Thread 1 holds lock A and waits for lock B, while Thread 2 holds lock B and waits for lock A. Nothing moves. What is this?",
+        "options": [
+          "A race condition: two threads overwrote each other's results",
+          "Starvation: one thread is ignored while the others keep working",
+          "A deadlock: a circular wait in which neither thread can continue",
+          "A context switch: the operating system is briefly pausing both threads"
+        ],
+        "answer_index": 2,
+        "explanation": "Each thread holds what the other needs, forming a circular wait. Neither can ever proceed."
+      }
+    },
+    {
+      "id": "starvation",
+      "term": "Starvation",
+      "category": "pitfalls",
+      "level": "intermediate",
+      "definition": "A thread suffers starvation when it is repeatedly denied the resources or processor time it needs, even though the rest of the system keeps making progress. It usually comes from unfair scheduling or from other threads that keep jumping the queue. The starved thread is not stuck in a circular wait; it simply never gets its turn.",
+      "analogy": "A shy person at a busy deli counter who is never served because new customers keep stepping in front of them, even though the line keeps moving.",
+      "real_world_example": "In a print system that always prints small jobs first, a huge document may wait indefinitely while new small jobs keep arriving.",
+      "confused_with": "Deadlock: in a deadlock everyone involved is frozen, while in starvation others keep working and only the unlucky thread waits.",
+      "related": [
+        "deadlock",
+        "livelock",
+        "lock-contention"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A print server always prints the shortest jobs first, so a large report never prints because short jobs keep arriving. What is this?",
+        "options": [
+          "Deadlock: every print job is frozen waiting on a circular lock",
+          "Starvation: the large job is repeatedly passed over while others progress",
+          "A race condition: two jobs wrote to the same page at once",
+          "Atomicity: the large job must print completely or not at all"
+        ],
+        "answer_index": 1,
+        "explanation": "The system keeps working, but one job is never chosen. That is starvation, not a circular wait."
+      }
+    },
+    {
+      "id": "livelock",
+      "term": "Livelock",
+      "category": "pitfalls",
+      "level": "advanced",
+      "definition": "In a livelock, threads keep reacting to each other and changing state, but none of them makes real progress. Unlike a deadlock they are not blocked, since they stay busy and use CPU time. It often appears when threads politely back off and retry in perfect sync.",
+      "analogy": "Two people meet in a corridor, both step left to let the other pass, then both step right, and keep mirroring each other forever.",
+      "real_world_example": "Two network devices that collide and retry at the same moment, over and over, never get a message through unless they wait random amounts of time.",
+      "confused_with": "Deadlock: deadlocked threads are silent and waiting, while livelocked threads are active but accomplish nothing.",
+      "related": [
+        "deadlock",
+        "starvation",
+        "lock-contention"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Two services detect a conflict, back off, and retry at exactly the same instant, repeating forever while using CPU. What is this?",
+        "options": [
+          "Livelock: both stay busy reacting to each other without making progress",
+          "Deadlock: both are asleep, waiting on locks the other holds",
+          "Thread safety: the services coordinate correctly under load",
+          "A thread pool: the services share a fixed group of workers"
+        ],
+        "answer_index": 0,
+        "explanation": "Both keep acting but never advance. Adding random delays before retrying is a common fix."
+      }
+    },
+    {
+      "id": "thread-safety",
+      "term": "Thread Safety",
+      "category": "concurrency",
+      "level": "intermediate",
+      "definition": "Code is thread-safe when it behaves correctly no matter how many threads use it at the same time or how their execution interleaves. Achieving this usually means protecting shared data with locks, using atomic operations, or avoiding shared changeable data altogether. Libraries often document whether their classes are thread-safe because the answer affects how you can use them.",
+      "analogy": null,
+      "real_world_example": "A web server's logging component must be thread-safe, since hundreds of requests may write log lines at once and the lines should not get scrambled together.",
+      "confused_with": "Correct in single-threaded use: a function can give perfect results when one thread calls it and still break when two call it together.",
+      "related": [
+        "shared-resource",
+        "mutex",
+        "atomic-operation"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A function works perfectly with one caller but returns corrupted data when two threads call it together. What is lacking?",
+        "options": [
+          "Portability: it only works on a single operating system",
+          "Compilation: the code contains a syntax error somewhere",
+          "Encryption: the data is not protected from outside readers",
+          "Thread safety: it mishandles shared data when calls interleave"
+        ],
+        "answer_index": 3,
+        "explanation": "Correct behavior under any interleaving of threads is what thread safety means, and this function does not have it."
+      }
+    },
+    {
+      "id": "lock-contention",
+      "term": "Lock Contention",
+      "category": "pitfalls",
+      "level": "advanced",
+      "definition": "When many threads compete for the same lock so often that they spend more time waiting than working, the result is lock contention. The code stays correct, but performance stops improving, and can even get worse, as you add more threads. Common fixes include holding locks for shorter periods, splitting one big lock into several smaller ones, or sharing less data.",
+      "analogy": null,
+      "real_world_example": "An online ticket site that guards its entire inventory with one lock slows to a crawl on sale day, because thousands of buyers queue for that single lock.",
+      "confused_with": "Deadlock: with contention threads are slow but still progress, whereas in a deadlock they never progress.",
+      "related": [
+        "mutex",
+        "deadlock",
+        "thread-pool"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "After adding more threads, a program still gives correct results but gets no faster because every thread queues for one big lock. What is this?",
+        "options": [
+          "A memory leak: the lock keeps consuming more memory",
+          "Lock contention: threads spend their time waiting for the same lock",
+          "Deadlock: the threads wait on each other in a circle",
+          "Livelock: the threads keep retrying in perfect sync"
+        ],
+        "answer_index": 1,
+        "explanation": "Results stay correct and threads do progress, but one popular lock becomes the bottleneck."
+      }
+    },
+    {
+      "id": "producer-consumer",
+      "term": "Producer-Consumer",
+      "category": "patterns",
+      "level": "intermediate",
+      "definition": "A common pattern in which some threads produce work items and put them into a shared buffer, while other threads take items out and process them. The buffer decouples the two sides, so producers and consumers can run at different speeds. The buffer must be synchronized, with producers waiting when it is full and consumers waiting when it is empty.",
+      "analogy": "A restaurant kitchen and its service counter: cooks place finished dishes on the counter and waiters pick them up. If the counter is full cooks pause, and if it is empty waiters wait.",
+      "real_world_example": "A photo service lets web servers add uploaded images to a queue while separate workers pull images off it to create thumbnails.",
+      "confused_with": "Publish-subscribe: in producer-consumer each item is handled by one consumer, while in publish-subscribe every subscriber receives a copy of the message.",
+      "related": [
+        "message-queue",
+        "thread-pool",
+        "semaphore"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Web servers add uploaded photos to a shared buffer while separate workers take photos from it and resize them. Which pattern is this?",
+        "options": [
+          "Deadlock avoidance: the buffer prevents threads from locking",
+          "Context switching: the workers take turns being paused",
+          "Producer-consumer: one side adds work and the other side processes it",
+          "A race condition: the workers compete to overwrite each photo"
+        ],
+        "answer_index": 2,
+        "explanation": "One group produces work, another consumes it, and a buffer in between lets them run at different speeds."
+      }
+    },
+    {
+      "id": "thread-pool",
+      "term": "Thread Pool",
+      "category": "patterns",
+      "level": "intermediate",
+      "definition": "A thread pool is a fixed group of reusable worker threads that take tasks from a queue. Creating a thread is relatively expensive and unlimited threads can overwhelm a machine, so reusing a limited set is cheaper and safer. When all workers are busy, new tasks wait in the queue instead of spawning more threads.",
+      "analogy": "A team of taxi drivers waiting at a depot. Rather than hiring and firing a driver for every trip, the next free driver takes the next passenger in line.",
+      "real_world_example": "A web server keeps a pool of worker threads, so each incoming request is handed to an idle worker instead of creating a brand new thread.",
+      "confused_with": null,
+      "related": [
+        "thread",
+        "producer-consumer",
+        "lock-contention"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A server creates a fresh thread for every request and slows down under heavy traffic. What change helps most?",
+        "options": [
+          "Give each request its own separate copy of the whole server",
+          "Reuse a fixed pool of worker threads that take requests from a queue",
+          "Remove every lock so that threads never have to wait",
+          "Run every request on a single thread in strict order"
+        ],
+        "answer_index": 1,
+        "explanation": "Reusing a limited set of workers avoids the cost of constant thread creation and stops the machine from being overwhelmed."
+      }
+    },
+    {
+      "id": "message-queue",
+      "term": "Message Queue",
+      "category": "patterns",
+      "level": "intermediate",
+      "definition": "A message queue is a service that holds messages from one part of a system until another part is ready to process them. Senders do not wait for receivers, so the two sides can run at different speeds and fail independently. Queues also smooth out traffic spikes, since a burst of messages simply waits its turn.",
+      "analogy": "A post office box: senders drop letters in whenever they like, and the recipient collects and reads them later at their own pace.",
+      "real_world_example": "When you place an order online, the shop puts an email-confirmation task on a queue, so checkout finishes instantly while a worker sends the email moments later.",
+      "confused_with": "Database: a queue is meant to hand off work in order and usually removes messages once processed, while a database is meant to store data long term.",
+      "related": [
+        "producer-consumer",
+        "asynchronous-programming",
+        "thread-pool"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A shop confirms an order instantly and sends the confirmation email later through a separate worker. What makes this possible?",
+        "options": [
+          "A message queue holding the email task until a worker is ready",
+          "A mutex that forces the email to be sent first",
+          "A deadlock that delays the email on purpose",
+          "A critical section that blocks checkout until the email finishes"
+        ],
+        "answer_index": 0,
+        "explanation": "The queue decouples checkout from email sending, so the sender does not wait for the receiver."
+      }
+    },
+    {
+      "id": "blocking-vs-non-blocking",
+      "term": "Blocking vs Non-Blocking",
+      "category": "async",
+      "level": "intermediate",
+      "definition": "Two styles of handling operations that take time: a blocking call makes the caller wait until the operation finishes, while a non-blocking call returns immediately and lets the caller do other work. Blocking is simpler to write but wastes the waiting thread's time. Non-blocking designs can serve far more tasks with fewer threads, at the cost of more complex code.",
+      "analogy": "Standing at the counter until your coffee is ready is blocking. Taking a receipt and sitting down until your name is called is non-blocking.",
+      "real_world_example": "A chat server that blocks on each slow user connection serves few users per thread, whereas a non-blocking server can watch thousands of connections at once.",
+      "confused_with": "Synchronous vs asynchronous: blocking and non-blocking describe whether the caller waits, while synchronous and asynchronous describe how results are coordinated. The pairs overlap but are not identical.",
+      "related": [
+        "asynchronous-programming",
+        "event-loop",
+        "thread"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A server thread waits idle for a slow client's reply and cannot serve anyone else meanwhile. Which style is this?",
+        "options": [
+          "Non-blocking: the thread returns immediately and does other work",
+          "Atomic: the operation cannot be split into smaller steps",
+          "Parallel: the thread runs on several processors at once",
+          "Blocking: the thread waits until the operation completes"
+        ],
+        "answer_index": 3,
+        "explanation": "Waiting idle until the operation finishes is the definition of a blocking call."
+      }
+    },
+    {
+      "id": "event-loop",
+      "term": "Event Loop",
+      "category": "async",
+      "level": "advanced",
+      "definition": "An event loop is a cycle, usually running on a single thread, that waits for events such as clicks or network responses and runs the matching handler for each one. Because it never sits idle waiting on one slow operation, one thread can juggle thousands of connections. The catch is that any handler doing heavy work blocks the loop and freezes everything else.",
+      "analogy": "A receptionist who answers whichever phone rings next, passes each request along, and never stays on one long call while other lines ring unanswered.",
+      "real_world_example": "Web browsers use an event loop to react to clicks and incoming data, which is why a script doing a huge calculation can make a page freeze.",
+      "confused_with": "Multithreading: an event loop gets concurrency from one thread reacting to events in turn, not from many threads running at once.",
+      "related": [
+        "asynchronous-programming",
+        "blocking-vs-non-blocking",
+        "concurrency-vs-parallelism"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A web page freezes when one click handler runs a huge calculation. Why does this happen in an event loop design?",
+        "options": [
+          "The loop creates a new thread for every click and runs out",
+          "The loop deletes pending events whenever a handler is slow",
+          "The handler blocks the loop, so no other events can be processed",
+          "The browser switches to parallel execution on every core"
+        ],
+        "answer_index": 2,
+        "explanation": "The loop runs one handler at a time, so a long handler holds up every event queued behind it."
+      }
+    },
+    {
+      "id": "asynchronous-programming",
+      "term": "Asynchronous Programming",
+      "category": "async",
+      "level": "intermediate",
+      "definition": "A style of programming where a slow task such as a network request is started, the program carries on with other work, and the result is handled whenever it arrives. It keeps applications responsive because nothing sits idle waiting on the slow task. Results are delivered through mechanisms like callbacks or promises, which can make the flow harder to follow than plain step-by-step code.",
+      "analogy": "Ordering food at a restaurant with a buzzer: you place the order, go sit down and chat, and get called when the meal is ready, instead of staring at the kitchen.",
+      "real_world_example": "A weather app requests the forecast and keeps scrolling smoothly while it waits, then updates the screen the moment the data comes back.",
+      "confused_with": "Parallelism: asynchronous code can run on a single thread and wait efficiently, while parallel code actually runs on several processors at once.",
+      "related": [
+        "event-loop",
+        "blocking-vs-non-blocking",
+        "message-queue"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "An app requests data from a server and keeps the screen responsive while waiting. Which approach is it using?",
+        "options": [
+          "Blocking calls: it stops everything until the reply comes back",
+          "Asynchronous programming: it keeps working and handles the result on arrival",
+          "A critical section: only one task may run at a time",
+          "Starvation: the screen update is denied processor time"
+        ],
+        "answer_index": 1,
+        "explanation": "Starting the task and handling its result later is the core of asynchronous programming."
+      }
+    }
+  ],
+  "daily_sets": [
+    {
+      "date": "2026-10-05",
+      "theme": "Concurrency",
+      "concept_ids": [
+        "process",
+        "thread",
+        "concurrency-vs-parallelism"
+      ]
+    },
+    {
+      "date": "2026-10-06",
+      "theme": "Concurrency",
+      "concept_ids": [
+        "context-switching",
+        "shared-resource",
+        "race-condition"
+      ]
+    },
+    {
+      "date": "2026-10-07",
+      "theme": "Concurrency",
+      "concept_ids": [
+        "critical-section",
+        "mutex",
+        "atomic-operation"
+      ]
+    },
+    {
+      "date": "2026-10-08",
+      "theme": "Concurrency",
+      "concept_ids": [
+        "semaphore",
+        "deadlock",
+        "starvation"
+      ]
+    },
+    {
+      "date": "2026-10-09",
+      "theme": "Concurrency",
+      "concept_ids": [
+        "livelock",
+        "thread-safety",
+        "lock-contention"
+      ]
+    },
+    {
+      "date": "2026-10-10",
+      "theme": "Concurrency",
+      "concept_ids": [
+        "producer-consumer",
+        "thread-pool",
+        "message-queue"
+      ]
+    },
+    {
+      "date": "2026-10-11",
+      "theme": "Concurrency",
+      "concept_ids": [
+        "blocking-vs-non-blocking",
+        "event-loop",
+        "asynchronous-programming"
+      ]
+    }
+  ]
+}
