@@ -82,3 +82,18 @@ This document tracks all modifications, additions, and removals made to the proj
 **Modified:**
 - `user_repository.dart`, `content_repository.dart` — guard streams/futures.
 - `daily_word_screen.dart`, `profile_screen.dart` — permission-specific messages, retry only on network-like errors.
+
+### [2026-09-30] - Content Pipeline and Concept Data Layer
+
+**Added:**
+- seed_concepts.py tool for validating and uploading new concept definitions.
+- Unit tests for seeding validation in 	ests/test_seed_concepts.py.
+- New Flutter models: Concept, ConceptQuiz, and DailySet in lib/core/models/concept_model.dart.
+- 	odaysConceptsProvider in lib/features/daily_word/concept_providers.dart.
+- getDailySet, getConceptsByIds, and getTodaysConcepts in ContentRepository.
+- Local date formatting utilities in lib/core/utils/date_utils.dart.
+
+**Modified:**
+- createOrUpdateUser in UserRepository now uses merge: true with strict profile fields (email, ield_of_study), fixing an issue where streak data could be overwritten by outdated client objects.
+- irestore.rules updated to allow authenticated reads for concepts_* and daily_sets_*.
+

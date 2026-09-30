@@ -1,6 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 abstract final class DateUtilsGradual {
+  /// Formats a [DateTime] as `yyyy-MM-dd` using its local year, month, and day.
+  static String localDateId(DateTime d) {
+    final mm = d.month.toString().padLeft(2, '0');
+    final dd = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$mm-$dd';
+  }
+
+  /// Returns today's date formatted as `yyyy-MM-dd` in local time.
+  static String todayLocalDateId() {
+    return localDateId(DateTime.now());
+  }
+
+  /// Parses a `yyyy-MM-dd` string into a local midnight [DateTime].
+  static DateTime dateFromId(String id) {
+    final parts = id.split('-');
+    if (parts.length != 3) {
+      final now = DateTime.now();
+      return DateTime(now.year, now.month, now.day);
+    }
+    final year = int.tryParse(parts[0]) ?? 2026;
+    final month = int.tryParse(parts[1]) ?? 1;
+    final day = int.tryParse(parts[2]) ?? 1;
+    return DateTime(year, month, day);
+  }
+
   /// Formats a [DateTime] as `yyyy-MM-dd` to be used as `date_id`.
   static String toDateId(DateTime date) {
     final d = DateTime.utc(date.year, date.month, date.day);

@@ -35,7 +35,10 @@ class UserRepository {
   Future<void> createOrUpdateUser(AppUser user) {
     return FirestoreErrors.guardFuture(
       _usersCollection.doc(user.uid).set(
-        user.toJson(),
+        {
+          'email': user.email,
+          'field_of_study': user.fieldOfStudy,
+        },
         SetOptions(merge: true),
       ),
     );

@@ -1,0 +1,81 @@
+{
+  "field": "software_engineering",
+  "concepts": [
+    {
+      "id": "race-condition",
+      "term": "Race Condition",
+      "category": "concurrency",
+      "level": "intermediate",
+      "definition": "A race condition occurs when two or more threads can access shared data and they try to change it at the same time. Because the thread scheduling algorithm can swap between threads at any time, you don't know the order in which the threads will attempt to access the shared data.",
+      "analogy": "Like two people trying to deposit money into the same bank account at the exact same millisecond. The bank might read the balance for both before updating, causing one deposit to overwrite the other.",
+      "real_world_example": "A ticketing system where two users see 1 ticket left. They both click 'buy' simultaneously. Without proper locks, both might be sold the same seat.",
+      "confused_with": "deadlock",
+      "related": ["mutex"],
+      "needs_review": false,
+      "quiz": {
+        "question": "What is the primary cause of a race condition?",
+        "options": [
+          "Using too many variables",
+          "Unsynchronized access to shared resources by multiple threads",
+          "Infinite loops in a single thread",
+          "Failing to compile code properly"
+        ],
+        "answer_index": 1,
+        "explanation": "Race conditions happen when multiple threads access and modify shared data simultaneously without synchronization."
+      }
+    },
+    {
+      "id": "mutex",
+      "term": "Mutex",
+      "category": "concurrency",
+      "level": "intermediate",
+      "definition": "A mutex (mutual exclusion object) is a synchronization primitive that prevents multiple threads from accessing a shared resource simultaneously. When a thread locks a mutex, any other thread attempting to lock it will be blocked until the first thread releases it.",
+      "analogy": "Like a bathroom key at a coffee shop. Only the person holding the key can use the bathroom. Others must wait in line until the key is returned.",
+      "real_world_example": "In a banking app, a mutex is used around the 'update balance' function so that if multiple transactions occur simultaneously, they are processed one after the other.",
+      "confused_with": "semaphore",
+      "related": ["race-condition"],
+      "needs_review": false,
+      "quiz": {
+        "question": "What is the main purpose of a mutex?",
+        "options": [
+          "To speed up program execution",
+          "To allow multiple threads to read and write data simultaneously",
+          "To prevent multiple threads from accessing a shared resource at the same time",
+          "To detect deadlocks automatically"
+        ],
+        "answer_index": 2,
+        "explanation": "A mutex enforces mutual exclusion, ensuring only one thread can access a critical section at a time."
+      }
+    },
+    {
+      "id": "deadlock",
+      "term": "Deadlock",
+      "category": "concurrency",
+      "level": "advanced",
+      "definition": "A deadlock is a state in concurrent programming where two or more threads are blocked forever, each waiting for the other to release a resource. This typically happens when multiple threads acquire locks in different orders.",
+      "analogy": "Like two cars facing each other on a narrow one-lane bridge. Neither can move forward until the other backs up, so they both sit there forever.",
+      "real_world_example": "A database transaction holding a lock on Table A and requesting Table B, while another transaction holds Table B and requests Table A. Both transactions halt indefinitely.",
+      "confused_with": "race-condition",
+      "related": ["race-condition", "mutex"],
+      "needs_review": false,
+      "quiz": {
+        "question": "Which of the following describes a deadlock?",
+        "options": [
+          "Two threads modifying a variable at the exact same time",
+          "A thread crashing due to a null pointer",
+          "Two or more threads indefinitely waiting for each other to release resources",
+          "A program taking up all available system memory"
+        ],
+        "answer_index": 2,
+        "explanation": "A deadlock is characterized by a circular wait condition where threads block each other permanently."
+      }
+    }
+  ],
+  "daily_sets": [
+    {
+      "date": "2026-10-05",
+      "theme": "Concurrency Essentials",
+      "concept_ids": ["race-condition", "mutex", "deadlock"]
+    }
+  ]
+}

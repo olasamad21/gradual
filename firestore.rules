@@ -8,10 +8,13 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Daily content and weekly quizzes (content_*, quizzes_* collections).
+    // Daily content, concepts, and quizzes.
     match /{collectionId}/{docId} {
       allow read: if request.auth != null
-        && (collectionId.matches('content_.*') || collectionId.matches('quizzes_.*'));
+        && (collectionId.matches('content_.*') 
+            || collectionId.matches('quizzes_.*')
+            || collectionId.matches('concepts_.*')
+            || collectionId.matches('daily_sets_.*'));
       allow write: if false;
     }
   }
