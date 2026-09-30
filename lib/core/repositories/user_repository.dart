@@ -1,10 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/app_rules.dart';
 import '../errors/firestore_errors.dart';
-import '../models/user_model.dart';
 import '../utils/date_utils.dart';
+import '../../features/quiz/quiz_models.dart';
+import '../models/user_model.dart';
 
 class UserRepository {
   UserRepository(this._firestore);
@@ -46,86 +47,41 @@ class UserRepository {
     );
   }
 
-  /// Records a Saturday weekly quiz attempt and updates the week streak.
-  /// Returns the new [current_streak] value written to Firestore.
-  Future<int> recordWeeklyQuiz({
+  Future<QuizSaveResult> saveQuizScore({
     required String uid,
-    required DateTime serverNow,
+    required String dateId,
     required int score,
-    required int totalQuestions,
+    required int total,
+    required String tier,
   }) async {
-    final saturday = DateUtilsGradual.saturdayOfWeekContaining(serverNow);
-    final saturdayId = DateUtilsGradual.toDateId(saturday);
-    final userRef = _usersCollection.doc(uid);
-
+    final docRef = _usersCollection.doc(uid);
     return FirestoreErrors.guardFuture(
-      _firestore.runTransaction<int>((transaction) async {
-      final snapshot = await transaction.get(userRef);
-      final existingData = snapshot.data() ?? <String, dynamic>{};
+      _firestore.runTransaction((transaction) async {
+        final doc = await transaction.get(docRef);
+        if (!doc.exists) return QuizSaveResult.saved;
+        final data = doc.data()!;
+        final rawLog = data['activity_log'] as Map<String, dynamic>? ?? {};
 
-      final currentStreak =
-          (existingData['current_streak'] as num?)?.toInt() ?? 0;
-      final lastActivity =
-          existingData['last_activity_date'] as Timestamp?;
+        final submitDate = DateUtilsGradual.dateFromId(dateId);
+        final weekStart = submitDate.subtract(Duration(days: submitDate.weekday - 1));
 
-      final rawLog = existingData['activity_log']
-              as Map<String, dynamic>? ??
-          <String, dynamic>{};
-      final saturdayRaw =
-          rawLog[saturdayId] as Map<String, dynamic>? ?? <String, dynamic>{};
-
-      if (saturdayRaw['quiz_type'] == 'weekly') {
-        return (existingData['current_streak'] as num?)?.toInt() ?? 0;
-      }
-
-      final tier = tierFromScore(score);
-      final counts = qualifiesForStreak(score);
-
-      int newStreak = 0;
-      var streakCounted = false;
-
-      if (counts) {
-        final lastDate = DateUtilsGradual.toDateOnly(lastActivity);
-
-        if (lastDate == null) {
-          newStreak = 1;
-        } else {
-          final gap = DateUtilsGradual.daysBetween(lastDate, saturday);
-          if (gap == 7) {
-            newStreak = currentStreak + 1;
-          } else {
-            newStreak = 1;
+        for (int i = 0; i < 7; i++) {
+          final d = weekStart.add(Duration(days: i));
+          final id = DateUtilsGradual.localDateId(d);
+          final entry = rawLog[id] as Map<String, dynamic>?;
+          if (entry != null && entry.containsKey('quiz_score')) {
+            return QuizSaveResult.alreadyTaken;
           }
         }
-        streakCounted = true;
-      }
 
-      final updatedSaturday = <String, dynamic>{
-        'quiz_type': 'weekly',
-        'score': score,
-        'total_questions': totalQuestions,
-        'tier': tier.id,
-        'streak_counted': streakCounted,
-      };
-
-      final updatedLog = <String, dynamic>{
-        ...rawLog,
-        saturdayId: updatedSaturday,
-      };
-
-      final updates = <String, dynamic>{
-        'activity_log': updatedLog,
-        'current_streak': newStreak,
-      };
-
-      if (counts) {
-        updates['last_activity_date'] =
-            Timestamp.fromDate(serverNow.toUtc());
-      }
-
-      transaction.set(userRef, updates, SetOptions(merge: true));
-      return newStreak;
-    }),
+        transaction.update(docRef, {
+          'activity_log.$dateId.quiz_score': score,
+          'activity_log.$dateId.quiz_total': total,
+          'activity_log.$dateId.quiz_tier': tier,
+        });
+        
+        return QuizSaveResult.saved;
+      }),
     );
   }
 
@@ -147,7 +103,7 @@ class UserRepository {
   }) async {
     return FirestoreErrors.guardFuture(
       _usersCollection.doc(uid).update({
-        FieldPath(['activity_log', dateId, 'concepts_read']): FieldValue.arrayUnion([conceptId]),
+        'activity_log.$dateId.concepts_read': FieldValue.arrayUnion([conceptId]),
       }),
     );
   }
@@ -178,4 +134,3 @@ class UserRepository {
     }
   }
 }
-

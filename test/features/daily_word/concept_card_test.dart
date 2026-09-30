@@ -73,7 +73,7 @@ void main() {
     expect(markedRead, isTrue);
   });
 
-  testWidgets('ConceptCard disables Got it button and forces collapse when read', (tester) async {
+  testWidgets('ConceptCard disables Got it button and allows collapse/expand when read', (tester) async {
     await tester.pumpWidget(wrapInApp(
       ConceptCard(
         concept: testConcept,
@@ -96,12 +96,12 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('This is a test definition.'), findsNothing);
+    expect(find.text('This is a test definition.'), findsOneWidget);
     
     await tester.tap(find.text('Test Concept'));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    expect(find.text('This is a test definition.'), findsNothing);
   });
 
   testWidgets('ConceptCard hides optional fields when null', (tester) async {

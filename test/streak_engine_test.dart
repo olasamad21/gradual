@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gradual/core/services/streak_engine.dart';
-import 'package:gradual/core/config/app_rules.dart';
 
 void main() {
   group('StreakEngine Core', () {

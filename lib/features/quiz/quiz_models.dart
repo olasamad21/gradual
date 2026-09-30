@@ -1,5 +1,3 @@
-import '../../core/models/weekly_quiz_model.dart';
-
 class QuizQuestion {
   QuizQuestion({
     required this.id,
@@ -68,21 +66,4 @@ class QuizAnswer {
   }
 }
 
-/// Builds a flat list of questions for the UI from a WeeklyQuiz.
-List<QuizQuestion> buildQuizFromWeekly(WeeklyQuiz quiz) {
-  return quiz.questions.asMap().entries.map((entry) {
-    final i = entry.key;
-    final item = entry.value;
-    final correctIndex = item.options.indexOf(item.answer);
-
-    return QuizQuestion(
-      id: '${quiz.weekEnd}-$i',
-      text: item.question,
-      options: item.options,
-      correctIndex: correctIndex < 0 ? 0 : correctIndex,
-      explanation: item.explanation,
-      sourceWord: item.sourceWord,
-      type: item.type,
-    );
-  }).toList();
-}
+enum QuizSaveResult { saved, alreadyTaken }

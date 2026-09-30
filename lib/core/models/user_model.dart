@@ -104,6 +104,9 @@ class ActivityLogEntry {
     required this.streakCounted,
     this.completedDifficulties = const [],
     this.conceptsRead = const [],
+    this.quizScore,
+    this.quizTotal,
+    this.quizTier,
   });
 
   final String quizType;
@@ -115,6 +118,9 @@ class ActivityLogEntry {
   /// Legacy daily difficulty entries (read-only compat).
   final List<String> completedDifficulties;
   final List<String> conceptsRead;
+  final int? quizScore;
+  final int? quizTotal;
+  final String? quizTier;
 
   bool get isWeeklyQuiz => quizType == 'weekly';
 
@@ -140,6 +146,9 @@ class ActivityLogEntry {
         tier: tierRaw != null ? tierFromId(tierRaw) : tierFromScore(score),
         streakCounted: json['streak_counted'] as bool? ?? false,
         conceptsRead: conceptsRead,
+        quizScore: (json['quiz_score'] as num?)?.toInt(),
+        quizTotal: (json['quiz_total'] as num?)?.toInt(),
+        quizTier: json['quiz_tier'] as String?,
       );
     }
 
@@ -207,17 +216,9 @@ class AppUser {
   int streakAt(DateTime today) => StreakEngine.currentStreak(rawActivityLog, today);
 
   int get liveStreak => streakAt(DateTime.now());
-  /// Entry for this week's Saturday quiz, keyed by Saturday date id.
-  ActivityLogEntry? get thisWeekEntry {
-    final saturday = DateUtilsGradual.saturdayOfWeekContaining(DateTime.now());
-    return activityLog[DateUtilsGradual.toDateId(saturday)];
-  }
 
-  /// Whether the user has already submitted this week's weekly quiz.
-  bool hasCompletedThisWeek() {
-    final entry = thisWeekEntry;
-    return entry != null && entry.isWeeklyQuiz;
-  }
+
+
 
   factory AppUser.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};

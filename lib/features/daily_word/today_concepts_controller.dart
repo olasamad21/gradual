@@ -2,9 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase/firebase_providers.dart';
 import '../../core/models/concept_model.dart';
-import '../../core/repositories/user_repository.dart';
 import '../../core/utils/date_utils.dart';
 import 'concept_providers.dart';
+import '../streak/streak_providers.dart';
 
 class TodayConceptsState {
   TodayConceptsState({
@@ -44,6 +44,7 @@ class TodayConceptsState {
 class TodayConceptsController extends AsyncNotifier<TodayConceptsState> {
   @override
   Future<TodayConceptsState> build() async {
+    await ref.watch(statsResetProvider.future);
     final user = await ref.watch(appUserProvider.future);
     final conceptsResult = await ref.watch(todaysConceptsProvider.future);
 

@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../features/auth/root_gatekeeper.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/profile/profile_screen.dart';
-import '../features/daily_word/daily_word_screen.dart';
+import '../shared/widgets/app_shell.dart';
 import '../features/quiz/quiz_screen.dart';
 import '../shared/widgets/placeholder_screen.dart';
 
@@ -46,7 +46,7 @@ abstract final class AppRouter {
       case AppRoutes.home:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => const DailyWordScreen(),
+          builder: (_) => const AppShell(),
         );
       case AppRoutes.profile:
         return MaterialPageRoute(

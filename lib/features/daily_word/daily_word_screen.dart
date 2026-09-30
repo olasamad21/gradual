@@ -1,29 +1,63 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
-import '../../core/models/daily_content_model.dart';
 import '../../core/models/user_model.dart';
 import '../../shared/widgets/firestore_permission_widget.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/primary_button.dart';
+import '../../shared/widgets/app_shell.dart';
 import '../streak/streak_heatmap_widget.dart';
 import '../streak/streak_success_modal.dart';
 import '../quiz/quiz_result_cache_provider.dart';
-import '../quiz/quiz_screen.dart';
-import '../quiz/quiz_models.dart';
+import '../quiz/quiz_providers.dart';
 import 'concept_card.dart';
 import 'today_concepts_controller.dart';
-import 'daily_word_providers.dart';
-import 'word_card.dart';
+import '../streak/streak_providers.dart';
 
 
 
-class DailyWordScreen extends ConsumerWidget {
+class DailyWordScreen extends ConsumerStatefulWidget {
   const DailyWordScreen({super.key});
 
+  @override
+  ConsumerState<DailyWordScreen> createState() => _DailyWordScreenState();
+}
+
+class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkFreshStart();
+  }
+
+  Future<void> _checkFreshStart() async {
+    // Wait for the reset migration to complete so the flag is set if needed.
+    await ref.read(statsResetProvider.future);
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('show_fresh_start_notice') == true) {
+      await prefs.setBool('show_fresh_start_notice', false);
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Fresh Start', style: TextStyle(fontWeight: FontWeight.w700)),
+            content: const Text('Streaks are now daily! Maintain your streak by marking at least 1 concept as read each day. A full set of 3 earns a perfect day star.', style: TextStyle(height: 1.5)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Got it', style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ],
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        );
+      }
+    }
+  }
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good morning';
@@ -31,13 +65,13 @@ class DailyWordScreen extends ConsumerWidget {
     return 'Good evening';
   }
 
-  bool get _isSaturday => DateTime.now().weekday == DateTime.saturday;
 
 
 
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  @override
+  Widget build(BuildContext context) {
     final userAsync = ref.watch(appUserProvider);
     final conceptsAsync = ref.watch(todayConceptsControllerProvider);
     
@@ -165,7 +199,7 @@ class DailyWordScreen extends ConsumerWidget {
   Widget _buildHeatmap(AsyncValue<AppUser?> userAsync, AppUser? cachedUser) {
     if (cachedUser != null) {
       return StreakHeatmapWidget(
-        activityLog: cachedUser.activityLog,
+        rawActivityLog: cachedUser.rawActivityLog,
         liveStreak: cachedUser.liveStreak,
       );
     }
@@ -270,32 +304,30 @@ class DailyWordScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
-            PrimaryButton(
-              label: _isSaturday
-                  ? 'Take Weekly Quiz'
-                  : 'Quiz Unlocks on Saturday',
-              onPressed: _isSaturday
-                  ? () {
-                      final cache = ref.read(quizResultCacheProvider).value ?? {};
-                      final isCompleted = user?.hasCompletedThisWeek() ?? false;
-
-                      if (isCompleted) {
-                        final allAnswers = Map<String, List<QuizAnswer>>.from(cache);
-                        allAnswers.putIfAbsent('weekly', () => []);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => QuizResultScreen(
-                              allAnswers: allAnswers,
-                              initialDifficultyId: 'weekly',
-                            ),
-                          ),
-                        );
-                      } else {
-                        Navigator.pushNamed(context, '/quiz');
-                      }
-                    }
-                  : null,
+            Consumer(
+              builder: (context, ref, _) {
+                final quizState = ref.watch(quizButtonStateProvider(DateTime.now()));
+                return PrimaryButton(
+                  label: quizState.label,
+                  onPressed: quizState.isEnabled
+                      ? () {
+                          if (quizState.isCompleted) {
+                            // Already completed, just view results
+                            final cache = ref.read(quizResultCacheProvider).value ?? {};
+                            // Use the week's date ID for cache lookup. But actually QuizResultScreen 
+                            // needs to know what key to look up. It used 'weekly' before.
+                            // Let's pass the date id. Or we can just let quiz screen handle it.
+                            // The prompt says: "Session date: capture the date id ONCE when the quiz starts and use it for both the Firestore write and the SharedPreferences result-cache key."
+                            // But wait, if they view results, what key? The session date of this week.
+                            // Better yet, just push to '/quiz' always and let the QuizScreen handle it. 
+                            ref.read(appShellTabProvider.notifier).state = 1;
+                          } else {
+                            ref.read(appShellTabProvider.notifier).state = 1;
+                          }
+                        }
+                      : null,
+                );
+              },
             ),
             const SizedBox(height: 28),
           ],
@@ -319,7 +351,10 @@ class DailyWordScreen extends ConsumerWidget {
               if (FirestoreErrors.shouldRetry(e)) ...[
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: () => ref.invalidate(todayConceptsControllerProvider),
+                  onPressed: () {
+                    ref.invalidate(statsResetProvider);
+                    ref.invalidate(todayConceptsControllerProvider);
+                  },
                   child: const Text('Retry'),
                 ),
               ],
@@ -329,12 +364,13 @@ class DailyWordScreen extends ConsumerWidget {
       },
     );
   }
+}
 
 class DotPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFD1D5DB).withOpacity(0.4)
+      ..color = const Color(0xFFD1D5DB).withValues(alpha: 0.4)
       ..strokeWidth = 1;
     const spacing = 24.0;
     for (double i = 0; i < size.width; i += spacing) {

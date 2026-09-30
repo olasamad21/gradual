@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+﻿import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -10,7 +10,6 @@ import '../../core/models/user_model.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_state_widget.dart';
 import '../../shared/widgets/firestore_permission_widget.dart';
-import '../daily_word/daily_word_screen.dart';
 import '../streak/streak_heatmap_widget.dart';
 import 'profile_providers.dart';
 
@@ -69,9 +68,9 @@ class _ProfileBody extends ConsumerWidget {
     int totalCorrect = 0;
     int totalQuestions = 0;
     for (final entry in u.activityLog.values) {
-      if (!entry.isWeeklyQuiz) continue;
-      totalCorrect += entry.score;
-      totalQuestions += entry.totalQuestions;
+      if (entry.quizScore == null || entry.quizTotal == null) continue;
+      totalCorrect += entry.quizScore!;
+      totalQuestions += entry.quizTotal!;
     }
     if (totalQuestions == 0) return '--';
     return '${(totalCorrect / totalQuestions * 100).round()}%';
@@ -145,7 +144,7 @@ class _ProfileBody extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 6))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 6))],
                 ),
                 child: Column(
                   children: [
@@ -158,7 +157,7 @@ class _ProfileBody extends ConsumerWidget {
                           end: Alignment.bottomRight,
                         ),
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: const Color(0xFF388E3C).withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
+                        boxShadow: [BoxShadow(color: const Color(0xFF388E3C).withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
                       ),
                       child: Center(
                         child: Text(initials,
@@ -183,8 +182,8 @@ class _ProfileBody extends ConsumerWidget {
                     iconColor: const Color(0xFFF97316),
                     label: 'Current Streak',
                     value: user.liveStreak == 1
-                        ? '1 wk'
-                        : '${user.liveStreak} wks',
+                        ? '1 day'
+                        : '${user.liveStreak} days',
                   ),
                   const SizedBox(width: 12),
                   _StatCard(
@@ -211,10 +210,10 @@ class _ProfileBody extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
                 ),
                 child: StreakHeatmapWidget(
-                  activityLog: user.activityLog,
+                  rawActivityLog: user.rawActivityLog,
                   liveStreak: user.liveStreak,
                 ),
               ),
@@ -247,7 +246,7 @@ class _ProfileBody extends ConsumerWidget {
   }
 }
 
-// ── Stat Card ────────────────────────────────────────────────
+// â”€â”€ Stat Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _StatCard extends StatelessWidget {
   const _StatCard({required this.icon, required this.iconColor, required this.label, required this.value});
@@ -264,7 +263,7 @@ class _StatCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
         ),
         child: Column(
           children: [
@@ -282,7 +281,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ── Field of Study Card ──────────────────────────────────────
+// â”€â”€ Field of Study Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _FieldOfStudyCard extends ConsumerStatefulWidget {
   const _FieldOfStudyCard({required this.user});
@@ -330,7 +329,7 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white, borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,7 +338,7 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
             children: [
               Container(
                 width: 36, height: 36,
-                decoration: BoxDecoration(color: const Color(0xFF3B82F6).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: const Color(0xFF3B82F6).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.school_rounded, color: Color(0xFF3B82F6), size: 20),
               ),
               const SizedBox(width: 12),
@@ -351,7 +350,7 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
                   onTap: () => setState(() => _isEditing = true),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFF388E3C).withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                    decoration: BoxDecoration(color: const Color(0xFF388E3C).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                     child: const Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF388E3C))),
                   ),
                 ),
@@ -378,7 +377,7 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF388E3C).withOpacity(0.06) : const Color(0xFFF9FAFB),
+                    color: isSelected ? const Color(0xFF388E3C).withValues(alpha: 0.06) : const Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                         color: isSelected ? const Color(0xFF388E3C) : const Color(0xFFE5E7EB),
@@ -433,7 +432,7 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
   }
 }
 
-// ── Quiz History Card ────────────────────────────────────────
+// â”€â”€ Quiz History Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _QuizHistoryCard extends StatelessWidget {
   const _QuizHistoryCard({required this.user});
@@ -450,7 +449,7 @@ class _QuizHistoryCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white, borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,7 +458,7 @@ class _QuizHistoryCard extends StatelessWidget {
             children: [
               Container(
                 width: 36, height: 36,
-                decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.history_rounded, color: Color(0xFF8B5CF6), size: 20),
               ),
               const SizedBox(width: 12),
@@ -509,7 +508,7 @@ class _HistoryRow extends StatelessWidget {
   Widget _badge(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(5)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(5)),
       child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
     );
   }
@@ -559,4 +558,21 @@ class _HistoryRow extends StatelessWidget {
       ),
     );
   }
+}
+class DotPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFD1D5DB).withValues(alpha: 0.4)
+      ..strokeWidth = 1;
+    const spacing = 24.0;
+    for (double i = 0; i < size.width; i += spacing) {
+      for (double j = 0; j < size.height; j += spacing) {
+        canvas.drawCircle(Offset(i, j), 1.5, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

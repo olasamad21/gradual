@@ -135,7 +135,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         border: Border.all(color: const Color(0xFFE6E8EE)),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButtonFormField<String>(
+                child: DropdownButtonFormField<String>(
           value: _selectedField,
           decoration: const InputDecoration(
             labelText: 'Your Field of Study',
@@ -145,11 +145,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           items: const [
             DropdownMenuItem(
               value: 'software_engineering',
-              child: Text('Software Engineering'),
+              child: Text('Computer Science & Software Engineering', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
             DropdownMenuItem(
               value: 'data_science',
-              child: Text('Data Science'),
+              enabled: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Data Science', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  SizedBox(width: 8),
+                  Text('Coming soon', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            DropdownMenuItem(
+              value: 'product_management',
+              enabled: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Product Management', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  SizedBox(width: 8),
+                  Text('Coming soon', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                ],
+              ),
             ),
           ],
           onChanged: isLoading ? null : (val) {
@@ -159,4 +179,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     );
   }
+}
+class DotPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFD1D5DB).withValues(alpha: 0.4)
+      ..strokeWidth = 1;
+    const spacing = 24.0;
+    for (double i = 0; i < size.width; i += spacing) {
+      for (double j = 0; j < size.height; j += spacing) {
+        canvas.drawCircle(Offset(i, j), 1.5, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
