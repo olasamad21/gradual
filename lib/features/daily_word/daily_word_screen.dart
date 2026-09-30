@@ -10,14 +10,16 @@ import '../../shared/widgets/firestore_permission_widget.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../streak/streak_heatmap_widget.dart';
+import '../streak/streak_success_modal.dart';
 import '../quiz/quiz_result_cache_provider.dart';
 import '../quiz/quiz_screen.dart';
 import '../quiz/quiz_models.dart';
+import 'concept_card.dart';
+import 'today_concepts_controller.dart';
 import 'daily_word_providers.dart';
 import 'word_card.dart';
 
-/// First date with imported content in Firestore (see content_json.json).
-const _firstContentDateId = '2026-05-24';
+
 
 class DailyWordScreen extends ConsumerWidget {
   const DailyWordScreen({super.key});
@@ -31,19 +33,33 @@ class DailyWordScreen extends ConsumerWidget {
 
   bool get _isSaturday => DateTime.now().weekday == DateTime.saturday;
 
-  String _emptyConceptMessage() {
-    final todayId =
-        '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}';
-    if (todayId.compareTo(_firstContentDateId) < 0) {
-      return 'No concept for today yet.\nNew content starts on May 24, 2026.';
-    }
-    return 'No concept for today yet.';
-  }
+
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(appUserProvider);
-    final contentAsync = ref.watch(todayContentProvider);
+    final conceptsAsync = ref.watch(todayConceptsControllerProvider);
+    
+    ref.listen<AsyncValue<TodayConceptsState>>(
+      todayConceptsControllerProvider,
+      (previous, next) {
+        final prevData = previous?.whenOrNull(data: (d) => d);
+        final nextData = next.whenOrNull(data: (d) => d);
+        
+        if (prevData != null && nextData != null) {
+          if (prevData.readCount == 0 && nextData.readCount == 1) {
+            showDialog(
+              context: context,
+              builder: (ctx) => StreakSuccessModal(
+                streakCount: nextData.liveStreak,
+                
+              ),
+            );
+          }
+        }
+      },
+    );
     final cachedUser = userAsync.when(
       data: (d) => d,
       loading: () => null,
@@ -98,7 +114,7 @@ class DailyWordScreen extends ConsumerWidget {
                           context,
                           ref,
                           userAsync: userAsync,
-                          contentAsync: contentAsync,
+                          conceptsAsync: conceptsAsync,
                           user: cachedUser,
                         ),
                 ),
@@ -166,30 +182,26 @@ class DailyWordScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref, {
     required AsyncValue<AppUser?> userAsync,
-    required AsyncValue<DailyContent?> contentAsync,
+    required AsyncValue<TodayConceptsState> conceptsAsync,
     required AppUser? user,
   }) {
     if (userAsync.isLoading && user == null) {
-      return const LoadingIndicator(label: "Loading today's concept...");
+      return const LoadingIndicator(label: "Loading today's concepts...");
     }
 
-    return contentAsync.when(
-      data: (content) {
-        if (content == null) {
+    return conceptsAsync.when(
+      data: (state) {
+        if (state.concepts.isEmpty) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.hourglass_empty_rounded,
-                    size: 48, color: Colors.grey.shade300),
+                Icon(Icons.hourglass_empty_rounded, size: 48, color: Colors.grey.shade300),
                 const SizedBox(height: 12),
                 Text(
-                  _emptyConceptMessage(),
+                  'No concepts available.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
                 ),
               ],
             ),
@@ -210,19 +222,53 @@ class DailyWordScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  "Today's Concept",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF6B7280),
-                    letterSpacing: 0.8,
+                Expanded(
+                  child: Text(
+                    "${state.readCount} of ${state.concepts.length} today",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF6B7280),
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
+                if (state.isPerfectDay)
+                  const Text(
+                    "Perfect day!",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF388E3C),
+                    ),
+                  ),
               ],
             ),
+            if (state.isFallback) ...[
+              const SizedBox(height: 4),
+              const Text(
+                "Showing the latest available set",
+                style: TextStyle(fontSize: 11, color: Colors.orange),
+              ),
+            ],
             const SizedBox(height: 12),
-            Expanded(child: WordCard(content: content)),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 20),
+                itemCount: state.concepts.length,
+                itemBuilder: (context, index) {
+                  final concept = state.concepts[index];
+                  final isRead = state.readConceptIds.contains(concept.id);
+                  return ConceptCard(
+                    concept: concept,
+                    isRead: isRead,
+                    onMarkRead: () {
+                      ref.read(todayConceptsControllerProvider.notifier).markRead(concept.id);
+                    },
+                  );
+                },
+              ),
+            ),
             const SizedBox(height: 20),
             PrimaryButton(
               label: _isSaturday
@@ -230,13 +276,11 @@ class DailyWordScreen extends ConsumerWidget {
                   : 'Quiz Unlocks on Saturday',
               onPressed: _isSaturday
                   ? () {
-                      final cache =
-                          ref.read(quizResultCacheProvider).value ?? {};
+                      final cache = ref.read(quizResultCacheProvider).value ?? {};
                       final isCompleted = user?.hasCompletedThisWeek() ?? false;
 
                       if (isCompleted) {
-                        final allAnswers =
-                            Map<String, List<QuizAnswer>>.from(cache);
+                        final allAnswers = Map<String, List<QuizAnswer>>.from(cache);
                         allAnswers.putIfAbsent('weekly', () => []);
                         Navigator.push(
                           context,
@@ -257,9 +301,7 @@ class DailyWordScreen extends ConsumerWidget {
           ],
         );
       },
-      loading: () => const LoadingIndicator(
-        label: "Loading today's concept...",
-      ),
+      loading: () => const LoadingIndicator(label: "Loading today's concepts..."),
       error: (e, _) {
         if (FirestoreErrors.isPermissionDenied(e)) {
           return const FirestorePermissionWidget();
@@ -268,17 +310,16 @@ class DailyWordScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.wifi_off_rounded,
-                  size: 48, color: Colors.grey.shade300),
+              Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey.shade300),
               const SizedBox(height: 12),
               Text(
-                'Failed to load today\'s concept.',
+                'Failed to load today\'s concepts.',
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
               ),
               if (FirestoreErrors.shouldRetry(e)) ...[
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: () => ref.invalidate(todayContentProvider),
+                  onPressed: () => ref.invalidate(todayConceptsControllerProvider),
                   child: const Text('Retry'),
                 ),
               ],
@@ -288,7 +329,6 @@ class DailyWordScreen extends ConsumerWidget {
       },
     );
   }
-}
 
 class DotPatternPainter extends CustomPainter {
   @override

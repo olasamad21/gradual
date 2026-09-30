@@ -114,3 +114,15 @@ This document tracks all modifications, additions, and removals made to the proj
 - Testing for `seed_concepts.py` expanded for database errors and mock glob validation.
 - Wired up Providers in `quiz_providers.dart`, `concept_providers.dart`, and `daily_word_providers.dart` to use `effectiveField(user)`.
 - Wired `onboarding_view_model.dart` to correctly init users using `initNewUserIfMissing` before merging profiles.
+
+### [2026-09-30 20:33:00] - Concept Screen Redesign (Phase 2 UI)
+
+**Added:**
+- Created `ConceptCard` widget to display terms with chips, animated expansion for details (definition, analogies, related), and a "Got it" completion toggle.
+- Created `TodayConceptsController` extending `AsyncNotifier` to expose today's loaded concepts, current user's read state, and an optimistic `markRead` update.
+- Created widget tests for `ConceptCard` behavior and layout validation.
+
+**Modified:**
+- Remodeled `DailyWordScreen` body to map through a list of 3 `ConceptCard`s instead of reading a single daily snippet.
+- Implemented real-time check logic to render the daily success modal once the first card of the day is marked as read, passing in the newly architected local liveStreak.
+- Removed legacy `_emptyConceptMessage` hardcoded constraints since content seeding natively handles fallback states now.
