@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../services/streak_engine.dart';
 import '../utils/date_utils.dart';
 
 typedef ActivityLog = Map<String, ActivityLogEntry>;
@@ -102,6 +103,7 @@ class ActivityLogEntry {
     required this.tier,
     required this.streakCounted,
     this.completedDifficulties = const [],
+    this.conceptsRead = const [],
   });
 
   final String quizType;
@@ -112,6 +114,7 @@ class ActivityLogEntry {
 
   /// Legacy daily difficulty entries (read-only compat).
   final List<String> completedDifficulties;
+  final List<String> conceptsRead;
 
   bool get isWeeklyQuiz => quizType == 'weekly';
 
@@ -124,6 +127,9 @@ class ActivityLogEntry {
         json['completed_difficulties'] as List<dynamic>? ?? <dynamic>[];
     final completedDifficulties = rawList.map((e) => e.toString()).toList();
 
+    final rawConcepts = json['concepts_read'] as List<dynamic>? ?? <dynamic>[];
+    final conceptsRead = rawConcepts.map((e) => e.toString()).toList();
+
     if (quizType == 'weekly') {
       final score = (json['score'] as num?)?.toInt() ?? 0;
       final tierRaw = json['tier'] as String?;
@@ -133,15 +139,16 @@ class ActivityLogEntry {
         totalQuestions: (json['total_questions'] as num?)?.toInt() ?? 10,
         tier: tierRaw != null ? tierFromId(tierRaw) : tierFromScore(score),
         streakCounted: json['streak_counted'] as bool? ?? false,
+        conceptsRead: conceptsRead,
       );
     }
 
-    // Legacy daily/difficulty entries
+    // Legacy daily/difficulty entries OR concept-only entries
     final score = (json['total_correct'] as num?)?.toInt() ??
         (json['score'] as num?)?.toInt() ??
         0;
     return ActivityLogEntry(
-      quizType: json['difficulty'] as String? ?? 'legacy',
+      quizType: quizType ?? json['difficulty'] as String? ?? 'legacy',
       score: score,
       totalQuestions: (json['total_questions'] as num?)?.toInt() ?? 3,
       tier: WeeklyScoreTier.legacy,
@@ -151,6 +158,7 @@ class ActivityLogEntry {
           : json['difficulty'] != null
               ? [json['difficulty'].toString()]
               : <String>[],
+      conceptsRead: conceptsRead,
     );
   }
 
@@ -162,6 +170,7 @@ class ActivityLogEntry {
         'total_questions': totalQuestions,
         'tier': tier.id,
         'streak_counted': streakCounted,
+        if (conceptsRead.isNotEmpty) 'concepts_read': conceptsRead,
       };
     }
     return <String, dynamic>{
@@ -171,6 +180,7 @@ class ActivityLogEntry {
       'tier': tier.id,
       'streak_counted': streakCounted,
       'completed_difficulties': completedDifficulties,
+      if (conceptsRead.isNotEmpty) 'concepts_read': conceptsRead,
     };
   }
 }
@@ -183,6 +193,7 @@ class AppUser {
     required this.currentStreak,
     required this.lastActivityDate,
     required this.activityLog,
+    this.rawActivityLog = const <String, dynamic>{},
   });
 
   final String uid;
@@ -191,42 +202,11 @@ class AppUser {
   final int currentStreak;
   final Timestamp? lastActivityDate;
   final ActivityLog activityLog;
+  final Map<String, dynamic> rawActivityLog;
 
-  /// Live weekly streak: 0 if the user missed this week's Saturday deadline.
-  int get liveStreak {
-    if (currentStreak == 0 && lastActivityDate == null) return 0;
+  int streakAt(DateTime today) => StreakEngine.currentStreak(rawActivityLog, today);
 
-    final now = DateTime.now();
-    final thisSaturday = DateUtilsGradual.saturdayOfWeekContaining(now);
-    final thisSaturdayId = DateUtilsGradual.toDateId(thisSaturday);
-    final deadline = DateUtilsGradual.endOfDay(thisSaturday);
-
-    final thisWeekEntry = activityLog[thisSaturdayId];
-
-    if (now.isAfter(deadline)) {
-      if (thisWeekEntry != null &&
-          thisWeekEntry.isWeeklyQuiz &&
-          qualifiesForStreak(thisWeekEntry.score)) {
-        return currentStreak;
-      }
-      return 0;
-    }
-
-    // Mon–Fri (or Saturday before deadline): streak alive if last qualifying week exists
-    if (lastActivityDate == null) return 0;
-
-    final lastQualifying = DateUtilsGradual.toDateOnly(lastActivityDate);
-    if (lastQualifying == null) return 0;
-
-    final prevSaturday = DateUtilsGradual.previousSaturday(thisSaturday);
-    final gap = DateUtilsGradual.daysBetween(lastQualifying, thisSaturday);
-
-    if (gap == 7 || gap == 0) return currentStreak;
-    if (gap > 7) return 0;
-
-    return currentStreak;
-  }
-
+  int get liveStreak => streakAt(DateTime.now());
   /// Entry for this week's Saturday quiz, keyed by Saturday date id.
   ActivityLogEntry? get thisWeekEntry {
     final saturday = DateUtilsGradual.saturdayOfWeekContaining(DateTime.now());

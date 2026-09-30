@@ -82,6 +82,7 @@ class OnboardingController extends AsyncNotifier<void> {
       activityLog: const {},
     );
 
+    await _userRepository.initNewUserIfMissing(user.uid);
     await _userRepository.createOrUpdateUser(appUser);
   }
 }

@@ -8,3 +8,13 @@ final streakCountProvider = Provider<AsyncValue<int>>((ref) {
   return appUserAsync.whenData((user) => user?.liveStreak ?? 0);
 });
 
+final statsResetProvider = FutureProvider<void>((ref) async {
+  final userAsync = ref.watch(appUserProvider);
+  if (userAsync.isLoading) return; // Wait for initial load
+  final user = userAsync.whenOrNull(data: (d) => d);
+  if (user == null) return;
+  
+  final repo = ref.read(userRepositoryProvider);
+  await repo.resetStatsIfNeeded(user.uid);
+});
+

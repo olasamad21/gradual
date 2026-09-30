@@ -92,11 +92,51 @@ def test_duplicate_slug():
     errors, _ = validate_payload(payload)
     assert any("Duplicate concept slug" in e for e in errors)
 
-def test_undefined_related_concept():
+def test_undefined_related_concept_dry_run():
     payload = get_valid_payload()
     payload['concepts'][0]['related'] = ["undefined-concept"]
-    errors, _ = validate_payload(payload)
-    assert any("relates to undefined slug 'undefined-concept'" in e for e in errors)
+    errors, warnings = validate_payload(payload, commit=False)
+    # in dry run it's a warning
+    assert not errors
+    assert any("Firestore was not checked" in w for w in warnings)
+
+def test_undefined_related_concept_commit_fails_db():
+    payload = get_valid_payload()
+    payload['concepts'][0]['related'] = ["undefined-concept"]
+    
+    class FakeDoc:
+        @property
+        def exists(self): return False
+        
+    class FakeDocRef:
+        def get(self): return FakeDoc()
+        
+    class FakeColl:
+        def document(self, slug): return FakeDocRef()
+        
+    class FakeDb:
+        def collection(self, name): return FakeColl()
+        
+    errors, warnings = validate_payload(payload, commit=True, db=FakeDb())
+    assert any("relates to undefined slug" in e for e in errors)
+
+def test_duplicate_concept_different_content(tmp_path, monkeypatch):
+    import json
+    import glob
+    import seed_concepts
+    
+    mock_file = tmp_path / "mock.json"
+    mock_file.write_text(json.dumps({
+        "concepts": [
+            {"id": "concept-a", "term": "Old Term"}
+        ]
+    }))
+    
+    monkeypatch.setattr(glob, "glob", lambda p: [str(mock_file)])
+    
+    payload = get_valid_payload() # concept-a has term 'Concept A'
+    errors, warnings = seed_concepts.validate_payload(payload)
+    assert any("already exists in another content file with different content" in e for e in errors)
 
 def test_invalid_quiz_options():
     payload = get_valid_payload()

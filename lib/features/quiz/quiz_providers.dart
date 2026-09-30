@@ -6,6 +6,7 @@ import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/models/weekly_quiz_model.dart';
+import '../../core/utils/field_utils.dart';
 import '../streak/streak_providers.dart';
 import 'quiz_models.dart';
 
@@ -25,7 +26,7 @@ final weeklyQuizProvider = FutureProvider<WeeklyQuiz?>((ref) async {
   final now = DateTime.now().toUtc();
   try {
     return await contentRepo.getWeeklyQuiz(
-      fieldOfStudy: user.fieldOfStudy,
+      fieldOfStudy: effectiveField(user),
       date: now,
     );
   } catch (e, st) {

@@ -97,3 +97,20 @@ This document tracks all modifications, additions, and removals made to the proj
 - createOrUpdateUser in UserRepository now uses merge: true with strict profile fields (email, ield_of_study), fixing an issue where streak data could be overwritten by outdated client objects.
 - irestore.rules updated to allow authenticated reads for concepts_* and daily_sets_*.
 
+
+### [2026-09-30 20:15:00] - Concept Implementation & Streak Engine
+
+**Added:**
+- Created `StreakEngine` in `lib/core/services/streak_engine.dart` containing pure Dart calculations for daily streaks, bypassing legacy Firestore limitations, tolerant to malformed DB entries.
+- Added exhaustive tests for `StreakEngine` ensuring resilience over gaps, DST boundaries, month/year boundaries, and malformed inputs.
+- Created `field_utils.dart` to determine `effectiveField` for concepts.
+- Added `recordConceptRead`, `resetStatsIfNeeded`, and `initNewUserIfMissing` in `UserRepository`.
+- Added `statsResetProvider` for one-time legacy user resets.
+
+**Modified:**
+- `AppUser` model rewritten to use `StreakEngine` for its `liveStreak` logic and provide access to the raw activity log json.
+- `ActivityLogEntry` updated to properly parse missing fields gracefully and store `conceptsRead`.
+- `seed_concepts.py` updated to strictly reject duplicated concepts with different content definitions, checking both local files and Firestore during commit.
+- Testing for `seed_concepts.py` expanded for database errors and mock glob validation.
+- Wired up Providers in `quiz_providers.dart`, `concept_providers.dart`, and `daily_word_providers.dart` to use `effectiveField(user)`.
+- Wired `onboarding_view_model.dart` to correctly init users using `initNewUserIfMissing` before merging profiles.

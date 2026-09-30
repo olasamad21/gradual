@@ -4,6 +4,7 @@ import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
 import '../../core/repositories/content_repository.dart';
 import '../../core/utils/date_utils.dart';
+import '../../core/utils/field_utils.dart';
 
 final todaysConceptsProvider = FutureProvider<TodaysConceptsResult>((ref) async {
   final user = ref.watch(
@@ -22,7 +23,7 @@ final todaysConceptsProvider = FutureProvider<TodaysConceptsResult>((ref) async 
   
   try {
     return await contentRepo.getTodaysConcepts(
-      user.fieldOfStudy,
+      effectiveField(user),
       todayId,
     );
   } catch (e, st) {

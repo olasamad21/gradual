@@ -5,7 +5,7 @@ import argparse
 import re
 from datetime import datetime
 
-def validate_payload(data, allow_review=False):
+def validate_payload(data, allow_review=False, commit=False, db=None):
     errors = []
     warnings = []
 
@@ -120,12 +120,51 @@ def validate_payload(data, allow_review=False):
             if not isinstance(exp, str) or not exp:
                 errors.append(f"Concept '{cid}' quiz missing 'explanation'")
 
+    # Read other files for validation
+    current_file_path = os.environ.get("CURRENT_SEED_FILE", "")
+    all_file_concepts = {}
+    import glob
+    for path in glob.glob("content/*.json"):
+        if path.endswith(".example.json"):
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                file_data = json.load(f)
+                for oc in file_data.get("concepts", []):
+                    oc_id = oc.get("id")
+                    if oc_id:
+                        all_file_concepts[oc_id] = (oc, path)
+        except Exception:
+            pass
+
+    # Reject a concept id that already exists in another content file with different content
+    for c in concepts:
+        cid = c.get("id")
+        if cid in all_file_concepts:
+            existing_c, existing_path = all_file_concepts[cid]
+            if existing_path != current_file_path and existing_path != "":
+                if json.dumps(c, sort_keys=True) != json.dumps(existing_c, sort_keys=True):
+                    errors.append(f"Concept '{cid}' already exists in another content file with different content.")
+
+    defined_slugs.update(all_file_concepts.keys())
+
     # Second pass: check related dependencies
     for c in concepts:
         cid = c.get("id")
         for r in c.get("related", []):
             if r not in defined_slugs:
-                errors.append(f"Concept '{cid}' relates to undefined slug '{r}'")
+                if commit and db is not None:
+                    try:
+                        doc = db.collection(f"concepts_{field}").document(r).get()
+                        if not doc.exists:
+                            errors.append(f"Concept '{cid}' relates to undefined slug '{r}'")
+                    except Exception as e:
+                        errors.append(f"Failed to check Firestore for slug '{r}': {e}")
+                else:
+                    if not commit:
+                        warnings.append(f"Note: Firestore was not checked for missing related concepts (dry-run). Slug '{r}' not found locally.")
+                    else:
+                        errors.append(f"Concept '{cid}' relates to undefined slug '{r}'")
 
     used_concept_ids = set()
     seen_dates = set()
@@ -179,7 +218,22 @@ def main():
             print(f"ERROR: Invalid JSON file: {e}")
             sys.exit(1)
 
-    errors, warnings = validate_payload(data, allow_review=args.allow_review)
+    os.environ["CURRENT_SEED_FILE"] = os.path.abspath(args.file)
+    field = data.get("field", "software_engineering")
+    db = None
+    
+    if args.commit:
+        print("\nConnecting to Firebase for validation...")
+        os.environ["FIRESTORE_PREFER_REST"] = "true"
+        import firebase_admin
+        from firebase_admin import credentials, firestore
+        if not firebase_admin._apps:
+            cred = credentials.Certificate("serviceAccountKey.json")
+            app = firebase_admin.initialize_app(cred)
+            print(f"Project ID: {app.project_id}")
+        db = firestore.client()
+
+    errors, warnings = validate_payload(data, allow_review=args.allow_review, commit=args.commit, db=db)
 
     for w in warnings:
         print(f"WARNING: {w}")
@@ -193,7 +247,6 @@ def main():
 
     print("\nValidation passed.")
     
-    field = data["field"]
     if not args.commit:
         print("\n--- DRY RUN (no Firestore writes, no credentials read) ---")
         for c in data["concepts"]:
@@ -202,17 +255,6 @@ def main():
             print(f"  daily_sets_{field}/{ds['date']}")
         print("--- DRY RUN COMPLETE ---")
         return
-
-    print("\nConnecting to Firebase...")
-    os.environ["FIRESTORE_PREFER_REST"] = "true"
-    import firebase_admin
-    from firebase_admin import credentials, firestore
-
-    cred = credentials.Certificate('serviceAccountKey.json')
-    app = firebase_admin.initialize_app(cred)
-    print(f"Project ID: {app.project_id}")
-
-    db = firestore.client()
 
     for c in data["concepts"]:
         c_id = c['id']

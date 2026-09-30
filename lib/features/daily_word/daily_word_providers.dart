@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
 import '../../core/models/daily_content_model.dart';
+import '../../core/utils/field_utils.dart';
 
 final todayContentProvider = FutureProvider<DailyContent?>((ref) async {
   final user = ref.watch(
@@ -20,7 +21,7 @@ final todayContentProvider = FutureProvider<DailyContent?>((ref) async {
   final now = DateTime.now().toUtc();
   try {
     return await contentRepo.getContentForDate(
-      fieldOfStudy: user.fieldOfStudy,
+      fieldOfStudy: effectiveField(user),
       date: now,
     );
   } catch (e, st) {
