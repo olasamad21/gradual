@@ -67,3 +67,18 @@ class QuizAnswer {
 }
 
 enum QuizSaveResult { saved, alreadyTaken }
+class CompletedQuizResult {
+  const CompletedQuizResult({
+    required this.sessionDateId,
+    required this.score,
+    required this.total,
+    required this.tier,
+    this.answers,
+  });
+
+  final String sessionDateId;
+  final int score;
+  final int total;
+  final String tier;
+  final List<QuizAnswer>? answers;
+}

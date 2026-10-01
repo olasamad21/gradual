@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:gradual/features/quiz/quiz_providers.dart';
 import 'package:gradual/features/quiz/quiz_result_cache_provider.dart';
+import 'package:gradual/core/services/streak_engine.dart';
 import 'quiz_models.dart';
 import '../../shared/widgets/app_shell.dart';
 
@@ -93,17 +94,20 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       return;
     }
 
-    await ref.read(quizResultCacheProvider.notifier).saveAnswers(state.sessionDateId, answers);
+    await ref.read(quizResultCacheProvider).saveAnswers(state.sessionDateId, answers);
 
-    final cache = ref.read(quizResultCacheProvider).value ?? {};
+    final completedResult = CompletedQuizResult(
+      sessionDateId: state.sessionDateId,
+      score: correctCount,
+      total: questions.length,
+      tier: StreakEngine.quizTier(correctCount, questions.length),
+      answers: answers,
+    );
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => QuizResultScreen(
-          allAnswers: cache,
-          sessionDateId: state.sessionDateId,
-        ),
+        builder: (_) => QuizResultScreen(result: completedResult),
       ),
     );
   }
@@ -128,11 +132,17 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
               const SizedBox(height: 32),
               if (buttonState.isEnabled)
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (buttonState.isCompleted) {
-                      final answers = ref.read(quizResultCacheProvider);
-                      // Already handled by result screen if completed, but we can jump to results here
-                      // We don't have the answers in state though, we might just show a message.
+                      final result = await ref.read(completedQuizResultProvider(DateTime.now()).future);
+                      if (result != null && context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => QuizResultScreen(result: result),
+                          ),
+                        );
+                      }
                       return;
                     }
                     setState(() {
@@ -502,12 +512,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 class QuizResultScreen extends StatefulWidget {
   const QuizResultScreen({
     super.key,
-    required this.allAnswers,
-    required this.sessionDateId,
+    required this.result,
   });
 
-  final Map<String, List<QuizAnswer>> allAnswers;
-  final String sessionDateId;
+  final CompletedQuizResult result;
 
   @override
   State<QuizResultScreen> createState() => _QuizResultScreenState();
@@ -518,9 +526,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
   @override
   Widget build(BuildContext context) {
 
-    final answers = widget.allAnswers[widget.sessionDateId] ?? [];
-    final correct = answers.where((a) => a.isCorrect).length;
-    final total = answers.length;
+    final correct = widget.result.score;
+    final total = widget.result.total;
     final pct = total == 0 ? 0.0 : correct / total;
     final percentInt = (pct * 100).round();
 
@@ -647,24 +654,35 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                         ),
                       ),
                       const SizedBox(height: 32),
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Review Answers',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1F2937),
+                      if (widget.result.answers != null) ...[
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Review Answers',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1F2937),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      ...answers.asMap().entries.map(
-                            (e) => _buildReviewCard(
-                          index: e.key,
-                          answer: e.value,
+                        const SizedBox(height: 16),
+                        ...widget.result.answers!.asMap().entries.map(
+                              (e) => _buildReviewCard(
+                            index: e.key,
+                            answer: e.value,
+                          ),
                         ),
-                      ),
+                      ] else ...[
+                        const Text(
+                          "Answer details aren't available on this device.",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF6B7280),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ],
                   ),
                 ),

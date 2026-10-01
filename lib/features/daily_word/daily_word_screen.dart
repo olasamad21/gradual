@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -311,19 +311,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
                   label: quizState.label,
                   onPressed: quizState.isEnabled
                       ? () {
-                          if (quizState.isCompleted) {
-                            // Already completed, just view results
-                            final cache = ref.read(quizResultCacheProvider).value ?? {};
-                            // Use the week's date ID for cache lookup. But actually QuizResultScreen 
-                            // needs to know what key to look up. It used 'weekly' before.
-                            // Let's pass the date id. Or we can just let quiz screen handle it.
-                            // The prompt says: "Session date: capture the date id ONCE when the quiz starts and use it for both the Firestore write and the SharedPreferences result-cache key."
-                            // But wait, if they view results, what key? The session date of this week.
-                            // Better yet, just push to '/quiz' always and let the QuizScreen handle it. 
-                            ref.read(appShellTabProvider.notifier).state = 1;
-                          } else {
-                            ref.read(appShellTabProvider.notifier).state = 1;
-                          }
+                          ref.read(appShellTabProvider.notifier).state = 1;
                         }
                       : null,
                 );

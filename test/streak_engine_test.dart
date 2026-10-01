@@ -128,6 +128,24 @@ void main() {
   });
 
   group('StreakEngine Weekly Math & Quiz', () {
+    test('quizDateIdInWeek behavior', () {
+      final today = DateTime(2026, 10, 11); // Sunday
+      // No quiz -> null
+      expect(StreakEngine.quizDateIdInWeek({}, today), null);
+
+      // Quiz Saturday -> Saturday's id
+      final logSat = {'2026-10-10': {'quiz_score': 5}};
+      expect(StreakEngine.quizDateIdInWeek(logSat, today), '2026-10-10');
+
+      // Quiz previous week -> null
+      final logPrev = {'2026-10-04': {'quiz_score': 5}}; // previous Sunday
+      expect(StreakEngine.quizDateIdInWeek(logPrev, today), null);
+
+      // Malformed entries don't throw
+      final logMalformed = {'2026-10-10': 'not a map', '2026-10-09': {'quiz_score': 10}};
+      expect(StreakEngine.quizDateIdInWeek(logMalformed, today), '2026-10-09');
+    });
+
     test('weekStartId for each weekday incl. Sunday', () {
       // 2026-10-05 is a Monday
       expect(StreakEngine.weekStartId(DateTime(2026, 10, 5)), '2026-10-05');

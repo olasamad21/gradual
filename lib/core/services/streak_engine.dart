@@ -173,18 +173,26 @@ abstract final class StreakEngine {
     return AppRules.quizWindowWeekdays.contains(today.weekday);
   }
 
-  static bool quizTakenThisWeek(Map<String, dynamic> log, DateTime today) {
-    final weekIds = _weekDateIds(today);
-    for (final id in weekIds) {
+  static String? quizDateIdInWeek(Map<String, dynamic> log, DateTime today) {
+    final local = DateTime(today.year, today.month, today.day);
+    final daysSinceMonday = local.weekday - 1;
+    final monday = DateTime(local.year, local.month, local.day - daysSinceMonday);
+    
+    for (int i = 0; i < 7; i++) {
+      final d = DateTime(monday.year, monday.month, monday.day + i);
+      final id = _dateId(d);
       final entry = log[id];
       if (entry is Map) {
-        // Fallback for legacy format 'score' alongside new 'quiz_score'
         if (entry['quiz_score'] != null || entry['score'] != null) {
-          return true;
+          return id;
         }
       }
     }
-    return false;
+    return null;
+  }
+
+  static bool quizTakenThisWeek(Map<String, dynamic> log, DateTime today) {
+    return quizDateIdInWeek(log, today) != null;
   }
 
   static QuizStatus quizStatus(Map<String, dynamic> log, DateTime today) {

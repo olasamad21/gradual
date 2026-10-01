@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +12,31 @@ import 'quiz_result_cache_provider.dart';
 
 const int quizMaxQuestions = 10;
 const int quizMinConcepts = 5; // Configured minimum to unlock quiz
+
+final completedQuizResultProvider = FutureProvider.family<CompletedQuizResult?, DateTime>((ref, today) async {
+  final user = await ref.watch(appUserProvider.future);
+  if (user == null) return null;
+
+  final sessionDateId = StreakEngine.quizDateIdInWeek(user.rawActivityLog, today);
+  if (sessionDateId == null) return null;
+
+  final entry = user.rawActivityLog[sessionDateId] as Map<String, dynamic>?;
+  if (entry == null) return null;
+
+  final score = (entry['quiz_score'] as num?)?.toInt() ?? 0;
+  final total = (entry['quiz_total'] as num?)?.toInt() ?? 0;
+  final tier = entry['quiz_tier'] as String? ?? 'bronze';
+
+  final answers = await ref.read(quizResultCacheProvider).loadAnswers(sessionDateId);
+
+  return CompletedQuizResult(
+    sessionDateId: sessionDateId,
+    score: score,
+    total: total,
+    tier: tier,
+    answers: answers,
+  );
+});
 
 class QuizButtonState {
   const QuizButtonState(this.label, this.isEnabled, this.isCompleted);
@@ -212,10 +237,6 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
         ));
         return result;
       }
-
-      // Save to SharedPreferences cache
-      final cache = ref.read(quizResultCacheProvider.notifier);
-      cache.saveAnswers(currentState.sessionDateId, []);
 
       // Invalidate user to refetch latest
       ref.invalidate(appUserProvider);
