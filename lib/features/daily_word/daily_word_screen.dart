@@ -11,13 +11,11 @@ import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../streak/streak_heatmap_widget.dart';
-import '../streak/streak_success_modal.dart';
+
 import '../quiz/quiz_providers.dart';
-import 'concept_card.dart';
+import 'concept_flip_card.dart';
 import 'today_concepts_controller.dart';
 import '../streak/streak_providers.dart';
-
-
 
 class DailyWordScreen extends ConsumerStatefulWidget {
   const DailyWordScreen({super.key});
@@ -27,6 +25,15 @@ class DailyWordScreen extends ConsumerStatefulWidget {
 }
 
 class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -82,13 +89,14 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
         
         if (prevData != null && nextData != null) {
           if (prevData.readCount == 0 && nextData.readCount == 1) {
-            showDialog(
-              context: context,
-              builder: (ctx) => StreakSuccessModal(
-                streakCount: nextData.liveStreak,
-                
-              ),
-            );
+            // TODO(step 3)
+            // showDialog(
+            //   context: context,
+            //   builder: (ctx) => StreakSuccessModal(
+            //     streakCount: nextData.liveStreak,
+            //     
+            //   ),
+            // );
           }
         }
       },
@@ -168,30 +176,35 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
     if (user == null && userAsync.isLoading) {
       return const SizedBox(height: 52);
     }
-    final name = user?.email.split('@').first ?? 'Dev';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _getGreeting(),
+    
+    final rawName = user?.email.split('@').first ?? 'Dev';
+    final name = rawName.isNotEmpty ? '${rawName[0].toUpperCase()}${rawName.substring(1)}' : rawName;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+      child: RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          text: '${_getGreeting()}, ',
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 24,
             fontWeight: FontWeight.w500,
             color: Color(0xFF6B7280),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          name,
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF1F2937),
             letterSpacing: -0.5,
+            
           ),
-          overflow: TextOverflow.ellipsis,
+          children: [
+            TextSpan(
+              text: name,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -245,60 +258,39 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 3,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF388E3C),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "${state.readCount} of ${state.concepts.length} today",
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF6B7280),
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                if (state.isPerfectDay)
-                  const Text(
-                    "Perfect day!",
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF388E3C),
-                    ),
-                  ),
-              ],
-            ),
-            if (state.isFallback) ...[
-              const SizedBox(height: 4),
-              const Text(
-                "Showing the latest available set",
-                style: TextStyle(fontSize: 11, color: Colors.orange),
-              ),
-            ],
-            const SizedBox(height: 12),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.only(bottom: 20),
+              child: PageView.builder(
+                clipBehavior: Clip.none,
+                controller: _pageController,
+                onPageChanged: (idx) {
+                  setState(() => _currentPage = idx);
+                },
                 itemCount: state.concepts.length,
                 itemBuilder: (context, index) {
                   final concept = state.concepts[index];
                   final isRead = state.readConceptIds.contains(concept.id);
-                  return ConceptCard(
-                    concept: concept,
-                    isRead: isRead,
-                    onMarkRead: () {
-                      ref.read(todayConceptsControllerProvider.notifier).markRead(concept.id);
-                    },
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 36, left: 4, right: 4, top: 4),
+                    child: ConceptFlipCard(
+                      concept: concept,
+                      isRead: isRead,
+                      isLastWord: index == state.concepts.length - 1,
+                      onMarkRead: () {
+                        ref.read(cardHintSeenProvider.notifier).markSeen();
+                        ref.read(todayConceptsControllerProvider.notifier).markRead(concept.id);
+                        
+                        Future.delayed(const Duration(milliseconds: 600), () {
+                          if (mounted && _pageController.hasClients) {
+                            if (index < state.concepts.length - 1) {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          }
+                        });
+                      },
+                    ),
                   );
                 },
               ),
@@ -371,3 +363,4 @@ class DotPatternPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
