@@ -238,4 +238,66 @@ void main() {
       expect(StreakEngine.quizStatus(log, sunday).type, QuizStatusType.completed);
     });
   });
+
+  group('HeatmapCell', () {
+    test('none: empty log and a day with no entry', () {
+      expect(StreakEngine.heatmapCell({}, '2026-10-10', 3), HeatmapCell.none);
+      expect(StreakEngine.heatmapCell({'2026-10-09': {}}, '2026-10-10', 3), HeatmapCell.none);
+    });
+
+    test('partial: a day with 1 concept read', () {
+      final log = {
+        '2026-10-10': {'concepts_read': ['c1']}
+      };
+      expect(StreakEngine.heatmapCell(log, '2026-10-10', 3), HeatmapCell.partial);
+    });
+
+    test('perfect: 3 concepts read (setSize 3), and NOT perfect with 2', () {
+      final log = {
+        '2026-10-10': {'concepts_read': ['c1', 'c2']},
+        '2026-10-11': {'concepts_read': ['c1', 'c2', 'c3']}
+      };
+      expect(StreakEngine.heatmapCell(log, '2026-10-10', 3), HeatmapCell.partial);
+      expect(StreakEngine.heatmapCell(log, '2026-10-11', 3), HeatmapCell.perfect);
+    });
+
+    test('re-read only: a day whose concepts were all read on an earlier day returns none', () {
+      final log = {
+        '2026-10-09': {'concepts_read': ['c1', 'c2']},
+        '2026-10-10': {'concepts_read': ['c1', 'c2']} // all already read
+      };
+      expect(StreakEngine.heatmapCell(log, '2026-10-10', 3), HeatmapCell.none);
+    });
+
+    test('quiz tier from stored tier, from missing tier (recomputed), and an invalid stored tier (recomputed)', () {
+      final log = {
+        '2026-10-10': {'quiz_score': 10, 'quiz_total': 10, 'quiz_tier': 'good'}, // forces 'good' via stored
+        '2026-10-11': {'quiz_score': 10, 'quiz_total': 10}, // recomputed -> excellent
+        '2026-10-12': {'quiz_score': 1, 'quiz_total': 10, 'quiz_tier': 'invalid'}, // recomputed -> failed
+      };
+      expect(StreakEngine.heatmapCell(log, '2026-10-10', 3), HeatmapCell.quizGood);
+      expect(StreakEngine.heatmapCell(log, '2026-10-11', 3), HeatmapCell.quizExcellent);
+      expect(StreakEngine.heatmapCell(log, '2026-10-12', 3), HeatmapCell.quizFailed);
+    });
+
+    test('quiz-only day returns the quiz cell, not none', () {
+      final log = {
+        '2026-10-10': {'quiz_score': 8, 'quiz_total': 10} // No concepts read
+      };
+      expect(StreakEngine.heatmapCell(log, '2026-10-10', 3), HeatmapCell.quizExcellent);
+    });
+
+    test('malformed entries return none and never throw', () {
+      final log = {
+        '2026-10-10': 'I am a string, not a map',
+        '2026-10-11': {'quiz_score': 'not a number'},
+        '2026-10-12': {'concepts_read': 'not a list'}
+      };
+      expect(() => StreakEngine.heatmapCell(log, '2026-10-10', 3), returnsNormally);
+      expect(StreakEngine.heatmapCell(log, '2026-10-10', 3), HeatmapCell.none);
+      expect(StreakEngine.heatmapCell(log, '2026-10-11', 3), HeatmapCell.none); 
+      // _hasValidQuizScore rejects non-num so it returns none
+      expect(StreakEngine.heatmapCell(log, '2026-10-12', 3), HeatmapCell.none);
+    });
+  });
 }

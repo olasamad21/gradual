@@ -200,6 +200,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
       return StreakHeatmapWidget(
         rawActivityLog: cachedUser.rawActivityLog,
         liveStreak: cachedUser.liveStreak,
+        today: DateTime.now(),
       );
     }
     if (userAsync.isLoading) {

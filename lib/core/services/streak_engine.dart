@@ -222,4 +222,51 @@ abstract final class StreakEngine {
     if (pct >= 0.3) return 'fair';
     return 'failed';
   }
+
+  static HeatmapCell heatmapCell(Map<String, dynamic> log, String dateId, int setSize) {
+    try {
+      final entry = log[dateId];
+      if (entry != null && _hasValidQuizScore(entry)) {
+        final rawTier = entry['quiz_tier'];
+        String tier;
+        if (rawTier is String && const ['excellent', 'good', 'fair', 'failed'].contains(rawTier)) {
+          tier = rawTier;
+        } else {
+          final score = (entry['quiz_score'] is num) ? (entry['quiz_score'] as num).toInt() : 0;
+          final total = (entry['quiz_total'] is num) ? (entry['quiz_total'] as num).toInt() : 0;
+          tier = quizTier(score, total);
+        }
+        
+        switch (tier) {
+          case 'excellent': return HeatmapCell.quizExcellent;
+          case 'good': return HeatmapCell.quizGood;
+          case 'fair': return HeatmapCell.quizFair;
+          default: return HeatmapCell.quizFailed;
+        }
+      }
+
+      if (isPerfectDay(log, dateId, setSize)) {
+        return HeatmapCell.perfect;
+      }
+
+      final counted = countedDays(log);
+      if (counted.contains(dateId)) {
+        return HeatmapCell.partial;
+      }
+    } catch (_) {
+      // Never throw on malformed data
+    }
+    
+    return HeatmapCell.none;
+  }
+}
+
+enum HeatmapCell {
+  none,
+  partial,
+  perfect,
+  quizExcellent,
+  quizGood,
+  quizFair,
+  quizFailed
 }

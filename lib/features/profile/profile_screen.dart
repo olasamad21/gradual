@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -215,6 +215,7 @@ class _ProfileBody extends ConsumerWidget {
                 child: StreakHeatmapWidget(
                   rawActivityLog: user.rawActivityLog,
                   liveStreak: user.liveStreak,
+                  today: DateTime.now(),
                 ),
               ),
               const SizedBox(height: 16),
