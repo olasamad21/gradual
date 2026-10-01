@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/services/streak_engine.dart';
+import '../../core/theme/streak_colors.dart';
+import '../../shared/widgets/streak_box.dart';
 
 class StreakHeatmapWidget extends StatelessWidget {
   const StreakHeatmapWidget({
@@ -19,28 +21,57 @@ class StreakHeatmapWidget extends StatelessWidget {
         '${date.day.toString().padLeft(2, '0')}';
   }
 
-  Color _colorForCell(HeatmapCell cell) {
-    switch (cell) {
-      case HeatmapCell.none: return const Color(0xFFEAECEF);
-      case HeatmapCell.partial: return const Color(0xFFC8E6C9);
-      case HeatmapCell.perfect: return const Color(0xFF388E3C);
-      case HeatmapCell.quizExcellent: return const Color(0xFF22C55E);
-      case HeatmapCell.quizGood: return const Color(0xFFF59E0B);
-      case HeatmapCell.quizFair: return const Color(0xFFF97316);
-      case HeatmapCell.quizFailed: return const Color(0xFFEF4444);
-    }
-  }
-
-  String _labelForCell(HeatmapCell cell) {
-    switch (cell) {
-      case HeatmapCell.none: return 'None';
-      case HeatmapCell.partial: return 'Partial';
-      case HeatmapCell.perfect: return 'Perfect';
-      case HeatmapCell.quizExcellent: return 'Excellent';
-      case HeatmapCell.quizGood: return 'Good';
-      case HeatmapCell.quizFair: return 'Fair';
-      case HeatmapCell.quizFailed: return 'Failed';
-    }
+  void _showInfoSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'What the boxes mean',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                for (final cell in HeatmapCell.values)
+                  if (cell != HeatmapCell.none)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Row(
+                        children: [
+                          StreakBox(cell: cell, size: 20),
+                          const SizedBox(width: 12),
+                          Text(
+                            StreakColors.labelFor(cell),
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                        ],
+                      ),
+                    ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Skipped days stay grey.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -60,11 +91,9 @@ class StreakHeatmapWidget extends StatelessWidget {
           (i) => DateTime(today.year, today.month, today.day - (totalDaysToShow - 1 - i)),
         );
 
-        final streakLabel = liveStreak == 0
-            ? 'No active streak'
-            : liveStreak == 1
-                ? '1 day streak'
-                : '$liveStreak day streak';
+        final streakLabel = liveStreak == 1
+            ? '1 day streak'
+            : '$liveStreak day streak';
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,13 +101,30 @@ class StreakHeatmapWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Recent Activity',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
+                Row(
+                  children: [
+                    const Text(
+                      'Streak Map',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    InkWell(
+                      onTap: () => _showInfoSheet(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: const Padding(
+                        padding: EdgeInsets.all(4.0),
+                        child: Icon(
+                          Icons.help_outline_rounded,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 Row(
                   children: [
@@ -105,20 +151,6 @@ class StreakHeatmapWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                _legendDot(const Color(0xFFEAECEF), 'None'),
-                _legendDot(const Color(0xFFC8E6C9), 'Partial'),
-                _legendDot(const Color(0xFF388E3C), 'Perfect', hasStar: true),
-                _legendDot(const Color(0xFFF97316), 'Fair'),
-                _legendDot(const Color(0xFFF59E0B), 'Good'),
-                _legendDot(const Color(0xFF22C55E), 'Excellent'),
-                _legendDot(const Color(0xFFEF4444), 'Failed'),
-              ],
-            ),
-            const SizedBox(height: 8),
             GridView.builder(
               shrinkWrap: true,
               padding: EdgeInsets.zero,
@@ -135,29 +167,19 @@ class StreakHeatmapWidget extends StatelessWidget {
                 final key = _formatDateKey(date);
                 
                 final cellState = StreakEngine.heatmapCell(rawActivityLog, key, 3);
-                final color = _colorForCell(cellState);
                 final isToday = key == _formatDateKey(today);
                 
-                final labelStr = '$key — ${_labelForCell(cellState)}';
+                final labelStr = '$key - ${StreakColors.labelFor(cellState)}';
 
                 return Tooltip(
                   message: labelStr,
                   child: Semantics(
                     label: labelStr,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(3),
-                        border: Border.all(
-                          color: isToday
-                              ? const Color(0xFF388E3C)
-                              : const Color(0x0D000000), // Colors.black.withValues(alpha: 0.05)
-                          width: isToday ? 1.5 : 1,
-                        ),
-                      ),
-                      child: cellState == HeatmapCell.perfect 
-                          ? const Icon(Icons.star_rounded, size: 10, color: Colors.white) 
-                          : null,
+                    child: StreakBox(
+                      cell: cellState,
+                      size: boxSize,
+                      isToday: isToday,
+                      animate: false,
                     ),
                   ),
                 );
@@ -166,38 +188,6 @@ class StreakHeatmapWidget extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-
-  Widget _legendDot(Color color, String label, {bool hasStar = false}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-            border: Border.all(
-              color: const Color(0x14000000), // Colors.black.withValues(alpha: 0.08)
-              width: 1,
-            ),
-          ),
-          child: hasStar
-              ? const Icon(Icons.star_rounded, size: 6, color: Colors.white)
-              : null,
-        ),
-        const SizedBox(width: 3),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 9,
-            color: Color(0xFF9CA3AF),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }
