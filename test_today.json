@@ -1,0 +1,96 @@
+{
+  "field": "software_engineering",
+  "concepts": [
+    {
+      "id": "process",
+      "term": "Process",
+      "category": "operating-systems",
+      "level": "beginner",
+      "definition": "A process is a running instance of a program, with its own private memory space and system resources. The operating system isolates processes from each other, so one crashing process usually does not corrupt another. Every app you open on your computer or phone runs as at least one process.",
+      "analogy": "A separate kitchen in its own building: it has its own stove, fridge and ingredients, and the cook inside cannot touch anything in the other kitchens.",
+      "real_world_example": "Google Chrome typically runs browser tabs in separate processes, so when one misbehaving tab crashes, the others keep working.",
+      "confused_with": "Program: a program is the file stored on disk, while a process is that program actively running in memory. Opening the same app twice creates two processes from one program.",
+      "related": [
+        "thread",
+        "context-switching"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You open a messaging app on your laptop. What does the operating system create to run it?",
+        "options": [
+          "A program: a stored file that gets copied each time you click",
+          "A thread that shares memory with every other app on the machine",
+          "A process: a running instance of the app with its own memory space",
+          "A compiler that translates the app again on every launch"
+        ],
+        "answer_index": 2,
+        "explanation": "A process is a running instance of a program with its own memory. The program itself is just the stored file."
+      }
+    },
+    {
+      "id": "thread",
+      "term": "Thread",
+      "category": "operating-systems",
+      "level": "beginner",
+      "definition": "A thread is the smallest unit of execution the operating system can schedule, and it lives inside a process. Threads in the same process share that process's memory, which makes communication fast but also risky. A single process can run many threads to do several things at once, such as loading data while keeping the screen responsive.",
+      "analogy": "Several cooks working in the same kitchen: they share the same stove and ingredients, so they cooperate quickly, but they can also get in each other's way.",
+      "real_world_example": "A music app uses one thread to play audio, another to download the next song, and another to keep the buttons responsive on screen.",
+      "confused_with": "Process: processes have separate memory and are isolated, while threads inside one process share memory. That sharing is why threads are faster to coordinate but easier to break.",
+      "related": [
+        "process",
+        "race-condition",
+        "concurrency-vs-parallelism"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A video editor must export a file without freezing its interface. Which design fits best?",
+        "options": [
+          "Run the export on a background thread so the interface thread stays free",
+          "Pause all button clicks until the export has completely finished",
+          "Start a second operating system to perform the export work",
+          "Recompile the editor each time the user clicks the export button"
+        ],
+        "answer_index": 0,
+        "explanation": "Threads let one process do several things at once, so the heavy export runs apart from the thread that keeps the screen responsive."
+      }
+    },
+    {
+      "id": "concurrency-vs-parallelism",
+      "term": "Concurrency vs Parallelism",
+      "category": "concurrency",
+      "level": "beginner",
+      "definition": "Two related ideas: concurrency means handling several tasks whose execution overlaps in time, while parallelism means running several tasks at the exact same instant on multiple processors. A single-core machine can be concurrent by switching quickly between tasks, but it cannot be parallel. Concurrency is a way of structuring a program, whereas parallelism is a way of running it faster on suitable hardware.",
+      "analogy": "One barista juggling several orders by switching between them is concurrent. Two baristas each making a drink at the same moment is parallel.",
+      "real_world_example": "A single-core phone plays music while downloading a file by switching rapidly between the two jobs, whereas a video render split across eight CPU cores runs in parallel.",
+      "confused_with": "Multithreading: using several threads does not guarantee parallelism, because on a single core the threads simply take turns.",
+      "related": [
+        "thread",
+        "context-switching",
+        "asynchronous-programming"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A server with one CPU core serves thousands of users by rapidly switching between their requests. What is this?",
+        "options": [
+          "Parallelism, because many users are being served at the same moment",
+          "Neither, because one core can only ever handle a single request",
+          "Parallelism, because switching quickly is identical to running simultaneously",
+          "Concurrency without parallelism: tasks overlap but never run at the same instant"
+        ],
+        "answer_index": 3,
+        "explanation": "Overlapping tasks on one core is concurrency. True parallelism needs multiple cores running work at the same instant."
+      }
+    }
+  ],
+  "daily_sets": [
+    {
+      "date": "2026-10-01",
+      "theme": "Concurrency",
+      "concept_ids": [
+        "process",
+        "thread",
+        "concurrency-vs-parallelism"
+      ]
+    }
+  ]
+}
