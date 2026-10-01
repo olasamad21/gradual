@@ -13,10 +13,10 @@ import 'quiz_result_cache_provider.dart';
 const int quizMaxQuestions = 10;
 const int quizMinConcepts = 5; // Configured minimum to unlock quiz
 
-final todayProvider = Provider<DateTime>((ref) => DateTime.now());
+final todayProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 final completedQuizResultProvider = FutureProvider.autoDispose<CompletedQuizResult?>((ref) async {
-  final today = ref.watch(todayProvider);
+  final today = ref.watch(todayProvider)();
   final user = await ref.watch(appUserProvider.future);
   if (user == null) return null;
 
@@ -29,7 +29,7 @@ final completedQuizResultProvider = FutureProvider.autoDispose<CompletedQuizResu
   final score = (entry['quiz_score'] is num) ? (entry['quiz_score'] as num).toInt() : 0;
   final total = (entry['quiz_total'] is num) ? (entry['quiz_total'] as num).toInt() : 0;
   
-  String tier = 'bronze';
+  final String tier;
   final rawTier = entry['quiz_tier'];
   if (rawTier is String && const ['excellent', 'good', 'fair', 'failed'].contains(rawTier)) {
     tier = rawTier;
@@ -224,11 +224,7 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
         return QuizSaveResult.alreadyTaken;
       }
 
-      double pct = total == 0 ? 0 : score / total;
-      String tier = 'failed';
-      if (pct >= 0.8) { tier = 'excellent'; }
-      else if (pct >= 0.5) { tier = 'good'; }
-      else if (pct >= 0.3) { tier = 'fair'; }
+      final tier = StreakEngine.quizTier(score, total);
 
       final repo = ref.read(userRepositoryProvider);
       final result = await repo.saveQuizScore(

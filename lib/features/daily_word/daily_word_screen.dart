@@ -12,7 +12,6 @@ import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../streak/streak_heatmap_widget.dart';
 import '../streak/streak_success_modal.dart';
-import '../quiz/quiz_result_cache_provider.dart';
 import '../quiz/quiz_providers.dart';
 import 'concept_card.dart';
 import 'today_concepts_controller.dart';
