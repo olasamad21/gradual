@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/app_rules.dart';
@@ -6,6 +6,7 @@ import '../errors/firestore_errors.dart';
 import '../utils/date_utils.dart';
 import '../../features/quiz/quiz_models.dart';
 import '../models/user_model.dart';
+import '../services/streak_engine.dart';
 
 class UserRepository {
   UserRepository(this._firestore);
@@ -63,15 +64,9 @@ class UserRepository {
         final rawLog = data['activity_log'] as Map<String, dynamic>? ?? {};
 
         final submitDate = DateUtilsGradual.dateFromId(dateId);
-        final weekStart = submitDate.subtract(Duration(days: submitDate.weekday - 1));
-
-        for (int i = 0; i < 7; i++) {
-          final d = weekStart.add(Duration(days: i));
-          final id = DateUtilsGradual.localDateId(d);
-          final entry = rawLog[id] as Map<String, dynamic>?;
-          if (entry != null && entry.containsKey('quiz_score')) {
-            return QuizSaveResult.alreadyTaken;
-          }
+        
+        if (StreakEngine.quizTakenThisWeek(rawLog, submitDate)) {
+          return QuizSaveResult.alreadyTaken;
         }
 
         transaction.update(docRef, {

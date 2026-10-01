@@ -13,19 +13,29 @@ import 'quiz_result_cache_provider.dart';
 const int quizMaxQuestions = 10;
 const int quizMinConcepts = 5; // Configured minimum to unlock quiz
 
-final completedQuizResultProvider = FutureProvider.family<CompletedQuizResult?, DateTime>((ref, today) async {
+final todayProvider = Provider<DateTime>((ref) => DateTime.now());
+
+final completedQuizResultProvider = FutureProvider.autoDispose<CompletedQuizResult?>((ref) async {
+  final today = ref.watch(todayProvider);
   final user = await ref.watch(appUserProvider.future);
   if (user == null) return null;
 
   final sessionDateId = StreakEngine.quizDateIdInWeek(user.rawActivityLog, today);
   if (sessionDateId == null) return null;
 
-  final entry = user.rawActivityLog[sessionDateId] as Map<String, dynamic>?;
-  if (entry == null) return null;
+  final entry = user.rawActivityLog[sessionDateId];
+  if (entry is! Map) return null;
 
-  final score = (entry['quiz_score'] as num?)?.toInt() ?? 0;
-  final total = (entry['quiz_total'] as num?)?.toInt() ?? 0;
-  final tier = entry['quiz_tier'] as String? ?? 'bronze';
+  final score = (entry['quiz_score'] is num) ? (entry['quiz_score'] as num).toInt() : 0;
+  final total = (entry['quiz_total'] is num) ? (entry['quiz_total'] as num).toInt() : 0;
+  
+  String tier = 'bronze';
+  final rawTier = entry['quiz_tier'];
+  if (rawTier is String && const ['excellent', 'good', 'fair', 'failed'].contains(rawTier)) {
+    tier = rawTier;
+  } else {
+    tier = StreakEngine.quizTier(score, total);
+  }
 
   final answers = await ref.read(quizResultCacheProvider).loadAnswers(sessionDateId);
 

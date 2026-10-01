@@ -134,14 +134,20 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                 ElevatedButton(
                   onPressed: () async {
                     if (buttonState.isCompleted) {
-                      final result = await ref.read(completedQuizResultProvider(DateTime.now()).future);
-                      if (result != null && context.mounted) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => QuizResultScreen(result: result),
-                          ),
-                        );
+                      final result = await ref.read(completedQuizResultProvider.future);
+                      if (context.mounted) {
+                        if (result != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => QuizResultScreen(result: result),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Couldn't load your results. Please try again.")),
+                          );
+                        }
                       }
                       return;
                     }

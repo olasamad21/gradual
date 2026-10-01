@@ -128,22 +128,44 @@ void main() {
   });
 
   group('StreakEngine Weekly Math & Quiz', () {
-    test('quizDateIdInWeek behavior', () {
+    test('quizDateIdInWeek - no quiz', () {
       final today = DateTime(2026, 10, 11); // Sunday
-      // No quiz -> null
       expect(StreakEngine.quizDateIdInWeek({}, today), null);
+    });
 
-      // Quiz Saturday -> Saturday's id
+    test('quizDateIdInWeek - Saturday seen from Sunday', () {
+      final today = DateTime(2026, 10, 11);
       final logSat = {'2026-10-10': {'quiz_score': 5}};
       expect(StreakEngine.quizDateIdInWeek(logSat, today), '2026-10-10');
+    });
 
-      // Quiz previous week -> null
+    test('quizDateIdInWeek - previous week', () {
+      final today = DateTime(2026, 10, 11);
       final logPrev = {'2026-10-04': {'quiz_score': 5}}; // previous Sunday
       expect(StreakEngine.quizDateIdInWeek(logPrev, today), null);
+    });
 
-      // Malformed entries don't throw
-      final logMalformed = {'2026-10-10': 'not a map', '2026-10-09': {'quiz_score': 10}};
-      expect(StreakEngine.quizDateIdInWeek(logMalformed, today), '2026-10-09');
+    test('quizDateIdInWeek - malformed', () {
+      final today = DateTime(2026, 10, 11);
+      // quiz_score null does not count
+      final logMalformed = {'2026-10-10': 'not a map', '2026-10-09': {'quiz_score': null}, '2026-10-08': {'quiz_score': 10}};
+      expect(StreakEngine.quizDateIdInWeek(logMalformed, today), '2026-10-08');
+    });
+
+    test('quizTakenThisWeek is consistent with quizDateIdInWeek', () {
+      final today = DateTime(2026, 10, 11);
+      final logs = <Map<String, dynamic>>[
+        {},
+        {'2026-10-10': {'quiz_score': 5}},
+        {'2026-10-04': {'quiz_score': 5}},
+        {'2026-10-10': 'not a map', '2026-10-09': {'quiz_score': null}, '2026-10-08': {'quiz_score': 10}}
+      ];
+      for (final log in logs) {
+        expect(
+          StreakEngine.quizTakenThisWeek(log, today),
+          StreakEngine.quizDateIdInWeek(log, today) != null,
+        );
+      }
     });
 
     test('weekStartId for each weekday incl. Sunday', () {

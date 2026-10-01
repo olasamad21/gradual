@@ -173,6 +173,11 @@ abstract final class StreakEngine {
     return AppRules.quizWindowWeekdays.contains(today.weekday);
   }
 
+  static bool _hasValidQuizScore(dynamic entry) {
+    if (entry is! Map) return false;
+    return entry['quiz_score'] is num || entry['score'] is num;
+  }
+
   static String? quizDateIdInWeek(Map<String, dynamic> log, DateTime today) {
     final local = DateTime(today.year, today.month, today.day);
     final daysSinceMonday = local.weekday - 1;
@@ -181,11 +186,8 @@ abstract final class StreakEngine {
     for (int i = 0; i < 7; i++) {
       final d = DateTime(monday.year, monday.month, monday.day + i);
       final id = _dateId(d);
-      final entry = log[id];
-      if (entry is Map) {
-        if (entry['quiz_score'] != null || entry['score'] != null) {
-          return id;
-        }
+      if (_hasValidQuizScore(log[id])) {
+        return id;
       }
     }
     return null;
@@ -211,5 +213,13 @@ abstract final class StreakEngine {
     }
 
     return const QuizStatus(QuizStatusType.available);
+  }
+  static String quizTier(int score, int total) {
+    if (total <= 0) return 'failed';
+    final pct = score / total;
+    if (pct >= 0.8) return 'excellent';
+    if (pct >= 0.5) return 'good';
+    if (pct >= 0.3) return 'fair';
+    return 'failed';
   }
 }
