@@ -36,6 +36,7 @@ void main() {
                 concept: concept,
                 isRead: isRead,
                 isLastWord: isLastWord,
+                index: 0,
                 onMarkRead: onMarkRead ?? () {},
               ),
             ),
