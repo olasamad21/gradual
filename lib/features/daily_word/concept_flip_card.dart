@@ -1,17 +1,20 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/models/concept_model.dart';
+import '../../shared/widgets/marquee_expandable_box.dart';
 
 class ConceptFlipCard extends StatefulWidget {
   const ConceptFlipCard({
     super.key,
     required this.concept,
+    required this.index,
     required this.isRead,
     required this.isLastWord,
     required this.onMarkRead,
   });
 
   final Concept concept;
+  final int index;
   final bool isRead;
   final bool isLastWord;
   final VoidCallback onMarkRead;
@@ -79,22 +82,53 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Word chip
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF388E3C).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'WORD OF THE DAY',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF388E3C),
-                    letterSpacing: 1.0,
+              // Word chip header row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF388E3C).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'WORDS OF THE DAY',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF388E3C),
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 16,
+                          height: 16,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF388E3C),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  if (widget.index == 0) const SwipeHintAnimation(),
+                ],
               ),
               const SizedBox(height: 14),
 
@@ -238,26 +272,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
 
                       if (showExample) ...[
                         _buildSectionHeader('Real World Example'),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1A1A2E),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Text(
-                              widget.concept.realWorldExample,
-                              style: const TextStyle(
-                                fontFamily: 'monospace',
-                                color: Color(0xFFE2E8F0),
-                                fontSize: 13,
-                                height: 1.6,
-                              ),
-                            ),
-                          ),
-                        ),
+                        MarqueeExpandableBox(text: widget.concept.realWorldExample),
                         const SizedBox(height: 16),
                       ],
 
@@ -327,7 +342,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                             disabledForegroundColor: Colors.grey.shade600,
                           ),
                           child: Text(
-                            widget.isRead ? 'Got it ✓' : 'Got it',
+                            widget.isRead ? 'Got it âœ“' : 'Got it',
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -417,3 +432,63 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
     );
   }
 }
+
+
+
+
+class SwipeHintAnimation extends StatefulWidget {
+  const SwipeHintAnimation({super.key});
+
+  @override
+  State<SwipeHintAnimation> createState() => _SwipeHintAnimationState();
+}
+
+class _SwipeHintAnimationState extends State<SwipeHintAnimation> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) return const SizedBox.shrink();
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = _controller.value;
+        final offsetX = 10.0 - (t * 20.0);
+        double opacity = 1.0;
+        if (t < 0.2) opacity = t / 0.2;
+        if (t > 0.8) opacity = (1.0 - t) / 0.2;
+
+        return Transform.translate(
+          offset: Offset(offsetX, 0),
+          child: Opacity(
+            opacity: opacity,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.keyboard_double_arrow_left_rounded, color: const Color(0xFF388E3C).withValues(alpha: 0.8), size: 28),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+

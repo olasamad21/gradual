@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,11 +8,11 @@ import '../../core/firebase/firebase_providers.dart';
 import '../../core/models/user_model.dart';
 import '../../shared/widgets/firestore_permission_widget.dart';
 import '../../shared/widgets/loading_indicator.dart';
-import '../../shared/widgets/primary_button.dart';
-import '../../shared/widgets/app_shell.dart';
+
+
 import '../streak/streak_heatmap_widget.dart';
 
-import '../quiz/quiz_providers.dart';
+
 import 'concept_flip_card.dart';
 import 'today_concepts_controller.dart';
 import '../streak/streak_providers.dart';
@@ -26,7 +26,7 @@ class DailyWordScreen extends ConsumerStatefulWidget {
 
 class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
   final PageController _pageController = PageController();
-  int _currentPage = 0;
+  
 
   @override
   void dispose() {
@@ -263,7 +263,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
                 clipBehavior: Clip.none,
                 controller: _pageController,
                 onPageChanged: (idx) {
-                  setState(() => _currentPage = idx);
+                  
                 },
                 itemCount: state.concepts.length,
                 itemBuilder: (context, index) {
@@ -273,6 +273,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
                     padding: const EdgeInsets.only(bottom: 36, left: 4, right: 4, top: 4),
                     child: ConceptFlipCard(
                       concept: concept,
+                      index: index,
                       isRead: isRead,
                       isLastWord: index == state.concepts.length - 1,
                       onMarkRead: () {
@@ -295,21 +296,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 20),
-            Consumer(
-              builder: (context, ref, _) {
-                final quizState = ref.watch(quizButtonStateProvider(DateTime.now()));
-                return PrimaryButton(
-                  label: quizState.label,
-                  onPressed: quizState.isEnabled
-                      ? () {
-                          ref.read(appShellTabProvider.notifier).state = 1;
-                        }
-                      : null,
-                );
-              },
-            ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 8),
           ],
         );
       },
