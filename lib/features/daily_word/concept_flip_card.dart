@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/models/concept_model.dart';
+import '../../core/theme/word_colors.dart';
 class ConceptFlipCard extends StatefulWidget {
   const ConceptFlipCard({
     super.key,
@@ -85,46 +86,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF388E3C).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'WORDS OF THE DAY',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF388E3C),
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          width: 16,
-                          height: 16,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF388E3C),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _WordIndexPill(index: widget.index, isRead: widget.isRead),
                   if (widget.index == 0) const SwipeHintAnimation(),
                 ],
               ),
@@ -194,12 +156,6 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               ),
             ],
           ),
-          if (widget.isRead)
-            Positioned(
-              top: -8,
-              right: -8,
-              child: Icon(Icons.check_circle_rounded, color: Colors.green.shade400, size: 28),
-            ),
         ],
       ),
     );
@@ -233,6 +189,8 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _WordIndexPill(index: widget.index, isRead: widget.isRead),
+              const SizedBox(height: 16),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -374,12 +332,6 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               ),
             ],
           ),
-          if (widget.isRead)
-            Positioned(
-              top: -8,
-              right: -8,
-              child: Icon(Icons.check_circle_rounded, color: Colors.green.shade400, size: 28),
-            ),
         ],
       ),
     );
@@ -488,6 +440,77 @@ class _SwipeHintAnimationState extends State<SwipeHintAnimation> with SingleTick
           ),
         );
       },
+    );
+  }
+}
+
+class _WordIndexPill extends StatelessWidget {
+  const _WordIndexPill({
+    required this.index,
+    required this.isRead,
+  });
+
+  final int index;
+  final bool isRead;
+
+  @override
+  Widget build(BuildContext context) {
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    final color = isRead ? doneGreen : wordColor(index);
+    final bgColor = color.withValues(alpha: 0.10);
+
+    return Semantics(
+      label: 'Word ${index + 1} of 3, ${isRead ? 'read' : 'not read yet'}',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'WORDS OF THE DAY',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: color,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) => ScaleTransition(
+                    scale: animation,
+                    child: FadeTransition(opacity: animation, child: child),
+                  ),
+                  child: isRead
+                      ? const Icon(Icons.check, key: ValueKey('check'), color: Colors.white, size: 12)
+                      : Text(
+                          '${index + 1}',
+                          key: const ValueKey('number'),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

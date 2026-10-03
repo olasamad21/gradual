@@ -167,5 +167,71 @@ void main() {
 
     expect(find.text(longText), findsOneWidget);
   });
+
+  testWidgets('Pill shows numbers 1, 2, 3 for index 0, 1, 2 when unread', (WidgetTester tester) async {
+    for (int i = 0; i < 3; i++) {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: ConceptFlipCard(
+            concept: testConcept,
+            index: i,
+            isRead: false,
+            isLastWord: false,
+            onMarkRead: () {},
+          ),
+        ),
+      ));
+      expect(find.text('${i + 1}'), findsWidgets);
+      expect(find.byIcon(Icons.check), findsNothing);
+    }
+  });
+
+  testWidgets('Pill swapping to check on Got it tap (and tests back face presence)', (WidgetTester tester) async {
+    await tester.pumpWidget(buildTestCard(concept: testConcept, isRead: false));
+    expect(find.text('1'), findsWidgets);
+    
+    // Tap card to flip to back face
+    await tester.tap(find.text('State'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+    
+    // Pill is present on back face (1 is still there)
+    expect(find.text('1'), findsWidgets);
+    
+    // Tap Got it. Real app rebuilds with isRead: true
+    await tester.tap(find.text('Got it'));
+    await tester.pump();
+    await tester.pumpWidget(buildTestCard(concept: testConcept, isRead: true));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+    
+    // Check icon is present, number is gone
+    expect(find.byIcon(Icons.check), findsWidgets);
+    expect(find.text('1'), findsNothing);
+  });
+
+  testWidgets('Pill built with isRead true shows check instantly', (WidgetTester tester) async {
+    await tester.pumpWidget(buildTestCard(concept: testConcept, isRead: true));
+    expect(find.byIcon(Icons.check), findsWidgets);
+    expect(find.text('1'), findsNothing);
+  });
+
+  testWidgets('Pill swap happens instantly with disableAnimations', (WidgetTester tester) async {
+    await tester.pumpWidget(buildTestCard(concept: testConcept, isRead: false, disableAnimations: true));
+    expect(find.text('1'), findsWidgets);
+    
+    await tester.tap(find.text('State'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+    
+    await tester.tap(find.text('Got it'));
+    await tester.pump();
+    await tester.pumpWidget(buildTestCard(concept: testConcept, isRead: true, disableAnimations: true));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+    
+    expect(find.byIcon(Icons.check), findsWidgets);
+    expect(find.text('1'), findsNothing);
+  });
 }
 
