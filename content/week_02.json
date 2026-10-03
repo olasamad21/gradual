@@ -1,0 +1,636 @@
+{
+  "field": "software_engineering",
+  "concepts": [
+    {
+      "id": "client-server-model",
+      "term": "Client-Server Model",
+      "category": "networking",
+      "level": "beginner",
+      "definition": "A client-server model splits a networked system into two roles: clients that ask for something and servers that listen and answer. The client is usually a browser or app on your device, and the server is a computer that stores data or runs logic. One server typically handles requests from many clients at once.",
+      "analogy": "A restaurant. Customers place orders, and the kitchen prepares and returns them. One kitchen serves many tables, and customers never walk in and cook.",
+      "real_world_example": "When you open Instagram, the app on your phone is the client. It requests your feed from Instagram's servers, which send back posts and photos.",
+      "confused_with": "Peer-to-peer: in peer-to-peer systems every device can both ask and answer, with no central server in charge, as in classic file-sharing networks.",
+      "related": [
+        "http",
+        "api",
+        "dns"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Your banking app shows your balance after contacting the bank's computers. Which role does your phone play?",
+        "options": [
+          "Server: it stores the balance and answers the bank's requests",
+          "Client: it sends a request and waits for the server's reply",
+          "Router: it forwards the balance between networks without reading it",
+          "Database: it keeps every customer's balance permanently"
+        ],
+        "answer_index": 1,
+        "explanation": "The phone asks and the bank's server answers. The side that asks is the client."
+      }
+    },
+    {
+      "id": "ip-address",
+      "term": "IP Address",
+      "category": "networking",
+      "level": "beginner",
+      "definition": "An IP address is a number that identifies a device on a network so other devices know where to send data. Every device that talks over the internet needs one, and routers use it to forward packets toward the right destination. Home networks often give each device a private address that can change over time.",
+      "analogy": "A postal address for a building. A letter with the right address finds its way through many sorting offices to the correct door.",
+      "real_world_example": "When you load a website, your request carries your public address so the reply can find its way back to your phone or laptop.",
+      "confused_with": "Domain name: an IP address is the numeric location, while a domain name like example.com is the human-friendly label that DNS translates into it.",
+      "related": [
+        "dns",
+        "client-server-model"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A router receives a packet and must decide where to send it next. What does it read to decide?",
+        "options": [
+          "The title of the web page being requested",
+          "The username of the person who sent it",
+          "The color theme of the app that created it",
+          "The destination IP address on the packet"
+        ],
+        "answer_index": 3,
+        "explanation": "Routers forward packets using the destination IP address, much like a post office reads a street address."
+      }
+    },
+    {
+      "id": "dns",
+      "term": "DNS",
+      "category": "networking",
+      "level": "beginner",
+      "definition": "The Domain Name System, or DNS, translates human-friendly names like example.com into the IP addresses computers use to find each other. When you type a web address, your device asks a DNS server to look up the matching number before it can connect. Results are cached for a while so repeated lookups are fast.",
+      "analogy": "A phone book for the internet. You look up a friend's name to get a number, so you never have to memorize the numbers yourself.",
+      "real_world_example": "Typing a site name into your browser triggers a DNS lookup first, and only then does your phone connect to the server's IP address.",
+      "confused_with": "IP address: DNS is the lookup service, while the IP address is the answer it returns.",
+      "related": [
+        "ip-address",
+        "caching",
+        "client-server-model"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A site moves to a new server with a new IP address, yet visitors still reach it using the same name. What makes this possible?",
+        "options": [
+          "DNS records are updated so the name points to the new address",
+          "Every visitor's phone is manually reconfigured by the site owner",
+          "The old IP address is transferred to the new server automatically",
+          "Browsers guess the new address from the site's page title"
+        ],
+        "answer_index": 0,
+        "explanation": "The name stays the same while DNS maps it to whichever address the owner currently uses."
+      }
+    },
+    {
+      "id": "http",
+      "term": "HTTP",
+      "category": "web",
+      "level": "beginner",
+      "definition": "The Hypertext Transfer Protocol (HTTP) is the set of rules browsers and servers follow to exchange web pages and data. A client sends a request and the server sends back a response, and each message has a header with details and often a body with content. By itself HTTP is not encrypted, so anyone on the network path could read the messages.",
+      "analogy": "The etiquette of a formal letter exchange. Both sides know the format: who it is from, what is requested, and how the reply will be laid out.",
+      "real_world_example": "Opening a news site sends an HTTP request for the page, and the server replies with the HTML, images and styles your browser draws.",
+      "confused_with": "HTML: HTTP is the delivery protocol, while HTML is the language of the page being delivered.",
+      "related": [
+        "https-tls",
+        "http-methods",
+        "status-codes"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A browser needs a page from a server it has never contacted. How does HTTP structure the exchange?",
+        "options": [
+          "The server pushes pages to every device on the network unasked",
+          "Both sides stream data at once with no request or reply",
+          "The client sends a request and the server sends back a response",
+          "A router decides what the page contains before delivery"
+        ],
+        "answer_index": 2,
+        "explanation": "HTTP is request and response: the client asks, the server answers."
+      }
+    },
+    {
+      "id": "https-tls",
+      "term": "HTTPS and TLS",
+      "category": "security",
+      "level": "intermediate",
+      "definition": "When a site uses HTTPS, its HTTP traffic travels through an encrypted connection set up with TLS, Transport Layer Security. Encryption stops people on the network from reading or changing the data, and a certificate lets the browser check it is talking to the real site. This is why login pages and online payments should always use HTTPS.",
+      "analogy": "Sending a letter in a locked box instead of a postcard. Postal workers can see the box but not what is inside, and the seal shows who sent it.",
+      "real_world_example": "When you pay on an online store, HTTPS encrypts your card details between your browser and the store, so someone on shared coffee-shop Wi-Fi cannot read them.",
+      "confused_with": "A safe website: HTTPS protects data in transit, but a scam site can have HTTPS too, so the padlock does not prove the site is honest.",
+      "related": [
+        "http",
+        "authentication-vs-authorization",
+        "cookies"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You log in to a site over public Wi-Fi. Which feature stops someone nearby from reading your password in transit?",
+        "options": [
+          "A longer domain name that is harder to guess",
+          "DNS, which hides your password inside the lookup",
+          "A CDN, which stores your password closer to you",
+          "HTTPS, which encrypts the traffic between browser and server"
+        ],
+        "answer_index": 3,
+        "explanation": "TLS encrypts the connection, so eavesdroppers on the same network see only scrambled data."
+      }
+    },
+    {
+      "id": "cookies",
+      "term": "Cookies",
+      "category": "web",
+      "level": "beginner",
+      "definition": "A cookie is a small piece of data a website asks your browser to store and send back with later requests. Sites use cookies to remember who you are, such as keeping you logged in or holding items in a cart. Because they can also track browsing across visits, browsers let you control or delete them.",
+      "analogy": "A cloakroom ticket. You hand over a coat and receive a numbered ticket, and showing it later tells the attendant which coat is yours.",
+      "real_world_example": "After you log in to an online store, a cookie lets the site recognize you on the next page, so your cart is still there when you add another item.",
+      "confused_with": "Cache: a cookie stores small facts about you for the server to read, while a cache stores copies of files so pages load faster.",
+      "related": [
+        "http",
+        "caching",
+        "authentication-vs-authorization"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A shop's website remembers your cart after you close the tab and return later. Which mechanism most likely does this?",
+        "options": [
+          "Your router keeping a list of all pages you visited",
+          "A cookie stored by your browser and sent back with each request",
+          "The server guessing your identity from your screen size",
+          "A DNS record that stores your shopping list"
+        ],
+        "answer_index": 1,
+        "explanation": "The browser keeps a small identifier and sends it back, so the server can recognize you."
+      }
+    },
+    {
+      "id": "api",
+      "term": "API",
+      "category": "backend",
+      "level": "beginner",
+      "definition": "An API, or application programming interface, is a defined way for one piece of software to ask another for data or actions. It lists what you can request, what to send, and what you will get back, without exposing how the work is done inside. Most modern apps rely on APIs to use maps, payments, weather and login services built by others.",
+      "analogy": "A waiter in a restaurant. You tell the waiter what you want, the waiter talks to the kitchen and brings your food, and you never walk into the kitchen yourself.",
+      "real_world_example": "A ride-hailing app asks a maps service's API for a route and a payment provider's API to charge your card, rather than building those systems itself.",
+      "confused_with": "User interface: a UI is how people interact with software, while an API is how software interacts with other software.",
+      "related": [
+        "rest",
+        "json",
+        "client-server-model"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A food delivery app shows live weather without running its own weather stations. What lets it do this?",
+        "options": [
+          "It copies the weather service's whole database onto each phone",
+          "It asks the phone's battery sensor to measure the rain",
+          "It requests the data from a weather service's API",
+          "It reads the weather from the user's DNS settings"
+        ],
+        "answer_index": 2,
+        "explanation": "An API lets one program request data from another without knowing how it is produced."
+      }
+    },
+    {
+      "id": "rest",
+      "term": "REST",
+      "category": "backend",
+      "level": "intermediate",
+      "definition": "Representational State Transfer, or REST, is a style for designing web APIs around resources, such as users or orders, each with its own URL. Clients use standard HTTP methods like GET and POST to read or change those resources, and each request carries everything the server needs, so the server keeps no memory of earlier requests. Following these conventions makes APIs predictable and easy to cache.",
+      "analogy": "A library catalog. Every book has its own reference number, and you use the same few actions, like borrow or return, on any book you pick.",
+      "real_world_example": "A to-do app might expose /tasks to list tasks and /tasks/7 for one task, using GET to read it and DELETE to remove it.",
+      "confused_with": "API: every REST service is an API, but not every API follows REST. Some use other styles, such as GraphQL or RPC.",
+      "related": [
+        "api",
+        "http-methods",
+        "json"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A service uses GET /orders/42 to fetch one order and DELETE /orders/42 to remove it. Which design idea is this?",
+        "options": [
+          "REST: a resource has its own URL and standard methods act on it",
+          "Caching: the server stores a copy of order 42 in memory",
+          "Load balancing: orders are spread across several servers",
+          "Encryption: order data is scrambled before it is sent"
+        ],
+        "answer_index": 0,
+        "explanation": "One URL per resource plus standard HTTP methods is the core of REST."
+      }
+    },
+    {
+      "id": "json",
+      "term": "JSON",
+      "category": "data",
+      "level": "beginner",
+      "definition": "Short for JavaScript Object Notation, JSON is a lightweight text format for sending structured data, made of named values, lists and nested objects. People can read it easily and almost every programming language can parse it. Web APIs use it more than any other format to carry data between clients and servers.",
+      "analogy": "A filled-in form. Each field has a label and a value, and fields can contain smaller forms, so the receiver knows what each piece of information means.",
+      "real_world_example": "A weather API replies with JSON holding the city name, temperature and a list of hourly forecasts, which the app turns into the screen you see.",
+      "confused_with": "A database: JSON is a way to write data down as text for transport, while a database is a system that stores and queries large amounts of data.",
+      "related": [
+        "api",
+        "rest",
+        "http"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "An app receives a city name, a temperature and a list of hourly values from a server, all written as readable text with labels. Which format is most likely?",
+        "options": [
+          "A compiled program that the phone must execute",
+          "JSON, a text format of labeled values and lists",
+          "An encrypted image of the weather map",
+          "A DNS record describing the server's location"
+        ],
+        "answer_index": 1,
+        "explanation": "Labeled values and lists written as text describe JSON."
+      }
+    },
+    {
+      "id": "http-methods",
+      "term": "HTTP Methods",
+      "category": "web",
+      "level": "beginner",
+      "definition": "Methods are the verbs of an HTTP request, telling the server what the client wants to do with a resource. GET reads data, POST creates something new, PUT replaces an existing item, and DELETE removes it. Choosing the right method makes an API predictable and lets browsers and caches treat requests safely.",
+      "analogy": "Actions at a library desk: look up a book, donate a new one, replace a damaged copy, or remove one from the shelf. The desk always knows which action you mean.",
+      "real_world_example": "Loading your profile page uses GET, submitting a new post uses POST, and pressing a trash icon on a comment usually sends DELETE.",
+      "confused_with": "Status codes: methods are what the client asks for, while status codes are how the server answers.",
+      "related": [
+        "http",
+        "status-codes",
+        "idempotency"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A user taps Publish to create a new blog post through a website's API. Which method fits best?",
+        "options": [
+          "GET, used to read data without changing anything",
+          "DELETE, used to remove an existing resource",
+          "HEAD, used to ask only for a page's headers",
+          "POST, used to create a new resource"
+        ],
+        "answer_index": 3,
+        "explanation": "POST is the usual method for creating a new resource."
+      }
+    },
+    {
+      "id": "status-codes",
+      "term": "HTTP Status Codes",
+      "category": "web",
+      "level": "beginner",
+      "definition": "A status code is a three-digit number in every HTTP response that tells the client how the request went. Codes starting with 2 mean success, 3 mean redirect, 4 mean the client made a mistake, and 5 mean the server failed. Codes such as 200, 404 and 500 are the ones developers meet most often.",
+      "analogy": "Stamps on a returned parcel: delivered, redirected, wrong address, or lost in the depot. The stamp tells you what happened before you open the box.",
+      "real_world_example": "Visiting a page that does not exist returns 404, while a server crash during checkout returns 500, even though the page address looked correct.",
+      "confused_with": "Error messages on the page: the status code is a machine-readable number, while the page text is what a person reads, and the two do not always match.",
+      "related": [
+        "http",
+        "http-methods",
+        "rest"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "An app calls an API and gets a 404 response. What does this most likely mean?",
+        "options": [
+          "The server crashed while handling a valid request",
+          "The request succeeded and returned the data",
+          "The client asked for something the server cannot find",
+          "The server redirected the client to a new address"
+        ],
+        "answer_index": 2,
+        "explanation": "4xx codes mean the client's request had a problem, and 404 means the resource was not found."
+      }
+    },
+    {
+      "id": "idempotency",
+      "term": "Idempotency",
+      "category": "backend",
+      "level": "advanced",
+      "definition": "An operation is idempotent when doing it several times has the same effect as doing it once. This matters on unreliable networks, where a client may retry a request because it never saw the reply. Designing important actions to be idempotent, such as payments, prevents duplicates when retries happen.",
+      "analogy": "An elevator call button. Pressing it five times still summons one elevator, because the extra presses change nothing after the first.",
+      "real_world_example": "A payment service accepts a unique key with each charge, so if your phone retries after a timeout, it charges your card once instead of twice.",
+      "confused_with": "Safe methods: a safe request does not change anything at all, while an idempotent request may change data but repeating it changes nothing more. DELETE is idempotent but not safe.",
+      "related": [
+        "http-methods",
+        "rest",
+        "status-codes"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A payment request times out and the app retries it. The customer is charged once, not twice. Which property protects against double charges?",
+        "options": [
+          "Idempotency: repeating the request has the same effect as one",
+          "Latency: the request travels faster on the second attempt",
+          "Caching: the first charge is saved and reused later",
+          "Encryption: the second request is unreadable to the bank"
+        ],
+        "answer_index": 0,
+        "explanation": "An idempotent operation can be repeated safely, so a retry does not charge twice."
+      }
+    },
+    {
+      "id": "latency",
+      "term": "Latency",
+      "category": "performance",
+      "level": "beginner",
+      "definition": "The delay between sending a request and starting to receive the answer is called latency. It depends on distance, the number of network hops and how busy the server is, and it is measured in milliseconds. Low latency makes apps feel instant, even when the amount of data moved is small.",
+      "analogy": "The pause between asking a question on a phone call and hearing the first word of the reply. A faster line does not shorten the pause caused by distance.",
+      "real_world_example": "Online games show it as ping: a player far from the server may have 200 milliseconds of delay and feel their actions land late.",
+      "confused_with": "Bandwidth: latency is how long one message takes to arrive, while bandwidth is how much data can flow per second.",
+      "related": [
+        "bandwidth",
+        "cdn",
+        "caching"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A video call has a clear picture but long awkward pauses before each reply. Which measure is most likely too high?",
+        "options": [
+          "Bandwidth, the total capacity of the connection",
+          "Resolution, the number of pixels in each frame",
+          "Storage, the space left on the device",
+          "Latency, the delay before data starts to arrive"
+        ],
+        "answer_index": 3,
+        "explanation": "A clear picture means capacity is fine, while the pauses point to delay."
+      }
+    },
+    {
+      "id": "bandwidth",
+      "term": "Bandwidth",
+      "category": "performance",
+      "level": "beginner",
+      "definition": "The maximum amount of data a connection can carry per second is its bandwidth, usually measured in megabits per second. A higher number allows more data to flow at once, so large downloads and high-quality video work better. It says nothing about how long the first byte takes to arrive.",
+      "analogy": "The width of a motorway. More lanes let more cars pass at once, but they do not make a single car arrive sooner.",
+      "real_world_example": "Streaming a film in high quality needs far more bandwidth than sending a text message, which is why video buffers on a weak connection.",
+      "confused_with": "Latency: bandwidth is capacity and latency is delay, so a connection can have high bandwidth and still feel slow to respond.",
+      "related": [
+        "latency",
+        "cdn",
+        "caching"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "More people in a house start streaming video and everything buffers, though opening a page still starts quickly. Which resource is running out?",
+        "options": [
+          "Latency: each message takes far longer to start arriving",
+          "Bandwidth: the connection cannot carry that much data at once",
+          "DNS: the names of websites can no longer be found",
+          "Cookies: the browser has stored too many small files"
+        ],
+        "answer_index": 1,
+        "explanation": "Buffering under heavy load points to limited capacity, which is bandwidth."
+      }
+    },
+    {
+      "id": "caching",
+      "term": "Caching",
+      "category": "performance",
+      "level": "intermediate",
+      "definition": "To cache something is to keep a copy of data close at hand so it does not have to be fetched or computed again. Browsers, servers and CDNs all cache, which saves time and reduces load. The trade-off is that a cached copy can become stale, so systems set rules for how long it stays valid.",
+      "analogy": "Keeping your most-used spices on the kitchen counter instead of walking to the store each time. It is faster, but the jar may run out or go stale.",
+      "real_world_example": "Your browser saves a website's logo after the first visit, so the next page loads without downloading the image again.",
+      "confused_with": "Permanent storage: a cache is temporary and can be thrown away at any time, while a database keeps the official copy.",
+      "related": [
+        "cdn",
+        "latency",
+        "dns"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A site loads fast on your second visit because its images are not downloaded again. What is happening?",
+        "options": [
+          "The browser is serving saved copies from its cache",
+          "The server is sending the images at a faster speed",
+          "The DNS system is compressing the images in transit",
+          "The images are being rewritten by a load balancer"
+        ],
+        "answer_index": 0,
+        "explanation": "Saved copies avoid a second download, which is exactly what a cache does."
+      }
+    },
+    {
+      "id": "cdn",
+      "term": "CDN",
+      "category": "infrastructure",
+      "level": "intermediate",
+      "definition": "A content delivery network, or CDN, is a group of servers spread around the world that keep copies of a site's files and serve each visitor from the nearest one. A shorter distance means lower latency and less load on the original server. CDNs are widely used for images, videos, scripts and even whole websites.",
+      "analogy": "A chain of local warehouses for an online shop. Instead of shipping every order from one distant factory, packages leave from the warehouse closest to the customer.",
+      "real_world_example": "Netflix places video servers inside internet providers' networks, so a film starts from a machine in your own region rather than another continent.",
+      "confused_with": "Browser cache: a CDN is a worldwide network of caches shared by all visitors, while a browser cache lives on a single device.",
+      "related": [
+        "caching",
+        "latency",
+        "load-balancer"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A site hosted in Lagos loads slowly for visitors in London. Which solution serves London visitors from a nearby server?",
+        "options": [
+          "A bigger password for the administrator account",
+          "More cookies stored in each visitor's browser",
+          "A CDN that stores copies of the site's files near visitors",
+          "A shorter domain name for the website"
+        ],
+        "answer_index": 2,
+        "explanation": "A CDN shortens the distance by serving copies from a nearby location."
+      }
+    },
+    {
+      "id": "load-balancer",
+      "term": "Load Balancer",
+      "category": "infrastructure",
+      "level": "intermediate",
+      "definition": "A load balancer sits in front of several servers and spreads incoming requests among them. This keeps any single server from being overwhelmed and lets the site keep working if one server fails. It also makes it easy to add more servers when traffic grows.",
+      "analogy": "A host at a supermarket with many checkout lanes who points each shopper to the shortest queue, so no single lane is overwhelmed while others stand empty.",
+      "real_world_example": "On a big sale day, an online shop's load balancer sends each visitor to one of dozens of identical servers.",
+      "confused_with": "CDN: a CDN serves files from locations near visitors, while a load balancer shares live requests among servers in one place or region.",
+      "related": [
+        "cdn",
+        "rate-limiting",
+        "client-server-model"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "An online shop runs on five identical servers and one fails during a sale, yet shoppers notice nothing. Which component most likely made this possible?",
+        "options": [
+          "A cookie that remembers which server crashed",
+          "A load balancer that stops sending requests to the failed server",
+          "A status code that repairs the broken server",
+          "A JSON file that lists the shoppers who are online"
+        ],
+        "answer_index": 1,
+        "explanation": "The load balancer routes around failures and spreads requests across healthy servers."
+      }
+    },
+    {
+      "id": "rate-limiting",
+      "term": "Rate Limiting",
+      "category": "backend",
+      "level": "intermediate",
+      "definition": "Capping how many requests a client may make in a given period, such as 100 per minute, is called rate limiting. It protects servers from overload, slows down abuse like password guessing, and shares capacity fairly among users. When a client goes over the limit, the server usually replies with status code 429, which means too many requests.",
+      "analogy": "A bouncer who lets only a few guests in per minute. The club stays comfortable, and one noisy group cannot crowd everyone else out.",
+      "real_world_example": "A login page that blocks further attempts after five wrong passwords in a minute makes automated guessing far slower.",
+      "confused_with": "Load balancing: rate limiting restricts how much any one client may send, while load balancing spreads the total traffic across servers.",
+      "related": [
+        "status-codes",
+        "load-balancer",
+        "authentication-vs-authorization"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A script tries thousands of passwords per second against a login endpoint. Which measure most directly slows it down?",
+        "options": [
+          "A CDN that copies the login page around the world",
+          "A longer JSON response from the login API",
+          "Caching the login page in the user's browser",
+          "Rate limiting that blocks clients sending too many attempts"
+        ],
+        "answer_index": 3,
+        "explanation": "Limiting attempts per client period makes brute-force guessing impractical."
+      }
+    },
+    {
+      "id": "authentication-vs-authorization",
+      "term": "Authentication vs Authorization",
+      "category": "security",
+      "level": "intermediate",
+      "definition": "Two steps that are often confused: authentication checks who you are, and authorization decides what you are allowed to do. Logging in with a password or fingerprint is authentication. Deciding that a regular user cannot open the admin dashboard is authorization.",
+      "analogy": "Showing your ID at a building entrance proves who you are. The keycard that opens only some floors decides where you may go.",
+      "real_world_example": "You log in to your company's email, which proves your identity. Only HR staff can open the salary folder, which is a permission check.",
+      "confused_with": "Encryption: authentication and authorization are about identity and permissions, while encryption protects data from being read.",
+      "related": [
+        "https-tls",
+        "cookies",
+        "rate-limiting"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A user logs in successfully but gets an Access Denied message on the admin page. Which step succeeded and which failed?",
+        "options": [
+          "Authentication succeeded, but authorization failed",
+          "Authorization succeeded, but authentication failed",
+          "Both succeeded, but encryption failed on the page",
+          "Both failed, but the login was cached by the browser"
+        ],
+        "answer_index": 0,
+        "explanation": "The system knew who the user was but did not allow that user to see the page."
+      }
+    },
+    {
+      "id": "cors",
+      "term": "CORS",
+      "category": "security",
+      "level": "advanced",
+      "definition": "Cross-Origin Resource Sharing, or CORS, is a browser rule that decides whether a web page may read responses from a different website than the one that served it. By default the browser stops the page from reading such responses, and a server opts in by sending headers naming which origins it trusts. CORS protects users from malicious pages quietly reading data from sites where they are logged in.",
+      "analogy": "A building's security desk that checks a visitor list before letting someone from another company into the office. The list is controlled by the building being visited.",
+      "real_world_example": "A web app at app.example.com calling an API at api.example.com works only if the API's reply says app.example.com is an allowed origin.",
+      "confused_with": "Server-side security: CORS is enforced by the browser to protect users, so a script or another server can still call your API, and it is not a substitute for authentication.",
+      "related": [
+        "http",
+        "api",
+        "authentication-vs-authorization"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A web page's script calls an API on another domain and the browser reports a CORS error, though the API works in other tools. Why?",
+        "options": [
+          "The page is too large to be loaded by the browser",
+          "The API server is offline for every user",
+          "The API's response did not allow the page's origin",
+          "The domain's DNS record was deleted"
+        ],
+        "answer_index": 2,
+        "explanation": "CORS is enforced by browsers, so other tools work while the page's script is blocked."
+      }
+    },
+    {
+      "id": "websocket",
+      "term": "WebSocket",
+      "category": "web",
+      "level": "advanced",
+      "definition": "A WebSocket is a long-lived connection between browser and server that lets either side send messages at any time. Normal HTTP requires the client to ask first and then waits for a reply, which makes live features awkward. WebSockets power chat, live scores and collaborative editing, where updates must arrive instantly.",
+      "analogy": "A phone call instead of sending letters. Once connected, either person can speak whenever they like without dialing again.",
+      "real_world_example": "A chat app keeps a WebSocket open so a new message appears on your screen the moment a friend sends it, without refreshing the page.",
+      "confused_with": "Polling: with polling the client repeatedly asks whether anything is new, while a WebSocket lets the server push updates the moment they happen.",
+      "related": [
+        "http",
+        "client-server-model",
+        "latency"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A live football score page must update instantly without the user refreshing. Which approach suits this best?",
+        "options": [
+          "A cookie that tells the browser the new score",
+          "A DNS lookup repeated every few minutes",
+          "A cached copy of the page from the morning",
+          "A WebSocket connection that lets the server push updates"
+        ],
+        "answer_index": 3,
+        "explanation": "A persistent two-way connection lets the server send updates as they happen."
+      }
+    }
+  ],
+  "daily_sets": [
+    {
+      "date": "2026-10-12",
+      "theme": "Web Fundamentals",
+      "concept_ids": [
+        "client-server-model",
+        "ip-address",
+        "dns"
+      ]
+    },
+    {
+      "date": "2026-10-13",
+      "theme": "Web Fundamentals",
+      "concept_ids": [
+        "http",
+        "https-tls",
+        "cookies"
+      ]
+    },
+    {
+      "date": "2026-10-14",
+      "theme": "Web Fundamentals",
+      "concept_ids": [
+        "api",
+        "rest",
+        "json"
+      ]
+    },
+    {
+      "date": "2026-10-15",
+      "theme": "Web Fundamentals",
+      "concept_ids": [
+        "http-methods",
+        "status-codes",
+        "idempotency"
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "theme": "Web Fundamentals",
+      "concept_ids": [
+        "latency",
+        "bandwidth",
+        "caching"
+      ]
+    },
+    {
+      "date": "2026-10-17",
+      "theme": "Web Fundamentals",
+      "concept_ids": [
+        "cdn",
+        "load-balancer",
+        "rate-limiting"
+      ]
+    },
+    {
+      "date": "2026-10-18",
+      "theme": "Web Fundamentals",
+      "concept_ids": [
+        "authentication-vs-authorization",
+        "cors",
+        "websocket"
+      ]
+    }
+  ]
+}
