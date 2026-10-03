@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/models/concept_model.dart';
 import '../../shared/widgets/marquee_expandable_box.dart';
@@ -342,7 +342,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                             disabledForegroundColor: Colors.grey.shade600,
                           ),
                           child: Text(
-                            widget.isRead ? 'Got it âœ“' : 'Got it',
+                            widget.isRead ? 'Got it \u2713' : 'Got it',
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../core/services/streak_engine.dart';
 import '../../core/theme/streak_colors.dart';
 import '../../shared/widgets/streak_box.dart';

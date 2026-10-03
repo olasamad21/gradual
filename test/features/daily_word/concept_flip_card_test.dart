@@ -62,6 +62,7 @@ void main() {
 
     // Tap to flip
     await tester.tap(find.text('State'));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
 
     expect(find.text('ANALOGY'), findsOneWidget);
@@ -70,6 +71,7 @@ void main() {
 
     // Tap to flip back
     await tester.tap(find.text('ANALOGY'));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
 
     // Should be front again
@@ -86,10 +88,12 @@ void main() {
 
     // Flip to back
     await tester.tap(find.byType(ConceptFlipCard));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
 
     // Tap Got it
     await tester.tap(find.text('Got it'));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
 
     expect(didMarkRead, isTrue);
@@ -111,6 +115,7 @@ void main() {
 
     await tester.pumpWidget(buildTestCard(concept: emptyConcept));
     await tester.tap(find.byType(ConceptFlipCard));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
 
     expect(find.text('ANALOGY'), findsNothing);
@@ -130,6 +135,7 @@ void main() {
 
     // Flip
     await tester.tap(find.text('State'));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
 
     // Should be back
