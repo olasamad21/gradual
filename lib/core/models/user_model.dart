@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../services/streak_engine.dart';
-import '../utils/date_utils.dart';
 
 typedef ActivityLog = Map<String, ActivityLogEntry>;
 

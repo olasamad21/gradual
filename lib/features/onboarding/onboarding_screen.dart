@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../shared/widgets/primary_button.dart';
-import '../daily_word/daily_word_screen.dart'; // To use your DotPatternPainter
 import 'onboarding_view_model.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {

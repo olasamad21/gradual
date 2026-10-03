@@ -247,7 +247,7 @@ class _ProfileBody extends ConsumerWidget {
   }
 }
 
-// â”€â”€ Stat Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---- Stat Card ----
 
 class _StatCard extends StatelessWidget {
   const _StatCard({required this.icon, required this.iconColor, required this.label, required this.value});
@@ -282,7 +282,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// â”€â”€ Field of Study Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---- Field of Study Card ----
 
 class _FieldOfStudyCard extends ConsumerStatefulWidget {
   const _FieldOfStudyCard({required this.user});
@@ -433,7 +433,7 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
   }
 }
 
-// â”€â”€ Quiz History Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---- Quiz History Card ----
 
 class _QuizHistoryCard extends StatelessWidget {
   const _QuizHistoryCard({required this.user});

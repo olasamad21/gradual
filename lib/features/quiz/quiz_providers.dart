@@ -62,7 +62,7 @@ final quizButtonStateProvider = Provider.family<QuizButtonState, DateTime>((ref,
     return const QuizButtonState('Loading...', false, false);
   }
 
-  final status = StreakEngine.quizStatus(user!.rawActivityLog, today);
+  final status = StreakEngine.quizStatus(user.rawActivityLog, today);
 
   switch (status.type) {
     case QuizStatusType.notYetOpen:
@@ -131,7 +131,7 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
 
       final sessionDateId = DateUtilsGradual.localDateId(today);
 
-      final log = user!.rawActivityLog;
+      final log = user.rawActivityLog;
       final weekStart = StreakEngine.weekStartId(today);
 
       final allRead = <String>{};
