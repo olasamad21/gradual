@@ -15,6 +15,7 @@ class FakeUserRepository implements UserRepository {
   Completer<QuizSaveResult>? completer;
   bool throwException = false;
   QuizResultCacheService? cache;
+  bool pendingSeenDuringCall = false;
 
   @override
   Future<AppUser?> getUser(String uid) async => null;
@@ -29,7 +30,10 @@ class FakeUserRepository implements UserRepository {
   Stream<AppUser?> userStream(String uid) => Stream.value(null);
 
   @override
-  Future<void> recordConceptRead({required String uid, required String conceptId, required String dateId}) async {}
+  Future<void> recordConceptRead(
+      {required String uid,
+      required String conceptId,
+      required String dateId}) async {}
 
   @override
   Future<void> resetStatsIfNeeded(String uid) async {}
@@ -47,7 +51,7 @@ class FakeUserRepository implements UserRepository {
 
     if (cache != null) {
       final pending = await cache!.loadPending(dateId);
-      expect(pending, isNotNull, reason: 'Pending answers should exist during network call');
+      pendingSeenDuringCall = pending != null;
     }
 
     if (completer != null) {
@@ -57,150 +61,175 @@ class FakeUserRepository implements UserRepository {
   }
 }
 
-void main() {
-  final fixedDate = DateTime(2026, 10, 10);
-  final fixedSessionId = '2026-10-10';
-  final testAnswers = [
-    QuizAnswer(
-      question: QuizQuestion(id: 'q1', text: 'Q1', options: ['A'], correctIndex: 0, explanation: '', sourceWord: '', type: 'mcq'),
-      selectedIndex: 0,
-    )
-  ];
-  final testUser = AppUser(
-    uid: 'u1',
-    email: 'test@test.com',
-    fieldOfStudy: 'CS',
-    currentStreak: 0,
-    lastActivityDate: null,
-    activityLog: const {},
-    rawActivityLog: const {},
+final fixedDate = DateTime(2026, 10, 10);
+const fixedSessionId = '2026-10-10';
+
+final testAnswers = [
+  QuizAnswer(
+    question: QuizQuestion(
+        id: 'q1',
+        text: 'Q1',
+        options: ['A'],
+        correctIndex: 0,
+        explanation: '',
+        sourceWord: '',
+        type: 'mcq'),
+    selectedIndex: 0,
+  )
+];
+
+final testUser = AppUser(
+  uid: 'u1',
+  email: 'test@test.com',
+  fieldOfStudy: 'CS',
+  currentStreak: 0,
+  lastActivityDate: null,
+  activityLog: const {},
+  rawActivityLog: const {},
+);
+
+Future<ProviderContainer> makeContainer({
+  required AppUser? user,
+  required FakeUserRepository repo,
+}) async {
+  SharedPreferences.setMockInitialValues({});
+  final container = ProviderContainer(
+    overrides: [
+      userRepositoryProvider.overrideWithValue(repo),
+      appUserProvider.overrideWith((ref) => Stream.value(user)),
+    ],
   );
+  addTearDown(container.dispose);
 
-  test('QuizController submitQuiz flows', () async {
-    SharedPreferences.setMockInitialValues({});
-    final fakeRepo = FakeUserRepository();
-    
-    final container = ProviderContainer(
-      overrides: [
-        userRepositoryProvider.overrideWithValue(fakeRepo),
-        appUserProvider.overrideWith((ref) async* { yield testUser; }),
-      ]
-    );
-    
-    container.listen(quizControllerProvider, (_, __) {});
-    await container.read(quizControllerProvider.future);
-    fakeRepo.cache = container.read(quizResultCacheProvider);
+  container.listen(appUserProvider, (previous, next) {});
+  await container.read(appUserProvider.future);
 
+  container.listen(quizControllerProvider, (previous, next) {});
+  await container.read(quizControllerProvider.future);
+
+  repo.cache = container.read(quizResultCacheProvider);
+  return container;
+}
+
+void main() {
+  test('saved', () async {
+    final repo = FakeUserRepository();
+    final container = await makeContainer(user: testUser, repo: repo);
     final controller = container.read(quizControllerProvider.notifier);
-    
-    // 1. saved
-    final result = await controller.submitQuiz(today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+
+    final result = await controller.submitQuiz(
+        today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+
     expect(result, QuizSaveResult.saved);
-    expect(fakeRepo.calls, 1);
-    
-    // verify normal result exists and pending is gone
-    final cache = container.read(quizResultCacheProvider);
-    var pending = await cache.loadPending(fixedSessionId);
-    expect(pending, isNull);
-    var normal = await cache.loadAnswers(fixedSessionId);
-    expect(normal, isNotNull);
-    
-    // 2. alreadyTaken
-    SharedPreferences.setMockInitialValues({});
-    fakeRepo.nextResult = QuizSaveResult.alreadyTaken;
-    
-    final result2 = await controller.submitQuiz(today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
-    expect(result2, QuizSaveResult.alreadyTaken);
-    
-    pending = await cache.loadPending(fixedSessionId);
-    expect(pending, isNull);
-    normal = await cache.loadAnswers(fixedSessionId);
-    expect(normal, isNull); // not written
-    
-    // 3. failed (repository throws)
-    fakeRepo.throwException = true;
-    final result3 = await controller.submitQuiz(today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
-    expect(result3, QuizSaveResult.failed);
-    
-    // pending kept, state is data, submitFailed true, answers kept
-    pending = await cache.loadPending(fixedSessionId);
-    expect(pending, isNotNull);
-    
-    final state3 = container.read(quizControllerProvider).value!;
-    expect(state3.submitFailed, true);
-    expect(state3.answers.isNotEmpty, true);
-    
-    // 4. failed then retry
-    fakeRepo.throwException = false;
-    fakeRepo.nextResult = QuizSaveResult.saved;
-    fakeRepo.calls = 0;
-    
-    final result4 = await controller.submitQuiz(today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
-    expect(result4, QuizSaveResult.saved);
-    expect(fakeRepo.calls, 1);
-    
-    pending = await cache.loadPending(fixedSessionId);
-    expect(pending, isNull);
-    normal = await cache.loadAnswers(fixedSessionId);
-    expect(normal, isNotNull);
-    
-    container.dispose();
-  });
+    expect(repo.calls, 1);
+    expect(repo.pendingSeenDuringCall, isTrue);
 
-  test('QuizController missing user', () async {
-    SharedPreferences.setMockInitialValues({});
-    final fakeRepo = FakeUserRepository();
-    
-    final container = ProviderContainer(
-      overrides: [
-        userRepositoryProvider.overrideWithValue(fakeRepo),
-        appUserProvider.overrideWith((ref) async* { yield null; }),
-      ]
-    );
-    
-    container.listen(quizControllerProvider, (_, __) {});
-    await container.read(quizControllerProvider.future);
-    
-    final controller = container.read(quizControllerProvider.notifier);
-    
-    final result = await controller.submitQuiz(today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
-    expect(result, QuizSaveResult.failed);
-    
     final cache = container.read(quizResultCacheProvider);
     final pending = await cache.loadPending(fixedSessionId);
-    expect(pending, isNotNull);
+    expect(pending, isNull);
     
-    container.dispose();
+    final normal = await cache.loadAnswers(fixedSessionId);
+    expect(normal, isNotNull);
   });
 
-  test('QuizController double submit', () async {
-    SharedPreferences.setMockInitialValues({});
-    final fakeRepo = FakeUserRepository();
-    fakeRepo.completer = Completer<QuizSaveResult>();
-    
-    final container = ProviderContainer(
-      overrides: [
-        userRepositoryProvider.overrideWithValue(fakeRepo),
-        appUserProvider.overrideWith((ref) async* { yield testUser; }),
-      ]
-    );
-    
-    container.listen(quizControllerProvider, (_, __) {});
-    await container.read(quizControllerProvider.future);
-    fakeRepo.cache = container.read(quizResultCacheProvider);
-    
+  test('alreadyTaken', () async {
+    final repo = FakeUserRepository()..nextResult = QuizSaveResult.alreadyTaken;
+    final container = await makeContainer(user: testUser, repo: repo);
     final controller = container.read(quizControllerProvider.notifier);
-    
-    final f1 = controller.submitQuiz(today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
-    final f2 = controller.submitQuiz(today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
-    
-    fakeRepo.completer!.complete(QuizSaveResult.saved);
-    
-    await f1;
-    await f2;
-    
-    expect(fakeRepo.calls, 1);
-    
-    container.dispose();
+
+    final result = await controller.submitQuiz(
+        today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+
+    expect(result, QuizSaveResult.alreadyTaken);
+
+    final cache = container.read(quizResultCacheProvider);
+    expect(await cache.loadPending(fixedSessionId), isNull);
+    expect(await cache.loadAnswers(fixedSessionId), isNull);
+  });
+
+  test('failed', () async {
+    final repo = FakeUserRepository()..throwException = true;
+    final container = await makeContainer(user: testUser, repo: repo);
+    final controller = container.read(quizControllerProvider.notifier);
+
+    final result = await controller.submitQuiz(
+        today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+
+    expect(result, QuizSaveResult.failed);
+
+    final cache = container.read(quizResultCacheProvider);
+    expect(await cache.loadPending(fixedSessionId), isNotNull);
+
+    final state = container.read(quizControllerProvider);
+    expect(state.hasValue, isTrue);
+    expect(state.hasError, isFalse);
+    expect(state.value!.submitFailed, isTrue);
+    expect(state.value!.answers, isNotEmpty);
+  });
+
+  test('failed then retry', () async {
+    final repo = FakeUserRepository()..throwException = true;
+    final container = await makeContainer(user: testUser, repo: repo);
+    final controller = container.read(quizControllerProvider.notifier);
+
+    final r1 = await controller.submitQuiz(
+        today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+    expect(r1, QuizSaveResult.failed);
+
+    repo.throwException = false;
+    repo.nextResult = QuizSaveResult.saved;
+
+    final r2 = await controller.submitQuiz(
+        today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+    expect(r2, QuizSaveResult.saved);
+    expect(repo.calls, 2);
+
+    final cache = container.read(quizResultCacheProvider);
+    expect(await cache.loadPending(fixedSessionId), isNull);
+    expect(await cache.loadAnswers(fixedSessionId), isNotNull);
+  });
+
+  test('missing user', () async {
+    final repo = FakeUserRepository();
+    final container = await makeContainer(user: null, repo: repo);
+    final controller = container.read(quizControllerProvider.notifier);
+
+    final result = await controller.submitQuiz(
+        today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+
+    expect(result, QuizSaveResult.failed);
+
+    final cache = container.read(quizResultCacheProvider);
+    expect(await cache.loadPending(fixedSessionId), isNotNull);
+  });
+
+  test('double submit', () async {
+    final repo = FakeUserRepository()
+      ..completer = Completer<QuizSaveResult>();
+    final container = await makeContainer(user: testUser, repo: repo);
+    final controller = container.read(quizControllerProvider.notifier);
+
+    final f1 = controller.submitQuiz(
+        today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+    final f2 = controller.submitQuiz(
+        today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+
+    int loops = 0;
+    while (repo.calls < 1 && loops < 50) {
+      await Future<void>.delayed(Duration.zero);
+      loops++;
+    }
+    if (repo.calls < 1) {
+      fail('Repository was never called after 50 microtask pumps.');
+    }
+
+    repo.completer!.complete(QuizSaveResult.saved);
+
+    final r1 = await f1;
+    final r2 = await f2;
+
+    expect(r1, QuizSaveResult.saved);
+    expect(r2, QuizSaveResult.saved);
+    expect(repo.calls, 1);
   });
 }

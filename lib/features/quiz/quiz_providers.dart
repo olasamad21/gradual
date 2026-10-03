@@ -245,13 +245,14 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
     if (id.isEmpty) id = DateUtilsGradual.localDateId(today);
 
     // a) set state: isSubmitting true, submitFailed false, answers set
-    state = AsyncData(currentState.copyWith(
+    final submitting = currentState.copyWith(
       isSubmitting: true,
       submitFailed: false,
       answers: answers,
       score: score,
       total: total,
-    ));
+    );
+    state = AsyncData(submitting);
 
     final cache = ref.read(quizResultCacheProvider);
 
@@ -263,7 +264,7 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
       final user = await ref.read(appUserProvider.future);
       if (!ref.mounted) return QuizSaveResult.failed;
       if (user == null) {
-        state = AsyncData(currentState.copyWith(
+        state = AsyncData(submitting.copyWith(
           isSubmitting: false,
           submitFailed: true,
         ));
@@ -289,7 +290,7 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
         
         if (!ref.mounted) return result;
         
-        state = AsyncData(currentState.copyWith(
+        state = AsyncData(submitting.copyWith(
           isSubmitting: false,
           submitFailed: false,
         ));
@@ -301,7 +302,7 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
         
         if (!ref.mounted) return result;
         
-        state = AsyncData(currentState.copyWith(
+        state = AsyncData(submitting.copyWith(
           isSubmitting: false,
         ));
         ref.invalidate(appUserProvider);
@@ -313,7 +314,7 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
       // g) any exception or missing user: keep the pending answers on disk. 
       // State: isSubmitting false, submitFailed true, answers kept. Return failed.
       if (ref.mounted) {
-        state = AsyncData(currentState.copyWith(
+        state = AsyncData(submitting.copyWith(
           isSubmitting: false,
           submitFailed: true,
         ));
