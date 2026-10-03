@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:gradual/features/quiz/quiz_providers.dart';
-import 'package:gradual/features/quiz/quiz_result_cache_provider.dart';
 import 'package:gradual/core/services/streak_engine.dart';
 import 'quiz_models.dart';
 import '../../shared/widgets/app_shell.dart';
@@ -82,7 +81,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 
     final correctCount = answers.where((a) => a.isCorrect).length;
 
-    final result = await ref.read(quizControllerProvider.notifier).submitQuiz(_sessionDate!, correctCount, questions.length);
+    final result = await ref.read(quizControllerProvider.notifier).submitQuiz(
+      today: _sessionDate!,
+      answers: answers,
+    );
     
     if (!mounted) return;
 
@@ -94,7 +96,12 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       return;
     }
 
-    await ref.read(quizResultCacheProvider).saveAnswers(state.sessionDateId, answers);
+    if (result == QuizSaveResult.failed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't save your score. Check your connection and retry.")),
+      );
+      return;
+    }
 
     final completedResult = CompletedQuizResult(
       sessionDateId: state.sessionDateId,

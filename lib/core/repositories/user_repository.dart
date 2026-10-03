@@ -59,7 +59,7 @@ class UserRepository {
     return FirestoreErrors.guardFuture(
       _firestore.runTransaction((transaction) async {
         final doc = await transaction.get(docRef);
-        if (!doc.exists) return QuizSaveResult.saved;
+        if (!doc.exists) throw StateError('User document not found');
         final data = doc.data()!;
         final rawLog = data['activity_log'] as Map<String, dynamic>? ?? {};
 

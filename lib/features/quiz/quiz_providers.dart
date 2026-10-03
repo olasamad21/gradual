@@ -84,6 +84,8 @@ class QuizSessionState {
     required this.isSubmitting,
     this.score,
     this.total,
+    this.answers = const [],
+    this.submitFailed = false,
   });
 
   final List<QuizQuestion> questions;
@@ -91,6 +93,8 @@ class QuizSessionState {
   final bool isSubmitting;
   final int? score;
   final int? total;
+  final List<QuizAnswer> answers;
+  final bool submitFailed;
 
   QuizSessionState copyWith({
     List<QuizQuestion>? questions,
@@ -98,6 +102,8 @@ class QuizSessionState {
     bool? isSubmitting,
     int? score,
     int? total,
+    List<QuizAnswer>? answers,
+    bool? submitFailed,
   }) {
     return QuizSessionState(
       questions: questions ?? this.questions,
@@ -105,6 +111,8 @@ class QuizSessionState {
       isSubmitting: isSubmitting ?? this.isSubmitting,
       score: score ?? this.score,
       total: total ?? this.total,
+      answers: answers ?? this.answers,
+      submitFailed: submitFailed ?? this.submitFailed,
     );
   }
 }
@@ -203,61 +211,114 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
     }
   }
 
-  Future<QuizSaveResult> submitQuiz(DateTime today, int score, int total) async {
-    final currentState = state.whenOrNull(data: (d) => d);
-    if (currentState == null || currentState.isSubmitting) return QuizSaveResult.saved;
+  Future<QuizSaveResult>? _runningSubmit;
 
-    state = AsyncData(currentState.copyWith(isSubmitting: true));
+  Future<QuizSaveResult> submitQuiz({
+    required DateTime today,
+    required List<QuizAnswer> answers,
+    String? sessionDateId,
+  }) {
+    if (_runningSubmit != null) return _runningSubmit!;
+    _runningSubmit = _doSubmitQuiz(
+      today: today,
+      answers: answers,
+      sessionDateId: sessionDateId,
+    ).whenComplete(() {
+      _runningSubmit = null;
+    });
+    return _runningSubmit!;
+  }
+
+  Future<QuizSaveResult> _doSubmitQuiz({
+    required DateTime today,
+    required List<QuizAnswer> answers,
+    String? sessionDateId,
+  }) async {
+    final currentState = state.whenOrNull(data: (d) => d);
+    if (currentState == null) return QuizSaveResult.failed;
+
+    final score = answers.where((a) => a.isCorrect).length;
+    final total = answers.length;
+    final tier = StreakEngine.quizTier(score, total);
+
+    String id = sessionDateId ?? currentState.sessionDateId;
+    if (id.isEmpty) id = DateUtilsGradual.localDateId(today);
+
+    // a) set state: isSubmitting true, submitFailed false, answers set
+    state = AsyncData(currentState.copyWith(
+      isSubmitting: true,
+      submitFailed: false,
+      answers: answers,
+      score: score,
+      total: total,
+    ));
+
+    final cache = ref.read(quizResultCacheProvider);
 
     try {
-      final user = await ref.read(appUserProvider.future);
-      if (user == null) throw Exception('User not logged in');
+      // b) await cache.savePending(id, answers) BEFORE any network call
+      await cache.savePending(id, answers);
 
-      // Guard against double submit locally
-      final status = StreakEngine.quizStatus(user.rawActivityLog, today);
-      if (status.type == QuizStatusType.completed) {
+      // c) read the user. If there is no user, treat as failed.
+      final user = await ref.read(appUserProvider.future);
+      if (!ref.mounted) return QuizSaveResult.failed;
+      if (user == null) {
         state = AsyncData(currentState.copyWith(
           isSubmitting: false,
-          score: score,
-          total: total,
+          submitFailed: true,
         ));
-        return QuizSaveResult.alreadyTaken;
+        return QuizSaveResult.failed;
       }
 
-      final tier = StreakEngine.quizTier(score, total);
-
+      // d) call repository saveQuizScore
       final repo = ref.read(userRepositoryProvider);
       final result = await repo.saveQuizScore(
         uid: user.uid,
-        dateId: currentState.sessionDateId,
+        dateId: id,
         score: score,
         total: total,
         tier: tier,
       );
 
-      if (result == QuizSaveResult.alreadyTaken) {
+      if (!ref.mounted) return result;
+
+      if (result == QuizSaveResult.saved) {
+        // e) saved
+        await cache.saveAnswers(id, answers);
+        await cache.clearPending(id);
+        
+        if (!ref.mounted) return result;
+        
         state = AsyncData(currentState.copyWith(
           isSubmitting: false,
-          score: score,
-          total: total,
+          submitFailed: false,
         ));
-        return result;
+        ref.invalidate(appUserProvider);
+        return QuizSaveResult.saved;
+      } else if (result == QuizSaveResult.alreadyTaken) {
+        // f) alreadyTaken
+        await cache.clearPending(id);
+        
+        if (!ref.mounted) return result;
+        
+        state = AsyncData(currentState.copyWith(
+          isSubmitting: false,
+        ));
+        ref.invalidate(appUserProvider);
+        return QuizSaveResult.alreadyTaken;
       }
 
-      // Invalidate user to refetch latest
-      ref.invalidate(appUserProvider);
-
-      state = AsyncData(currentState.copyWith(
-        isSubmitting: false,
-        score: score,
-        total: total,
-      ));
-      
-      return result;
-    } catch (e, st) {
-      state = AsyncData(currentState.copyWith(isSubmitting: false));
-      state = AsyncError(e, st);
-      rethrow;
+      return QuizSaveResult.failed;
+    } catch (_) {
+      // g) any exception or missing user: keep the pending answers on disk. 
+      // State: isSubmitting false, submitFailed true, answers kept. Return failed.
+      if (ref.mounted) {
+        state = AsyncData(currentState.copyWith(
+          isSubmitting: false,
+          submitFailed: true,
+        ));
+      }
+      return QuizSaveResult.failed;
     }
   }
 }

@@ -66,7 +66,7 @@ class QuizAnswer {
   }
 }
 
-enum QuizSaveResult { saved, alreadyTaken }
+enum QuizSaveResult { saved, alreadyTaken, failed }
 class CompletedQuizResult {
   const CompletedQuizResult({
     required this.sessionDateId,
