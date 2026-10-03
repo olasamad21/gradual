@@ -141,4 +141,31 @@ void main() {
     // Should be back
     expect(find.text('ANALOGY'), findsOneWidget);
   });
+
+  testWidgets('ConceptFlipCard shows full real world example text on back face', (WidgetTester tester) async {
+    const longText = 'This is a very long real world example that stretches to about four hundred characters. It is intended to test whether the back face properly displays the entire text without truncating it. We are making sure that the plain text widget is fully visible inside the card. If it was truncated or hidden inside a marquee, this test would fail because the text would not be completely visible at once. Let us add a few more words to ensure it is sufficiently long.';
+    
+    final longExampleConcept = Concept(
+      id: 'long_ex',
+      term: 'LongEx',
+      category: 'cat',
+      definition: 'def',
+      level: 'easy',
+      analogy: null,
+      confusedWith: '',
+      realWorldExample: longText,
+      related: [],
+      quiz: const ConceptQuiz(question: '', options: [], answerIndex: 0, explanation: ''),
+    );
+
+    await tester.pumpWidget(buildTestCard(concept: longExampleConcept));
+    
+    // Flip to back
+    await tester.tap(find.byType(ConceptFlipCard));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+
+    expect(find.text(longText), findsOneWidget);
+  });
 }
+

@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/models/concept_model.dart';
-import '../../shared/widgets/marquee_expandable_box.dart';
-
 class ConceptFlipCard extends StatefulWidget {
   const ConceptFlipCard({
     super.key,
@@ -272,7 +270,10 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
 
                       if (showExample) ...[
                         _buildSectionHeader('Real World Example'),
-                        MarqueeExpandableBox(text: widget.concept.realWorldExample),
+                        Text(
+                          widget.concept.realWorldExample,
+                          style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+                        ),
                         const SizedBox(height: 16),
                       ],
 
@@ -452,7 +453,7 @@ class _SwipeHintAnimationState extends State<SwipeHintAnimation> with SingleTick
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat();
+    )..forward();
   }
 
   @override
