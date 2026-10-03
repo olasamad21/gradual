@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gradual/core/models/concept_model.dart';
 import 'package:gradual/features/daily_word/concept_flip_card.dart';
@@ -62,7 +62,7 @@ void main() {
 
     // Tap to flip
     await tester.tap(find.text('State'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 800));
 
     expect(find.text('ANALOGY'), findsOneWidget);
     expect(find.text('Like remembering where you left your keys.'), findsOneWidget);
@@ -70,7 +70,7 @@ void main() {
 
     // Tap to flip back
     await tester.tap(find.text('ANALOGY'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 800));
 
     // Should be front again
     expect(find.text('State'), findsOneWidget);
@@ -86,11 +86,11 @@ void main() {
 
     // Flip to back
     await tester.tap(find.byType(ConceptFlipCard));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 800));
 
     // Tap Got it
     await tester.tap(find.text('Got it'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 800));
 
     expect(didMarkRead, isTrue);
   });
@@ -111,7 +111,7 @@ void main() {
 
     await tester.pumpWidget(buildTestCard(concept: emptyConcept));
     await tester.tap(find.byType(ConceptFlipCard));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 800));
 
     expect(find.text('ANALOGY'), findsNothing);
     expect(find.text("DON'T CONFUSE WITH"), findsNothing);
@@ -130,7 +130,7 @@ void main() {
 
     // Flip
     await tester.tap(find.text('State'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 800));
 
     // Should be back
     expect(find.text('ANALOGY'), findsOneWidget);
