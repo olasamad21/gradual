@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:gradual/features/quiz/quiz_providers.dart';
+import 'package:gradual/features/quiz/quiz_submit_failed_banner.dart';
 import 'package:gradual/core/services/streak_engine.dart';
 import 'quiz_models.dart';
 import '../../shared/widgets/app_shell.dart';
@@ -68,15 +69,20 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     }
   }
 
-  Future<void> _submitQuiz(QuizSessionState state) async {
-    final questions = state.questions;
-    final answers = <QuizAnswer>[];
-    for (var i = 0; i < questions.length; i++) {
-      final selected = _selections[i] ?? 0;
-      answers.add(QuizAnswer(
-        question: questions[i],
-        selectedIndex: selected,
-      ));
+  Future<void> _submitQuiz(QuizSessionState state, {bool isRetry = false}) async {
+    List<QuizAnswer> answers;
+    if (isRetry) {
+      answers = state.answers;
+    } else {
+      final questions = state.questions;
+      answers = <QuizAnswer>[];
+      for (var i = 0; i < questions.length; i++) {
+        final selected = _selections[i] ?? 0;
+        answers.add(QuizAnswer(
+          question: questions[i],
+          selectedIndex: selected,
+        ));
+      }
     }
 
     final correctCount = answers.where((a) => a.isCorrect).length;
@@ -84,6 +90,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     final result = await ref.read(quizControllerProvider.notifier).submitQuiz(
       today: _sessionDate!,
       answers: answers,
+      sessionDateId: isRetry ? state.sessionDateId : null,
     );
     
     if (!mounted) return;
@@ -97,17 +104,14 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     }
 
     if (result == QuizSaveResult.failed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't save your score. Check your connection and retry.")),
-      );
       return;
     }
 
     final completedResult = CompletedQuizResult(
       sessionDateId: state.sessionDateId,
       score: correctCount,
-      total: questions.length,
-      tier: StreakEngine.quizTier(correctCount, questions.length),
+      total: answers.length,
+      tier: StreakEngine.quizTier(correctCount, answers.length),
       answers: answers,
     );
 
@@ -121,7 +125,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 
 
   Widget _buildStatusScreen(BuildContext context) {
-    final today = DateTime.now();
+    final today = ref.read(todayProvider)();
     final buttonState = ref.watch(quizButtonStateProvider(today));
 
     return Scaffold(
@@ -160,7 +164,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                     }
                     setState(() {
                       _hasStarted = true;
-                      _sessionDate = DateTime.now();
+                      _sessionDate = ref.read(todayProvider)();
                     });
                     ref.read(quizControllerProvider.notifier).generateQuiz(_sessionDate!);
                   },
@@ -235,6 +239,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                       ),
                     ),
                   ),
+                  if (sessionState.submitFailed)
+                    QuizSubmitFailedBanner(
+                      isSaving: sessionState.isSubmitting,
+                      onRetry: () => _submitQuiz(sessionState, isRetry: true),
+                    ),
                   _buildBottomBar(
                     isLast: isLast,
                     allAnswered: allAnswered,
