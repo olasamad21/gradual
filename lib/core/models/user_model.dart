@@ -243,6 +243,7 @@ class AppUser {
       currentStreak: (json['current_streak'] as num?)?.toInt() ?? 0,
       lastActivityDate: json['last_activity_date'] as Timestamp?,
       activityLog: log,
+      rawActivityLog: rawLog,
     );
   }
 
