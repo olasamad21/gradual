@@ -77,6 +77,80 @@ final quizButtonStateProvider = Provider.family<QuizButtonState, DateTime>((ref,
   }
 });
 
+class UnsavedQuizInfo {
+  const UnsavedQuizInfo({this.sessionDateId, this.answers});
+  final String? sessionDateId;
+  final List<QuizAnswer>? answers;
+  bool get hasUnsaved => sessionDateId != null && answers != null;
+}
+
+class UnsavedQuizResolver {
+  const UnsavedQuizResolver(this.cache);
+  final QuizResultCacheService cache;
+  static final _dateIdPattern = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+
+  Future<UnsavedQuizInfo> resolve({
+    required DateTime today,
+    required Map<String, dynamic> activityLog,
+  }) async {
+    final ids = await cache.listPendingSessionIds();
+    final currentWeek = StreakEngine.weekStartId(today);
+    final isTaken = StreakEngine.quizTakenThisWeek(activityLog, today);
+
+    String? bestId;
+
+    for (final id in ids) {
+      
+      if (!_dateIdPattern.hasMatch(id)) {
+        await cache.clearPending(id);
+        continue;
+      }
+      final date = DateUtilsGradual.dateFromId(id);
+
+      final week = StreakEngine.weekStartId(date);
+      if (week != currentWeek || isTaken) {
+        await cache.clearPending(id);
+        continue;
+      }
+
+      final answers = await cache.loadPending(id);
+      if (answers == null) {
+        await cache.clearPending(id);
+        continue;
+      }
+
+      if (bestId == null || id.compareTo(bestId) > 0) {
+        bestId = id;
+      }
+    }
+
+    if (bestId != null) {
+      final answers = await cache.loadPending(bestId);
+      if (answers != null) {
+        return UnsavedQuizInfo(sessionDateId: bestId, answers: answers);
+      }
+    }
+    return const UnsavedQuizInfo();
+  }
+}
+
+final unsavedQuizProvider = FutureProvider.autoDispose<UnsavedQuizInfo>((ref) async {
+  final user = await ref.watch(appUserProvider.future);
+  if (user == null) return const UnsavedQuizInfo();
+
+  final today = ref.read(todayProvider)();
+  final cache = ref.read(quizResultCacheProvider);
+  final resolver = UnsavedQuizResolver(cache);
+
+  return resolver.resolve(today: today, activityLog: user.rawActivityLog);
+});
+
+class QuizSubmitOutcome {
+  const QuizSubmitOutcome({required this.result, this.completed});
+  final QuizSaveResult result;
+  final CompletedQuizResult? completed;
+}
+
 class QuizSessionState {
   const QuizSessionState({
     required this.questions,
@@ -213,6 +287,45 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
 
   Future<QuizSaveResult>? _runningSubmit;
 
+  Future<QuizSubmitOutcome> retryPendingSave() async {
+    try {
+      final user = await ref.read(appUserProvider.future);
+      if (user == null) return const QuizSubmitOutcome(result: QuizSaveResult.failed);
+
+      final today = ref.read(todayProvider)();
+      final cache = ref.read(quizResultCacheProvider);
+      final resolver = UnsavedQuizResolver(cache);
+
+      final info = await resolver.resolve(today: today, activityLog: user.rawActivityLog);
+      if (!info.hasUnsaved) return const QuizSubmitOutcome(result: QuizSaveResult.failed);
+
+      final result = await submitQuiz(
+        today: today,
+        answers: info.answers!,
+        sessionDateId: info.sessionDateId,
+      );
+
+      if (result == QuizSaveResult.saved) {
+        final score = info.answers!.where((a) => a.isCorrect).length;
+        final total = info.answers!.length;
+        final tier = StreakEngine.quizTier(score, total);
+        return QuizSubmitOutcome(
+          result: result,
+          completed: CompletedQuizResult(
+            sessionDateId: info.sessionDateId!,
+            score: score,
+            total: total,
+            tier: tier,
+            answers: info.answers!,
+          ),
+        );
+      }
+      return QuizSubmitOutcome(result: result);
+    } catch (e) {
+      return const QuizSubmitOutcome(result: QuizSaveResult.failed);
+    }
+  }
+
   Future<QuizSaveResult> submitQuiz({
     required DateTime today,
     required List<QuizAnswer> answers,
@@ -234,8 +347,8 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
     required List<QuizAnswer> answers,
     String? sessionDateId,
   }) async {
-    final currentState = state.whenOrNull(data: (d) => d);
-    if (currentState == null) return QuizSaveResult.failed;
+    final currentState = state.whenOrNull(data: (d) => d) ??
+        const QuizSessionState(questions: [], sessionDateId: '', isSubmitting: false);
 
     final score = answers.where((a) => a.isCorrect).length;
     final total = answers.length;

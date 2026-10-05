@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:gradual/features/quiz/quiz_providers.dart';
 import 'package:gradual/features/quiz/quiz_submit_failed_banner.dart';
+import 'package:gradual/features/quiz/unsaved_quiz_card.dart';
 import 'package:gradual/core/services/streak_engine.dart';
 import 'quiz_models.dart';
 import '../../shared/widgets/app_shell.dart';
@@ -127,6 +128,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
   Widget _buildStatusScreen(BuildContext context) {
     final today = ref.read(todayProvider)();
     final buttonState = ref.watch(quizButtonStateProvider(today));
+    final unsavedInfo = ref.watch(unsavedQuizProvider).whenOrNull(data: (d) => d);
+    final isSubmitting = ref.watch(quizControllerProvider).whenOrNull(data: (d) => d)?.isSubmitting ?? false;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
@@ -140,6 +143,31 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
               const Text('Weekly Quiz', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Text(buttonState.label, style: const TextStyle(fontSize: 16, color: Colors.grey)),
+              if (unsavedInfo != null && unsavedInfo.hasUnsaved)
+                UnsavedQuizCard(
+                  isSaving: isSubmitting,
+                  onRetry: () async {
+                    final outcome = await ref.read(quizControllerProvider.notifier).retryPendingSave();
+                    if (!context.mounted) return;
+                    ref.invalidate(unsavedQuizProvider);
+                    if (outcome.result == QuizSaveResult.saved && outcome.completed != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => QuizResultScreen(result: outcome.completed!),
+                        ),
+                      );
+                    } else if (outcome.result == QuizSaveResult.alreadyTaken) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Quiz already taken this week.')),
+                      );
+                    } else if (outcome.result == QuizSaveResult.failed) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Couldn't save your score. Check your connection and retry.")),
+                      );
+                    }
+                  },
+                ),
               const SizedBox(height: 32),
               if (buttonState.isEnabled)
                 ElevatedButton(

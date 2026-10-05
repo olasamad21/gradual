@@ -9,6 +9,17 @@ import 'package:gradual/features/quiz/quiz_providers.dart';
 import 'package:gradual/features/quiz/quiz_result_cache_provider.dart';
 import 'package:gradual/core/firebase/firebase_providers.dart';
 
+import 'package:gradual/core/repositories/content_repository.dart';
+import 'package:gradual/core/models/concept_model.dart';
+
+class FakeContentRepo implements ContentRepository {
+  @override
+  Future<List<Concept>> getConceptsByIds(String fieldOfStudy, List<String> ids) async => [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
 class FakeUserRepository implements UserRepository {
   int calls = 0;
   QuizSaveResult nextResult = QuizSaveResult.saved;
@@ -97,6 +108,8 @@ Future<ProviderContainer> makeContainer({
     overrides: [
       userRepositoryProvider.overrideWithValue(repo),
       appUserProvider.overrideWith((ref) => Stream.value(user)),
+      todayProvider.overrideWithValue(() => DateTime(2026, 10, 10)),
+      contentRepositoryProvider.overrideWithValue(FakeContentRepo()),
     ],
   );
   addTearDown(container.dispose);
@@ -231,5 +244,136 @@ void main() {
     expect(r1, QuizSaveResult.saved);
     expect(r2, QuizSaveResult.saved);
     expect(repo.calls, 1);
+  });
+
+  group('UnsavedQuizResolver and retryPendingSave', () {
+    test('resolver: pending in the current week and quiz not taken -> hasUnsaved', () async {
+      final repo = FakeUserRepository();
+      final container = await makeContainer(user: testUser, repo: repo);
+      final cache = container.read(quizResultCacheProvider);
+      await cache.savePending('2026-10-09', testAnswers);
+      
+      final info = await container.read(unsavedQuizProvider.future);
+      expect(info.hasUnsaved, isTrue);
+      expect(info.sessionDateId, '2026-10-09');
+    });
+
+    test('pending from last week -> cleared and not shown', () async {
+      final repo = FakeUserRepository();
+      final container = await makeContainer(user: testUser, repo: repo);
+      final cache = container.read(quizResultCacheProvider);
+      await cache.savePending('2026-10-01', testAnswers); // Previous week
+      
+      final info = await container.read(unsavedQuizProvider.future);
+      expect(info.hasUnsaved, isFalse);
+      expect(await cache.loadPending('2026-10-01'), isNull);
+    });
+
+    test('pending but quiz already taken this week -> cleared', () async {
+      final takenUser = AppUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        currentStreak: 0,
+        fieldOfStudy: '',
+        lastActivityDate: null,
+        activityLog: {
+          '2026-10-08': ActivityLogEntry(quizType: 'weekly', score: 10, totalQuestions: 10, tier: WeeklyScoreTier.excellent, streakCounted: true),
+        },
+        rawActivityLog: {
+          '2026-10-08': {
+            'quiz_type': 'weekly',
+            'score': 10,
+            'total_questions': 10,
+            'tier': 'excellent',
+            'streak_counted': true,
+          }
+        }
+      );
+      final repo = FakeUserRepository();
+      final container = await makeContainer(user: takenUser, repo: repo);
+      final cache = container.read(quizResultCacheProvider);
+      await cache.savePending('2026-10-09', testAnswers);
+      
+      final info = await container.read(unsavedQuizProvider.future);
+      expect(info.hasUnsaved, isFalse);
+      expect(await cache.loadPending('2026-10-09'), isNull);
+    });
+
+    test('two pending in the current week -> the later date wins', () async {
+      final repo = FakeUserRepository();
+      final container = await makeContainer(user: testUser, repo: repo);
+      final cache = container.read(quizResultCacheProvider);
+      await cache.savePending('2026-10-08', testAnswers);
+      await cache.savePending('2026-10-09', testAnswers);
+      
+      final info = await container.read(unsavedQuizProvider.future);
+      expect(info.hasUnsaved, isTrue);
+      expect(info.sessionDateId, '2026-10-09');
+    });
+
+    test('invalid id -> cleared', () async {
+      final repo = FakeUserRepository();
+      final container = await makeContainer(user: testUser, repo: repo);
+      final cache = container.read(quizResultCacheProvider);
+      await cache.savePending('invalid-date', testAnswers);
+      
+      final info = await container.read(unsavedQuizProvider.future);
+      expect(info.hasUnsaved, isFalse);
+      expect(await cache.loadPending('invalid-date'), isNull);
+    });
+
+    test('retryPendingSave: repo succeeds -> saved with a CompletedQuizResult and pending cleared', () async {
+      final repo = FakeUserRepository();
+      final container = await makeContainer(user: testUser, repo: repo);
+      final cache = container.read(quizResultCacheProvider);
+      await cache.savePending('2026-10-09', testAnswers);
+      
+      final outcome = await container.read(quizControllerProvider.notifier).retryPendingSave();
+      expect(outcome.result, QuizSaveResult.saved);
+      expect(outcome.completed, isNotNull);
+      expect(outcome.completed!.sessionDateId, '2026-10-09');
+      
+      expect(await cache.loadPending('2026-10-09'), isNull);
+    });
+
+    test('retryPendingSave: repo throws -> failed and pending kept', () async {
+      final repo = FakeUserRepository()..throwException = true;
+      final container = await makeContainer(user: testUser, repo: repo);
+      final cache = container.read(quizResultCacheProvider);
+      await cache.savePending('2026-10-09', testAnswers);
+      
+      final outcome = await container.read(quizControllerProvider.notifier).retryPendingSave();
+      expect(outcome.result, QuizSaveResult.failed);
+      expect(outcome.completed, isNull);
+      
+      expect(await cache.loadPending('2026-10-09'), isNotNull);
+    });
+
+    test('retryPendingSave: no pending -> failed without calling the repo', () async {
+      final repo = FakeUserRepository();
+      final container = await makeContainer(user: testUser, repo: repo);
+      
+      final outcome = await container.read(quizControllerProvider.notifier).retryPendingSave();
+      expect(outcome.result, QuizSaveResult.failed);
+      expect(repo.calls, 0);
+    });
+
+    test('submit while controller state is loading still writes pending first', () async {
+      final repo = FakeUserRepository()..throwException = true;
+      final container = await makeContainer(user: testUser, repo: repo);
+      final controller = container.read(quizControllerProvider.notifier);
+      
+      // Start generating quiz so state is AsyncLoading
+      controller.generateQuiz(DateTime(2026, 10, 10));
+      
+      // Call submitQuiz (simulating a submit while state is loading/not data)
+      final result = await controller.submitQuiz(today: DateTime(2026, 10, 10), answers: testAnswers, sessionDateId: '2026-10-10');
+      
+      expect(result, QuizSaveResult.failed);
+      
+      final cache = container.read(quizResultCacheProvider);
+      final pending = await cache.loadPending('2026-10-10');
+      expect(pending, isNotNull); // pending was written
+    });
   });
 }
