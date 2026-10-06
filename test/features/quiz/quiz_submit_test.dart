@@ -246,6 +246,43 @@ void main() {
     expect(repo.calls, 1);
   });
 
+  test('save that never completes times out and returns failed', () async {
+    final repo = FakeUserRepository()
+      ..completer = Completer<QuizSaveResult>(); // Never completed
+    final container = ProviderContainer(
+      overrides: [
+        userRepositoryProvider.overrideWithValue(repo),
+        appUserProvider.overrideWith((ref) => Stream.value(testUser)),
+        todayProvider.overrideWithValue(() => fixedDate),
+        quizSaveTimeoutProvider.overrideWithValue(const Duration(milliseconds: 200)),
+        contentRepositoryProvider.overrideWithValue(FakeContentRepo()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.listen(appUserProvider, (previous, next) {});
+    await container.read(appUserProvider.future);
+
+    container.listen(quizControllerProvider, (previous, next) {});
+    await container.read(quizControllerProvider.future);
+
+    repo.cache = container.read(quizResultCacheProvider);
+
+    final controller = container.read(quizControllerProvider.notifier);
+
+    final result = await controller.submitQuiz(
+        today: fixedDate, answers: testAnswers, sessionDateId: fixedSessionId);
+
+    expect(result, QuizSaveResult.failed);
+
+    final cache = container.read(quizResultCacheProvider);
+    expect(await cache.loadPending(fixedSessionId), isNotNull);
+
+    final state = container.read(quizControllerProvider);
+    expect(state.hasValue, isTrue);
+    expect(state.value!.submitFailed, isTrue);
+  });
+
   group('UnsavedQuizResolver and retryPendingSave', () {
     test('resolver: pending in the current week and quiz not taken -> hasUnsaved', () async {
       final repo = FakeUserRepository();

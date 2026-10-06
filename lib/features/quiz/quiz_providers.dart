@@ -14,6 +14,7 @@ const int quizMaxQuestions = 10;
 const int quizMinConcepts = 5; // Configured minimum to unlock quiz
 
 final todayProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+final quizSaveTimeoutProvider = Provider<Duration>((ref) => const Duration(seconds: 10));
 
 final completedQuizResultProvider = FutureProvider.autoDispose<CompletedQuizResult?>((ref) async {
   final today = ref.watch(todayProvider)();
@@ -392,7 +393,7 @@ class QuizController extends AsyncNotifier<QuizSessionState> {
         score: score,
         total: total,
         tier: tier,
-      );
+      ).timeout(ref.read(quizSaveTimeoutProvider));
 
       if (!ref.mounted) return result;
 

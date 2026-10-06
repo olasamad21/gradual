@@ -237,6 +237,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
     }
 
     return conceptsAsync.when(
+      skipLoadingOnReload: true,
       data: (state) {
         if (state.concepts.isEmpty) {
           return Center(
