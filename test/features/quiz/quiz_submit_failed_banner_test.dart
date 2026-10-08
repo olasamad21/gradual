@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gradual/features/quiz/quiz_submit_failed_banner.dart';
+import 'package:gradual/core/theme/app_theme.dart';
 
 void main() {
   Widget buildTestableWidget(Widget child) {
     return MaterialApp(
+      theme: AppTheme.light,
       home: Scaffold(
-        body: child,
+        body: Column(
+          children: [child],
+        ),
       ),
     );
   }
@@ -55,5 +59,57 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100)); // Just a small advance, no pumpAndSettle
 
     expect(retryCount, 0);
+  });
+
+  testWidgets('pumps the widget and asserts tester.takeException() is null (isSaving false)', (tester) async {
+    await tester.pumpWidget(
+      buildTestableWidget(
+        QuizSubmitFailedBanner(
+          isSaving: false,
+          onRetry: () {},
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('rendered width is finite and greater than 0 (isSaving false)', (tester) async {
+    await tester.pumpWidget(
+      buildTestableWidget(
+        QuizSubmitFailedBanner(
+          isSaving: false,
+          onRetry: () {},
+        ),
+      ),
+    );
+    final size = tester.getSize(find.byType(ElevatedButton));
+    expect(size.width.isFinite, isTrue);
+    expect(size.width > 0, isTrue);
+  });
+
+  testWidgets('pumps the widget and asserts tester.takeException() is null (isSaving true)', (tester) async {
+    await tester.pumpWidget(
+      buildTestableWidget(
+        QuizSubmitFailedBanner(
+          isSaving: true,
+          onRetry: () {},
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('rendered width is finite and greater than 0 (isSaving true)', (tester) async {
+    await tester.pumpWidget(
+      buildTestableWidget(
+        QuizSubmitFailedBanner(
+          isSaving: true,
+          onRetry: () {},
+        ),
+      ),
+    );
+    final size = tester.getSize(find.byType(ElevatedButton));
+    expect(size.width.isFinite, isTrue);
+    expect(size.width > 0, isTrue);
   });
 }

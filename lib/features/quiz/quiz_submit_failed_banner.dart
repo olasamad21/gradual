@@ -31,29 +31,32 @@ class QuizSubmitFailedBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 48),
-              child: ElevatedButton(
-                onPressed: isSaving ? null : onRetry,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444),
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFFECACA),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: ElevatedButton(
+                  onPressed: isSaving ? null : onRetry,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(120, 48),
+                    backgroundColor: const Color(0xFFEF4444),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFFFECACA),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Retry'),
                 ),
-                child: isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Retry'),
               ),
             ),
           ],
