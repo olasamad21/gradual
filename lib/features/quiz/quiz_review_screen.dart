@@ -2,13 +2,36 @@ import 'package:flutter/material.dart';
 import 'quiz_models.dart';
 import 'quiz_screen.dart'; // For DotPatternPainter
 
-class QuizReviewScreen extends StatelessWidget {
+class QuizReviewScreen extends StatefulWidget {
   const QuizReviewScreen({
     super.key,
     required this.answers,
+    this.initialIndex = 0,
   });
 
   final List<QuizAnswer> answers;
+  final int initialIndex;
+
+  @override
+  State<QuizReviewScreen> createState() => _QuizReviewScreenState();
+}
+
+class _QuizReviewScreenState extends State<QuizReviewScreen> {
+  late final PageController _pageController;
+  late int _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,20 +47,108 @@ class QuizReviewScreen extends StatelessWidget {
       body: CustomPaint(
         painter: DotPatternPainter(),
         child: SafeArea(
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            itemCount: answers.length,
-            itemBuilder: (context, index) {
-              return _buildReviewCard(
-                index: index,
-                answer: answers[index],
-              );
-            },
-          ),
+          child: widget.answers.isEmpty
+              ? const Center(child: Text('No answers to review.'))
+              : Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Text('Question ${_current + 1} of ${widget.answers.length}'),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: List.generate(widget.answers.length, (index) {
+                        final answer = widget.answers[index];
+                        final isCorrect = answer.isCorrect;
+                        final isActive = index == _current;
+
+                        return Semantics(
+                          button: true,
+                          selected: isActive,
+                          label: 'Question ${index + 1}, ${isCorrect ? 'correct' : 'incorrect'}',
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              key: ValueKey('review_box_$index'),
+                              onTap: () {
+                                if (MediaQuery.disableAnimationsOf(context)) {
+                                  _pageController.jumpToPage(index);
+                                } else {
+                                  _pageController.animateToPage(
+                                    index,
+                                    duration: const Duration(milliseconds: 250),
+                                    curve: Curves.easeInOut,
+                                  );
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: isCorrect ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isCorrect ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                                    width: isActive ? 3.0 : 1.5,
+                                  ),
+                                ),
+                                child: Stack(
+                                  children: [
+                                    Center(
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: TextStyle(
+                                          color: isCorrect ? const Color(0xFF065F46) : const Color(0xFF991B1B),
+                                          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 2,
+                                      right: 2,
+                                      child: Icon(
+                                        isCorrect ? Icons.check : Icons.close,
+                                        size: 12,
+                                        color: isCorrect ? const Color(0xFF065F46) : const Color(0xFF991B1B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: widget.answers.length,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _current = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          return SingleChildScrollView(
+                            padding: const EdgeInsets.all(20),
+                            child: _buildReviewCard(
+                              index: index,
+                              answer: widget.answers[index],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );
   }
+
 
   Widget _buildReviewCard({required int index, required QuizAnswer answer}) {
     final isCorrect = answer.isCorrect;
