@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/models/concept_model.dart';
 import '../../core/theme/word_colors.dart';
 import '../../core/services/read_aloud_text.dart';
+import 'auto_scroll_logic.dart';
 import 'read_along_text.dart';
 
 class ConceptFlipCard extends StatefulWidget {
@@ -42,6 +44,12 @@ class ConceptFlipCard extends StatefulWidget {
 class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  late final ScrollController _frontScrollController;
+  late final ScrollController _backScrollController;
+  final GlobalKey _frontScrollViewKey = GlobalKey();
+  final GlobalKey _backScrollViewKey = GlobalKey();
+  bool _autoScrollPaused = false;
+  Timer? _userScrollTimer;
   bool _isFront = true;
 
   @override
@@ -54,6 +62,8 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
     _animation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
     );
+    _frontScrollController = ScrollController();
+    _backScrollController = ScrollController();
   }
 
   @override
@@ -74,8 +84,62 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
 
   @override
   void dispose() {
+    _userScrollTimer?.cancel();
+    _frontScrollController.dispose();
+    _backScrollController.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onUserScroll() {
+    _autoScrollPaused = true;
+    _userScrollTimer?.cancel();
+    _userScrollTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) {
+        _autoScrollPaused = false;
+      }
+    });
+  }
+
+  void _onWordRect(Rect wordRect, {required bool isFrontFace}) {
+    if (!widget.isReadingAloud) return;
+    if (isFrontFace != _isFront) return;
+    if (_autoScrollPaused) return;
+
+    final controller = isFrontFace ? _frontScrollController : _backScrollController;
+    final key = isFrontFace ? _frontScrollViewKey : _backScrollViewKey;
+
+    if (!controller.hasClients) return;
+
+    final scrollContext = key.currentContext;
+    if (scrollContext == null) return;
+    final renderBox = scrollContext.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return;
+
+    final viewportTopLeft = renderBox.localToGlobal(Offset.zero);
+    final viewportTop = viewportTopLeft.dy;
+    final viewportBottom = viewportTop + renderBox.size.height;
+
+    final target = computeAutoScrollTarget(
+      currentOffset: controller.offset,
+      maxExtent: controller.position.maxScrollExtent,
+      viewportTop: viewportTop,
+      viewportBottom: viewportBottom,
+      wordTop: wordRect.top,
+      wordBottom: wordRect.bottom,
+    );
+
+    if (target != null) {
+      if (MediaQuery.disableAnimationsOf(scrollContext)) {
+        controller.jumpTo(target);
+      } else {
+        controller.animateTo(
+          target,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    }
   }
 
   void _toggleCard() {
@@ -195,6 +259,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                   height: 1.1,
                 ),
                 sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.term,
+                onCurrentWordRect: (rect) => _onWordRect(rect, isFrontFace: true),
               ),
               const SizedBox(height: 16),
 
@@ -217,17 +282,28 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               ),
               const SizedBox(height: 6),
               Expanded(
-                child: SingleChildScrollView(
-                  child: ReadAlongText(
-                    text: widget.concept.definition,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF374151),
-                      height: 1.6,
+                child: NotificationListener<ScrollStartNotification>(
+                  onNotification: (notification) {
+                    if (notification.dragDetails != null) {
+                      _onUserScroll();
+                    }
+                    return false;
+                  },
+                  child: SingleChildScrollView(
+                    key: _frontScrollViewKey,
+                    controller: _frontScrollController,
+                    child: ReadAlongText(
+                      text: widget.concept.definition,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF374151),
+                        height: 1.6,
+                      ),
+                      sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.definition,
+                      highlightStart: widget.readingSection == ReadSectionKind.definition ? widget.readingWordStart : null,
+                      highlightEnd: widget.readingSection == ReadSectionKind.definition ? widget.readingWordEnd : null,
+                      onCurrentWordRect: (rect) => _onWordRect(rect, isFrontFace: true),
                     ),
-                    sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.definition,
-                    highlightStart: widget.readingSection == ReadSectionKind.definition ? widget.readingWordStart : null,
-                    highlightEnd: widget.readingSection == ReadSectionKind.definition ? widget.readingWordEnd : null,
                   ),
                 ),
               ),
@@ -297,66 +373,78 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (showAnalogy) ...[
-                        _buildSectionHeader('Analogy'),
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFBBF7D0)),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('💡', style: TextStyle(fontSize: 16)),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: ReadAlongText(
-                                  text: widget.concept.analogy!,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFF166534),
-                                    height: 1.5,
+                child: NotificationListener<ScrollStartNotification>(
+                  onNotification: (notification) {
+                    if (notification.dragDetails != null) {
+                      _onUserScroll();
+                    }
+                    return false;
+                  },
+                  child: SingleChildScrollView(
+                    key: _backScrollViewKey,
+                    controller: _backScrollController,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (showAnalogy) ...[
+                          _buildSectionHeader('Analogy'),
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFBBF7D0)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('💡', style: TextStyle(fontSize: 16)),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: ReadAlongText(
+                                    text: widget.concept.analogy!,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF166534),
+                                      height: 1.5,
+                                    ),
+                                    sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.analogy,
+                                    highlightStart: widget.readingSection == ReadSectionKind.analogy ? widget.readingWordStart : null,
+                                    highlightEnd: widget.readingSection == ReadSectionKind.analogy ? widget.readingWordEnd : null,
+                                    onCurrentWordRect: (rect) => _onWordRect(rect, isFrontFace: false),
                                   ),
-                                  sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.analogy,
-                                  highlightStart: widget.readingSection == ReadSectionKind.analogy ? widget.readingWordStart : null,
-                                  highlightEnd: widget.readingSection == ReadSectionKind.analogy ? widget.readingWordEnd : null,
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                          const SizedBox(height: 16),
+                        ],
 
-                      if (showExample) ...[
-                        _buildSectionHeader('Real World Example'),
-                        ReadAlongText(
-                          text: widget.concept.realWorldExample,
-                          style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
-                          sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.example,
-                          highlightStart: widget.readingSection == ReadSectionKind.example ? widget.readingWordStart : null,
-                          highlightEnd: widget.readingSection == ReadSectionKind.example ? widget.readingWordEnd : null,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                        if (showExample) ...[
+                          _buildSectionHeader('Real World Example'),
+                          ReadAlongText(
+                            text: widget.concept.realWorldExample,
+                            style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+                            sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.example,
+                            highlightStart: widget.readingSection == ReadSectionKind.example ? widget.readingWordStart : null,
+                            highlightEnd: widget.readingSection == ReadSectionKind.example ? widget.readingWordEnd : null,
+                            onCurrentWordRect: (rect) => _onWordRect(rect, isFrontFace: false),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
-                      if (showConfusedWith) ...[
-                        _buildSectionHeader("Don't confuse with"),
-                        ReadAlongText(
-                          text: widget.concept.confusedWith!,
-                          style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
-                          sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.confusedWith,
-                          highlightStart: widget.readingSection == ReadSectionKind.confusedWith ? widget.readingWordStart : null,
-                          highlightEnd: widget.readingSection == ReadSectionKind.confusedWith ? widget.readingWordEnd : null,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                        if (showConfusedWith) ...[
+                          _buildSectionHeader("Don't confuse with"),
+                          ReadAlongText(
+                            text: widget.concept.confusedWith!,
+                            style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+                            sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.confusedWith,
+                            highlightStart: widget.readingSection == ReadSectionKind.confusedWith ? widget.readingWordStart : null,
+                            highlightEnd: widget.readingSection == ReadSectionKind.confusedWith ? widget.readingWordEnd : null,
+                            onCurrentWordRect: (rect) => _onWordRect(rect, isFrontFace: false),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
                       if (showRelated) ...[
                         _buildSectionHeader('Related Terms'),
@@ -425,6 +513,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                   ),
                 ),
               ),
+            ),
 
               const SizedBox(height: 12),
 
