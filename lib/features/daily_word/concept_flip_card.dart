@@ -2,6 +2,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/models/concept_model.dart';
 import '../../core/theme/word_colors.dart';
+import '../../core/services/read_aloud_text.dart';
+import 'read_along_text.dart';
+
 class ConceptFlipCard extends StatefulWidget {
   const ConceptFlipCard({
     super.key,
@@ -10,6 +13,13 @@ class ConceptFlipCard extends StatefulWidget {
     required this.isRead,
     required this.isLastWord,
     required this.onMarkRead,
+    this.isReadingAloud = false,
+    this.onToggleReadAloud,
+    this.readingSection,
+    this.readingWordStart,
+    this.readingWordEnd,
+    this.readingSpeed = 1.0,
+    this.onCycleSpeed,
   });
 
   final Concept concept;
@@ -17,6 +27,13 @@ class ConceptFlipCard extends StatefulWidget {
   final bool isRead;
   final bool isLastWord;
   final VoidCallback onMarkRead;
+  final bool isReadingAloud;
+  final VoidCallback? onToggleReadAloud;
+  final ReadSectionKind? readingSection;
+  final int? readingWordStart;
+  final int? readingWordEnd;
+  final double readingSpeed;
+  final VoidCallback? onCycleSpeed;
 
   @override
   State<ConceptFlipCard> createState() => _ConceptFlipCardState();
@@ -40,6 +57,22 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
   }
 
   @override
+  void didUpdateWidget(ConceptFlipCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isReadingAloud && 
+        widget.readingSection != null && 
+        widget.readingSection!.onBackFace && 
+        _isFront) {
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _controller.value = 1.0;
+      } else {
+        _controller.forward();
+      }
+      _isFront = false;
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -52,6 +85,57 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
       _controller.reverse();
     }
     _isFront = !_isFront;
+  }
+
+  Widget _buildSpeakerAndSpeed() {
+    if (widget.onToggleReadAloud == null) return const SizedBox.shrink();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.isReadingAloud && widget.onCycleSpeed != null)
+          Semantics(
+            label: 'Reading speed',
+            button: true,
+            child: InkWell(
+              onTap: widget.onCycleSpeed,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                alignment: Alignment.center,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    widget.readingSpeed == 1.0 ? '1x' : (widget.readingSpeed == 0.75 ? '0.75x' : '1.25x'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: IconButton(
+            icon: Icon(
+              widget.isReadingAloud ? Icons.stop_rounded : Icons.volume_up_rounded,
+              color: Colors.grey.shade600,
+            ),
+            tooltip: widget.isReadingAloud ? 'Stop reading' : 'Read aloud',
+            onPressed: widget.onToggleReadAloud,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildCardBase({required Widget child}) {
@@ -86,15 +170,23 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _WordIndexPill(index: widget.index, isRead: widget.isRead),
-                  if (widget.index == 0) const SwipeHintAnimation(),
+                  Flexible(
+                    child: _WordIndexPill(index: widget.index, isRead: widget.isRead),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.index == 0) const SwipeHintAnimation(),
+                      _buildSpeakerAndSpeed(),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
 
               // Word
-              Text(
-                widget.concept.term,
+              ReadAlongText(
+                text: widget.concept.term,
                 style: const TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w900,
@@ -102,6 +194,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                   letterSpacing: -0.5,
                   height: 1.1,
                 ),
+                sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.term,
               ),
               const SizedBox(height: 16),
 
@@ -125,13 +218,16 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               const SizedBox(height: 6),
               Expanded(
                 child: SingleChildScrollView(
-                  child: Text(
-                    widget.concept.definition,
+                  child: ReadAlongText(
+                    text: widget.concept.definition,
                     style: const TextStyle(
                       fontSize: 15,
                       color: Color(0xFF374151),
                       height: 1.6,
                     ),
+                    sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.definition,
+                    highlightStart: widget.readingSection == ReadSectionKind.definition ? widget.readingWordStart : null,
+                    highlightEnd: widget.readingSection == ReadSectionKind.definition ? widget.readingWordEnd : null,
                   ),
                 ),
               ),
@@ -189,7 +285,16 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _WordIndexPill(index: widget.index, isRead: widget.isRead),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: _WordIndexPill(index: widget.index, isRead: widget.isRead),
+                  ),
+                  _buildSpeakerAndSpeed(),
+                ],
+              ),
               const SizedBox(height: 16),
               Expanded(
                 child: SingleChildScrollView(
@@ -211,13 +316,16 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                               const Text('💡', style: TextStyle(fontSize: 16)),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text(
-                                  widget.concept.analogy!,
+                                child: ReadAlongText(
+                                  text: widget.concept.analogy!,
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF166534),
                                     height: 1.5,
                                   ),
+                                  sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.analogy,
+                                  highlightStart: widget.readingSection == ReadSectionKind.analogy ? widget.readingWordStart : null,
+                                  highlightEnd: widget.readingSection == ReadSectionKind.analogy ? widget.readingWordEnd : null,
                                 ),
                               ),
                             ],
@@ -228,18 +336,24 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
 
                       if (showExample) ...[
                         _buildSectionHeader('Real World Example'),
-                        Text(
-                          widget.concept.realWorldExample,
+                        ReadAlongText(
+                          text: widget.concept.realWorldExample,
                           style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+                          sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.example,
+                          highlightStart: widget.readingSection == ReadSectionKind.example ? widget.readingWordStart : null,
+                          highlightEnd: widget.readingSection == ReadSectionKind.example ? widget.readingWordEnd : null,
                         ),
                         const SizedBox(height: 16),
                       ],
 
                       if (showConfusedWith) ...[
                         _buildSectionHeader("Don't confuse with"),
-                        Text(
-                          widget.concept.confusedWith!,
+                        ReadAlongText(
+                          text: widget.concept.confusedWith!,
                           style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+                          sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.confusedWith,
+                          highlightStart: widget.readingSection == ReadSectionKind.confusedWith ? widget.readingWordStart : null,
+                          highlightEnd: widget.readingSection == ReadSectionKind.confusedWith ? widget.readingWordEnd : null,
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -470,13 +584,17 @@ class _WordIndexPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'WORDS OF THE DAY',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: color,
-                letterSpacing: 1.0,
+            Flexible(
+              child: Text(
+                'WORDS OF THE DAY',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  letterSpacing: 1.0,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 6),

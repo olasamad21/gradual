@@ -15,6 +15,7 @@ import '../streak/streak_heatmap_widget.dart';
 
 import 'concept_flip_card.dart';
 import 'today_concepts_controller.dart';
+import 'read_aloud_controller.dart';
 import '../streak/streak_providers.dart';
 
 class DailyWordScreen extends ConsumerStatefulWidget {
@@ -24,20 +25,29 @@ class DailyWordScreen extends ConsumerStatefulWidget {
   ConsumerState<DailyWordScreen> createState() => _DailyWordScreenState();
 }
 
-class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
+class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsBindingObserver {
   final PageController _pageController = PageController();
-  
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkFreshStart();
+  }
 
   @override
   void dispose() {
+    ref.read(readAloudControllerProvider.notifier).stop();
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
   }
 
   @override
-  void initState() {
-    super.initState();
-    _checkFreshStart();
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      ref.read(readAloudControllerProvider.notifier).stop();
+    }
   }
 
   Future<void> _checkFreshStart() async {
@@ -264,12 +274,15 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
                 clipBehavior: Clip.none,
                 controller: _pageController,
                 onPageChanged: (idx) {
-                  
+                  ref.read(readAloudControllerProvider.notifier).stop();
                 },
                 itemCount: state.concepts.length,
                 itemBuilder: (context, index) {
                   final concept = state.concepts[index];
                   final isRead = state.readConceptIds.contains(concept.id);
+                  final readAloudState = ref.watch(readAloudControllerProvider);
+                  final isReadingAloud = readAloudState.conceptId == concept.id;
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 36, left: 4, right: 4, top: 4),
                     child: ConceptFlipCard(
@@ -277,6 +290,27 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> {
                       index: index,
                       isRead: isRead,
                       isLastWord: index == state.concepts.length - 1,
+                      isReadingAloud: isReadingAloud,
+                      readingSection: isReadingAloud ? readAloudState.section : null,
+                      readingWordStart: isReadingAloud ? readAloudState.wordStart : null,
+                      readingWordEnd: isReadingAloud ? readAloudState.wordEnd : null,
+                      readingSpeed: isReadingAloud ? readAloudState.speed : 1.0,
+                      onToggleReadAloud: () async {
+                        final success = await ref.read(readAloudControllerProvider.notifier).toggle(concept);
+                        if (!success && mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Read aloud isn't available on this device.")),
+                          );
+                        }
+                      },
+                      onCycleSpeed: () {
+                        final currentSpeed = ref.read(readAloudControllerProvider).speed;
+                        double nextSpeed = 1.0;
+                        if (currentSpeed == 0.75) nextSpeed = 1.0;
+                        else if (currentSpeed == 1.0) nextSpeed = 1.25;
+                        else nextSpeed = 0.75;
+                        ref.read(readAloudControllerProvider.notifier).setSpeed(nextSpeed);
+                      },
                       onMarkRead: () {
                         ref.read(cardHintSeenProvider.notifier).markSeen();
                         ref.read(todayConceptsControllerProvider.notifier).markRead(concept.id);

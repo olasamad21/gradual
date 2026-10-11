@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gradual/core/models/concept_model.dart';
 import 'package:gradual/features/daily_word/concept_flip_card.dart';
+import 'package:gradual/core/services/read_aloud_text.dart';
 
 void main() {
   final testConcept = Concept(
@@ -23,6 +24,13 @@ void main() {
     bool isLastWord = false,
     VoidCallback? onMarkRead,
     bool disableAnimations = false,
+    bool isReadingAloud = false,
+    VoidCallback? onToggleReadAloud,
+    ReadSectionKind? readingSection,
+    int? readingWordStart,
+    int? readingWordEnd,
+    double readingSpeed = 1.0,
+    VoidCallback? onCycleSpeed,
   }) {
     return MediaQuery(
       data: MediaQueryData(disableAnimations: disableAnimations),
@@ -38,6 +46,13 @@ void main() {
                 isLastWord: isLastWord,
                 index: 0,
                 onMarkRead: onMarkRead ?? () {},
+                isReadingAloud: isReadingAloud,
+                onToggleReadAloud: onToggleReadAloud,
+                readingSection: readingSection,
+                readingWordStart: readingWordStart,
+                readingWordEnd: readingWordEnd,
+                readingSpeed: readingSpeed,
+                onCycleSpeed: onCycleSpeed,
               ),
             ),
           ),
@@ -233,5 +248,128 @@ void main() {
     expect(find.byIcon(Icons.check), findsWidgets);
     expect(find.text('1'), findsNothing);
   });
-}
+  testWidgets('with onToggleReadAloud null there is no speaker button', (tester) async {
+    await tester.pumpWidget(buildTestCard(concept: testConcept));
+    expect(find.byIcon(Icons.volume_up_rounded), findsNothing);
+    expect(find.byIcon(Icons.stop_rounded), findsNothing);
+  });
 
+  testWidgets('with callback the button is present with a finite width greater than 0, tapping calls callback once', (tester) async {
+    int taps = 0;
+    await tester.pumpWidget(buildTestCard(
+      concept: testConcept,
+      onToggleReadAloud: () => taps++,
+    ));
+
+    final button = find.byType(IconButton);
+    expect(button, findsOneWidget);
+    
+    final size = tester.getSize(button);
+    expect(size.width.isFinite, isTrue);
+    expect(size.width, greaterThan(0));
+
+    await tester.tap(button);
+    expect(taps, 1);
+  });
+
+  testWidgets('with isReadingAloud true the stop icon shows', (tester) async {
+    await tester.pumpWidget(buildTestCard(
+      concept: testConcept,
+      isReadingAloud: true,
+      onToggleReadAloud: () {},
+    ));
+
+    expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.volume_up_rounded), findsNothing);
+  });
+
+  testWidgets('the button is present on both faces after a flip', (tester) async {
+    await tester.pumpWidget(buildTestCard(
+      concept: testConcept,
+      onToggleReadAloud: () {},
+    ));
+
+    expect(find.byType(IconButton), findsOneWidget);
+
+    await tester.tap(find.text('State'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+
+    expect(find.byType(IconButton), findsOneWidget);
+  });
+
+  testWidgets('readingSection analogy while showing the front flips to the back', (tester) async {
+    await tester.pumpWidget(buildTestCard(
+      concept: testConcept,
+      isReadingAloud: false,
+    ));
+
+    expect(find.text('Like remembering where you left your keys.'), findsNothing); // Analogy hidden
+
+    await tester.pumpWidget(buildTestCard(
+      concept: testConcept,
+      isReadingAloud: true,
+      readingSection: ReadSectionKind.analogy,
+      disableAnimations: true, // instant flip
+    ));
+    await tester.pump(); // trigger flip
+
+    expect(find.text('Like remembering where you left your keys.'), findsOneWidget); // Visible now
+  });
+
+  testWidgets('speed chip shows only while reading and tapping it calls onCycleSpeed once', (tester) async {
+    int taps = 0;
+
+    await tester.pumpWidget(buildTestCard(
+      concept: testConcept,
+      isReadingAloud: false,
+      onToggleReadAloud: () {},
+      onCycleSpeed: () => taps++,
+    ));
+
+    expect(find.text('1x'), findsNothing);
+
+    await tester.pumpWidget(buildTestCard(
+      concept: testConcept,
+      isReadingAloud: true,
+      onToggleReadAloud: () {},
+      onCycleSpeed: () => taps++,
+    ));
+
+    final chip = find.text('1x');
+    expect(chip, findsOneWidget);
+
+    await tester.tap(chip);
+    expect(taps, 1);
+  });
+
+  testWidgets('no exceptions at text scale 1.3 with reading buttons', (tester) async {
+    await tester.pumpWidget(MediaQuery(
+      data: const MediaQueryData(textScaler: TextScaler.linear(1.3)),
+      child: MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 400,
+              height: 600,
+              child: ConceptFlipCard(
+                concept: testConcept,
+                index: 0,
+                isRead: false,
+                isLastWord: false,
+                onMarkRead: () {},
+                isReadingAloud: true,
+                onToggleReadAloud: () {},
+                onCycleSpeed: () {},
+                readingSpeed: 1.25,
+                readingSection: ReadSectionKind.example,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
+
+    expect(tester.takeException(), isNull);
+  });
+}
