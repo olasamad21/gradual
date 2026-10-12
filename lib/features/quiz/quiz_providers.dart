@@ -11,7 +11,6 @@ import 'quiz_models.dart';
 import 'quiz_result_cache_provider.dart';
 
 const int quizMaxQuestions = 10;
-const int quizMinConcepts = 5; // Configured minimum to unlock quiz
 
 final todayProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 final quizSaveTimeoutProvider = Provider<Duration>((ref) => const Duration(seconds: 10));

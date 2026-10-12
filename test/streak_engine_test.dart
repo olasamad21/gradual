@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gradual/core/config/app_rules.dart';
 import 'package:gradual/core/services/streak_engine.dart';
 
 void main() {
@@ -197,33 +198,62 @@ void main() {
     });
 
     test('quizStatus for every state', () {
-      // 2026-10-07 is Wednesday (window not open)
-      final wednesday = DateTime(2026, 10, 7);
-      expect(StreakEngine.quizStatus({}, wednesday).type, QuizStatusType.notYetOpen);
+      final N = AppRules.quizMinConceptsThisWeek;
+      final monday = DateTime(2026, 10, 5);
+      final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
 
-      // 2026-10-10 is Saturday (window open)
-      final saturday = DateTime(2026, 10, 10);
-      final log1 = {
-        '2026-10-05': {'concepts_read': ['c1', 'c2']},
-        '2026-10-06': {'concepts_read': ['c3']}
-      }; // 3 concepts read this week
-      
-      final status1 = StreakEngine.quizStatus(log1, saturday);
-      expect(status1.type, QuizStatusType.needMoreConcepts);
-      expect(status1.conceptsNeeded, 2);
+      DateTime? openDate;
+      DateTime? closedDate;
+      for (final d in weekDays) {
+        if (AppRules.quizWindowWeekdays.contains(d.weekday)) {
+          openDate ??= d;
+        } else {
+          closedDate ??= d;
+        }
+      }
 
-      final log2 = {
-        '2026-10-05': {'concepts_read': ['c1', 'c2']},
-        '2026-10-06': {'concepts_read': ['c3', 'c4']},
-        '2026-10-07': {'concepts_read': ['c5']}
-      }; // 5 concepts read
-      expect(StreakEngine.quizStatus(log2, saturday).type, QuizStatusType.available);
+      if (closedDate != null) {
+        expect(StreakEngine.quizStatus({}, closedDate).type, QuizStatusType.notYetOpen);
+      } else {
+        // ignore: avoid_print
+        print('Skipping notYetOpen assertion: no closed weekday found in AppRules.quizWindowWeekdays');
+      }
 
-      final log3 = {
-        '2026-10-05': {'concepts_read': ['c1', 'c2', 'c3', 'c4', 'c5']},
-        '2026-10-10': {'quiz_score': 10}
-      }; // taken on Saturday
-      expect(StreakEngine.quizStatus(log3, saturday).type, QuizStatusType.completed);
+      expect(openDate, isNotNull);
+
+      if (N >= 1) {
+        final conceptsNMinus1 = List.generate(N - 1, (i) => 'concept_$i');
+        final logNeedMore = {
+          '2026-10-05': {'concepts_read': conceptsNMinus1},
+        };
+        final statusNeedMore = StreakEngine.quizStatus(logNeedMore, openDate!);
+        expect(statusNeedMore.type, QuizStatusType.needMoreConcepts);
+        expect(statusNeedMore.conceptsNeeded, 1);
+      }
+
+      final conceptsN = List.generate(N, (i) => 'concept_$i');
+      final logAvailable = {
+        '2026-10-05': {'concepts_read': conceptsN},
+      };
+      expect(StreakEngine.quizStatus(logAvailable, openDate!).type, QuizStatusType.available);
+
+      final openDateStr = '${openDate.year}-${openDate.month.toString().padLeft(2, '0')}-${openDate.day.toString().padLeft(2, '0')}';
+      final logCompleted = <String, dynamic>{
+        '2026-10-05': {'concepts_read': conceptsN},
+      };
+      final existing = (logCompleted[openDateStr] as Map<String, dynamic>?) ?? {};
+      logCompleted[openDateStr] = {
+        ...existing,
+        'quiz_score': 10,
+      };
+      expect(StreakEngine.quizStatus(logCompleted, openDate).type, QuizStatusType.completed);
+
+      // A quiz score from the PREVIOUS week does not count as completed.
+      final logPrevWeekQuiz = {
+        '2026-10-04': {'quiz_score': 10},
+        '2026-10-05': {'concepts_read': conceptsN},
+      };
+      expect(StreakEngine.quizStatus(logPrevWeekQuiz, openDate).type, QuizStatusType.available);
     });
 
     test('quiz taken Saturday blocks Sunday', () {
