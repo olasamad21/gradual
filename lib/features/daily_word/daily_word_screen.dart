@@ -297,7 +297,8 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                       readingSpeed: isReadingAloud ? readAloudState.speed : 1.0,
                       onToggleReadAloud: () async {
                         final success = await ref.read(readAloudControllerProvider.notifier).toggle(concept);
-                        if (!success && mounted) {
+                        if (!context.mounted) return;
+                        if (!success) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Read aloud isn't available on this device.")),
                           );
@@ -306,9 +307,13 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                       onCycleSpeed: () {
                         final currentSpeed = ref.read(readAloudControllerProvider).speed;
                         double nextSpeed = 1.0;
-                        if (currentSpeed == 0.75) nextSpeed = 1.0;
-                        else if (currentSpeed == 1.0) nextSpeed = 1.25;
-                        else nextSpeed = 0.75;
+                        if (currentSpeed == 0.75) {
+                          nextSpeed = 1.0;
+                        } else if (currentSpeed == 1.0) {
+                          nextSpeed = 1.25;
+                        } else {
+                          nextSpeed = 0.75;
+                        }
                         ref.read(readAloudControllerProvider.notifier).setSpeed(nextSpeed);
                       },
                       onMarkRead: () {

@@ -200,7 +200,7 @@ void main() {
     test('quizStatus for every state', () {
       final N = AppRules.quizMinConceptsThisWeek;
       final monday = DateTime(2026, 10, 5);
-      final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
+      final weekDays = List.generate(7, (i) => DateTime(monday.year, monday.month, monday.day + i));
 
       DateTime? openDate;
       DateTime? closedDate;
