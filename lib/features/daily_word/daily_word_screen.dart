@@ -17,6 +17,7 @@ import '../streak/reward_tracker.dart';
 import '../streak/streak_heatmap_widget.dart';
 
 import 'concept_flip_card.dart';
+import 'concept_reader.dart';
 import 'today_concepts_controller.dart';
 import 'read_aloud_controller.dart';
 import '../streak/streak_providers.dart';
@@ -38,7 +39,7 @@ bool shouldTriggerReward({
 }) {
   if (isFallback) return false;
   if (alreadyShown) return false;
-  if (reward == DayReward.none) return false;
+  if (reward != DayReward.perfect) return false;
   return newCount > previousCount;
 }
 
@@ -143,6 +144,8 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
           todayId,
           AppRules.conceptsPerDay,
         );
+
+        if (reward != DayReward.perfect) return;
 
         final tracker = RewardTracker();
         final shouldShow = await tracker.shouldShow(reward, todayId);
@@ -388,6 +391,30 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                             }
                           }
                         });
+                      },
+                      onExpand: () {
+                        ref.read(readAloudControllerProvider.notifier).stop();
+                        openConceptReader(
+                          context,
+                          concept: concept,
+                          index: index,
+                          total: state.concepts.length,
+                          onMarkRead: () {
+                            ref.read(cardHintSeenProvider.notifier).markSeen();
+                            ref.read(todayConceptsControllerProvider.notifier).markRead(concept.id);
+                            
+                            Future.delayed(const Duration(milliseconds: 600), () {
+                              if (mounted && _pageController.hasClients) {
+                                if (index < state.concepts.length - 1) {
+                                  _pageController.nextPage(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeInOut,
+                                  );
+                                }
+                              }
+                            });
+                          },
+                        );
                       },
                     ),
                   );

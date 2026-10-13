@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gradual/core/models/concept_model.dart';
+import 'package:gradual/core/theme/app_theme.dart';
 import 'package:gradual/features/daily_word/concept_flip_card.dart';
 import 'package:gradual/core/services/read_aloud_text.dart';
 
@@ -31,10 +32,12 @@ void main() {
     int? readingWordEnd,
     double readingSpeed = 1.0,
     VoidCallback? onCycleSpeed,
+    VoidCallback? onExpand,
   }) {
     return MediaQuery(
       data: MediaQueryData(disableAnimations: disableAnimations),
       child: MaterialApp(
+        theme: AppTheme.light,
         home: Scaffold(
           body: Center(
             child: SizedBox(
@@ -53,6 +56,7 @@ void main() {
                 readingWordEnd: readingWordEnd,
                 readingSpeed: readingSpeed,
                 onCycleSpeed: onCycleSpeed,
+                onExpand: onExpand,
               ),
             ),
           ),
@@ -371,5 +375,109 @@ void main() {
     ));
 
     expect(tester.takeException(), isNull);
+  });
+
+  group('ConceptFlipCard onExpand and longPress tests', () {
+    testWidgets('with onExpand null there is no handle and a long press does nothing', (tester) async {
+      await tester.pumpWidget(buildTestCard(concept: testConcept, onExpand: null));
+      expect(find.byKey(const Key('concept_card_expand_handle')), findsNothing);
+
+      await tester.longPress(find.byType(ConceptFlipCard));
+      await tester.pump();
+      expect(find.text('DEFINITION'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('with onExpand set tester.longPress on the card calls it once and the card is still on the front', (tester) async {
+      var expandCalls = 0;
+      await tester.pumpWidget(buildTestCard(concept: testConcept, onExpand: () => expandCalls++));
+
+      await tester.longPress(find.byType(ConceptFlipCard));
+      await tester.pump();
+
+      expect(expandCalls, 1);
+      expect(find.text('DEFINITION'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a normal tap still flips and does not call onExpand', (tester) async {
+      var expandCalls = 0;
+      await tester.pumpWidget(buildTestCard(concept: testConcept, onExpand: () => expandCalls++));
+
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      expect(expandCalls, 0);
+      expect(find.text('Tap to flip back'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('tapping the handle calls it once', (tester) async {
+      var expandCalls = 0;
+      await tester.pumpWidget(buildTestCard(concept: testConcept, onExpand: () => expandCalls++));
+
+      final handleFinder = find.byKey(const Key('concept_card_expand_handle'));
+      expect(handleFinder, findsOneWidget);
+
+      await tester.tap(handleFinder);
+      await tester.pump();
+
+      expect(expandCalls, 1);
+      expect(find.text('DEFINITION'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the handle is present on both faces after a flip (pump() then pump(Duration(milliseconds: 800)))', (tester) async {
+      await tester.pumpWidget(buildTestCard(concept: testConcept, onExpand: () {}));
+
+      // Front face
+      expect(find.byKey(const Key('concept_card_expand_handle')), findsOneWidget);
+
+      // Flip card
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      // Back face
+      expect(find.byKey(const Key('concept_card_expand_handle')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('no overflow at text scale 1.3', (tester) async {
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(1.3)),
+          child: MaterialApp(
+            theme: AppTheme.light,
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 400,
+                  height: 600,
+                  child: ConceptFlipCard(
+                    concept: testConcept,
+                    index: 0,
+                    isRead: false,
+                    isLastWord: false,
+                    onMarkRead: () {},
+                    onExpand: () {},
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+
+      // Flip to back face
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      expect(tester.takeException(), isNull);
+    });
   });
 }

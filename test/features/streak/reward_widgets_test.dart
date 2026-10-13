@@ -242,21 +242,10 @@ void main() {
   });
 
   group('Screen-level reward decision logic tests (shouldTriggerReward)', () {
-    test('goes from 0 to 1 new concept read today: trigger is true', () {
+    test('goes from 0 to 1 new concept read today: trigger is false (counted reward suppressed)', () {
       final trigger = shouldTriggerReward(
         previousCount: 0,
         newCount: 1,
-        reward: DayReward.counted,
-        isFallback: false,
-        alreadyShown: false,
-      );
-      expect(trigger, isTrue);
-    });
-
-    test('first emitted value alone (previousCount == newCount == 0): trigger is false', () {
-      final trigger = shouldTriggerReward(
-        previousCount: 0,
-        newCount: 0,
         reward: DayReward.counted,
         isFallback: false,
         alreadyShown: false,
@@ -264,11 +253,22 @@ void main() {
       expect(trigger, isFalse);
     });
 
-    test('second update with the same count (1 -> 1): trigger is false', () {
+    test('first emitted value alone (previousCount == newCount == 0): trigger is false', () {
       final trigger = shouldTriggerReward(
-        previousCount: 1,
-        newCount: 1,
-        reward: DayReward.counted,
+        previousCount: 0,
+        newCount: 0,
+        reward: DayReward.perfect,
+        isFallback: false,
+        alreadyShown: false,
+      );
+      expect(trigger, isFalse);
+    });
+
+    test('second update with the same count (3 -> 3): trigger is false', () {
+      final trigger = shouldTriggerReward(
+        previousCount: 3,
+        newCount: 3,
+        reward: DayReward.perfect,
         isFallback: false,
         alreadyShown: false,
       );
@@ -277,9 +277,9 @@ void main() {
 
     test('fallback day shows nothing even when count increases', () {
       final trigger = shouldTriggerReward(
-        previousCount: 0,
-        newCount: 1,
-        reward: DayReward.counted,
+        previousCount: 2,
+        newCount: 3,
+        reward: DayReward.perfect,
         isFallback: true,
         alreadyShown: false,
       );
@@ -288,9 +288,9 @@ void main() {
 
     test('already shown returns false', () {
       final trigger = shouldTriggerReward(
-        previousCount: 0,
-        newCount: 1,
-        reward: DayReward.counted,
+        previousCount: 2,
+        newCount: 3,
+        reward: DayReward.perfect,
         isFallback: false,
         alreadyShown: true,
       );
@@ -317,6 +317,17 @@ void main() {
         alreadyShown: false,
       );
       expect(trigger, isTrue);
+    });
+
+    test('perfect day already shown returns false (shows only once)', () {
+      final trigger = shouldTriggerReward(
+        previousCount: 2,
+        newCount: 3,
+        reward: DayReward.perfect,
+        isFallback: false,
+        alreadyShown: true,
+      );
+      expect(trigger, isFalse);
     });
   });
 }

@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import '../../core/models/concept_model.dart';
 import '../../core/theme/word_colors.dart';
 import '../../core/services/read_aloud_text.dart';
@@ -22,6 +25,7 @@ class ConceptFlipCard extends StatefulWidget {
     this.readingWordEnd,
     this.readingSpeed = 1.0,
     this.onCycleSpeed,
+    this.onExpand,
   });
 
   final Concept concept;
@@ -36,6 +40,7 @@ class ConceptFlipCard extends StatefulWidget {
   final int? readingWordEnd;
   final double readingSpeed;
   final VoidCallback? onCycleSpeed;
+  final VoidCallback? onExpand;
 
   @override
   State<ConceptFlipCard> createState() => _ConceptFlipCardState();
@@ -51,6 +56,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
   bool _autoScrollPaused = false;
   Timer? _userScrollTimer;
   bool _isFront = true;
+  bool _longPressed = false;
 
   @override
   void initState() {
@@ -202,6 +208,31 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
     );
   }
 
+  Widget _buildExpandHandle() {
+    if (widget.onExpand == null) return const SizedBox.shrink();
+
+    return Center(
+      child: GestureDetector(
+        key: const Key('concept_card_expand_handle'),
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onExpand,
+        child: Container(
+          width: 48,
+          height: 24,
+          alignment: Alignment.center,
+          child: Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1D5DB),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCardBase({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -229,6 +260,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (widget.onExpand != null) _buildExpandHandle(),
               // Word chip header row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -361,6 +393,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (widget.onExpand != null) _buildExpandHandle(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -544,48 +577,98 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
   Widget build(BuildContext context) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
 
-    return GestureDetector(
-      onTap: _toggleCard,
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          final isFrontFacing = _animation.value <= 0.5;
+    final gestures = <Type, GestureRecognizerFactory>{};
 
-          if (disableAnimations) {
-            return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                return Stack(
-                  fit: StackFit.expand,
-                  children: <Widget>[
-                    ...previousChildren,
-                    if (currentChild != null) currentChild,
-                  ],
-                );
-              },
-              child: isFrontFacing
-                  ? KeyedSubtree(key: const ValueKey(1), child: _buildFront())
-                  : KeyedSubtree(key: const ValueKey(2), child: _buildBack()),
-            );
-          }
-
-          final angle = _animation.value * math.pi;
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001)
-              ..rotateY(angle),
-            child: isFrontFacing
-                ? _buildFront()
-                : Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.rotationY(math.pi),
-                    child: _buildBack(),
-                  ),
-          );
+    if (widget.onExpand != null) {
+      gestures[LongPressGestureRecognizer] =
+          GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+        () => LongPressGestureRecognizer(
+          duration: const Duration(milliseconds: 450),
+        ),
+        (LongPressGestureRecognizer instance) {
+          instance.onLongPress = () {
+            _longPressed = true;
+            HapticFeedback.mediumImpact();
+            widget.onExpand?.call();
+          };
         },
-      ),
+      );
+    }
+
+    gestures[TapGestureRecognizer] =
+        GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+      () => TapGestureRecognizer(),
+      (TapGestureRecognizer instance) {
+        instance.onTapDown = (_) {
+          _longPressed = false;
+        };
+        instance.onTap = () {
+          if (_longPressed) {
+            _longPressed = false;
+            return;
+          }
+          _toggleCard();
+        };
+      },
     );
+
+    Widget cardContent = AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        final isFrontFacing = _animation.value <= 0.5;
+
+        if (disableAnimations) {
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+              return Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  ...previousChildren,
+                  if (currentChild != null) currentChild,
+                ],
+              );
+            },
+            child: isFrontFacing
+                ? KeyedSubtree(key: const ValueKey(1), child: _buildFront())
+                : KeyedSubtree(key: const ValueKey(2), child: _buildBack()),
+          );
+        }
+
+        final angle = _animation.value * math.pi;
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(angle),
+          child: isFrontFacing
+              ? _buildFront()
+              : Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.rotationY(math.pi),
+                  child: _buildBack(),
+                ),
+        );
+      },
+    );
+
+    Widget result = RawGestureDetector(
+      behavior: HitTestBehavior.opaque,
+      gestures: gestures,
+      child: cardContent,
+    );
+
+    if (widget.onExpand != null) {
+      result = Semantics(
+        customSemanticsActions: {
+          const CustomSemanticsAction(label: 'Open full screen reader'):
+              widget.onExpand!,
+        },
+        child: result,
+      );
+    }
+
+    return result;
   }
 }
 
