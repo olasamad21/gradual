@@ -3,20 +3,44 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/config/app_rules.dart';
 import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
 import '../../core/models/user_model.dart';
+import '../../core/services/streak_engine.dart';
+import '../../core/utils/date_utils.dart';
 import '../../shared/widgets/firestore_permission_widget.dart';
 import '../../shared/widgets/loading_indicator.dart';
 
-
+import '../streak/day_reward_overlay.dart';
+import '../streak/reward_tracker.dart';
 import '../streak/streak_heatmap_widget.dart';
-
 
 import 'concept_flip_card.dart';
 import 'today_concepts_controller.dart';
 import 'read_aloud_controller.dart';
 import '../streak/streak_providers.dart';
+
+int _conceptCountForDate(Map<String, dynamic> log, String dateId) {
+  final entry = log[dateId];
+  if (entry is! Map) return 0;
+  final concepts = entry['concepts_read'];
+  if (concepts is! List) return 0;
+  return concepts.whereType<String>().toSet().length;
+}
+
+bool shouldTriggerReward({
+  required int previousCount,
+  required int newCount,
+  required DayReward reward,
+  required bool isFallback,
+  required bool alreadyShown,
+}) {
+  if (isFallback) return false;
+  if (alreadyShown) return false;
+  if (reward == DayReward.none) return false;
+  return newCount > previousCount;
+}
 
 class DailyWordScreen extends ConsumerStatefulWidget {
   const DailyWordScreen({super.key});
@@ -86,29 +110,63 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
 
 
   @override
-  @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(appUserProvider);
     final conceptsAsync = ref.watch(todayConceptsControllerProvider);
     
-    ref.listen<AsyncValue<TodayConceptsState>>(
-      todayConceptsControllerProvider,
-      (previous, next) {
-        final prevData = previous?.whenOrNull(data: (d) => d);
-        final nextData = next.whenOrNull(data: (d) => d);
-        
-        if (prevData != null && nextData != null) {
-          if (prevData.readCount == 0 && nextData.readCount == 1) {
-            // TODO(step 3)
-            // showDialog(
-            //   context: context,
-            //   builder: (ctx) => StreakSuccessModal(
-            //     streakCount: nextData.liveStreak,
-            //     
-            //   ),
-            // );
-          }
+    ref.listen<AsyncValue<AppUser?>>(
+      appUserProvider,
+      (previous, next) async {
+        if (previous == null || previous.isLoading || !previous.hasValue || previous.value == null) {
+          return;
         }
+        if (next.isLoading || !next.hasValue || next.value == null) {
+          return;
+        }
+
+        final prevUser = previous.value!;
+        final nextUser = next.value!;
+
+        final today = DateTime.now();
+        final todayId = DateUtilsGradual.todayLocalDateId();
+
+        final prevCount = _conceptCountForDate(prevUser.rawActivityLog, todayId);
+        final nextCount = _conceptCountForDate(nextUser.rawActivityLog, todayId);
+
+        if (nextCount <= prevCount) return;
+
+        final conceptsState = ref.read(todayConceptsControllerProvider).asData?.value;
+        final isFallback = conceptsState?.isFallback ?? false;
+
+        final reward = StreakEngine.dayReward(
+          nextUser.rawActivityLog,
+          todayId,
+          AppRules.conceptsPerDay,
+        );
+
+        final tracker = RewardTracker();
+        final shouldShow = await tracker.shouldShow(reward, todayId);
+
+        final trigger = shouldTriggerReward(
+          previousCount: prevCount,
+          newCount: nextCount,
+          reward: reward,
+          isFallback: isFallback,
+          alreadyShown: !shouldShow,
+        );
+
+        if (!trigger) return;
+
+        await tracker.markShown(reward, todayId);
+
+        if (!mounted || !context.mounted) return;
+
+        final streakCount = nextUser.streakAt(today);
+        DayRewardOverlay.show(
+          context,
+          reward: reward,
+          streakCount: streakCount,
+        );
       },
     );
     final cachedUser = userAsync.when(

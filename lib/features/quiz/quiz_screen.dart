@@ -7,6 +7,7 @@ import 'package:gradual/features/quiz/unsaved_quiz_card.dart';
 import 'package:gradual/core/services/streak_engine.dart';
 import 'quiz_models.dart';
 import 'quiz_review_screen.dart';
+import '../streak/quiz_result_box.dart';
 import '../../shared/widgets/app_shell.dart';
 
 // -----------------------------------------------------------------------------
@@ -601,6 +602,11 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
     final pct = total == 0 ? 0.0 : correct / total;
     final percentInt = (pct * 100).round();
 
+    final rawTier = widget.result.tier.toLowerCase().trim();
+    final tier = const ['excellent', 'good', 'fair', 'failed'].contains(rawTier)
+        ? rawTier
+        : StreakEngine.quizTier(correct, total);
+
     Color scoreColor;
     String scoreLabel;
     IconData scoreIcon;
@@ -729,6 +735,8 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 24),
+                        QuizResultBox(tier: tier),
                         const SizedBox(height: 32),
                         Column(
                           children: [

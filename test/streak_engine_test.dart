@@ -330,4 +330,43 @@ void main() {
       expect(StreakEngine.heatmapCell(log, '2026-10-12', 3), HeatmapCell.none);
     });
   });
+
+  group('DayReward pure tests', () {
+    test('dayReward returns none for empty log', () {
+      expect(StreakEngine.dayReward({}, '2026-10-10', 3), DayReward.none);
+    });
+
+    test('dayReward returns none for a day whose concepts were all read on earlier days', () {
+      final log = {
+        '2026-10-09': {'concepts_read': ['c1', 'c2', 'c3']},
+        '2026-10-10': {'concepts_read': ['c1', 'c2']},
+      };
+      expect(StreakEngine.dayReward(log, '2026-10-10', 3), DayReward.none);
+    });
+
+    test('dayReward returns counted for a day with one new concept', () {
+      final log = {
+        '2026-10-09': {'concepts_read': ['c1', 'c2']},
+        '2026-10-10': {'concepts_read': ['c1', 'c3']},
+      };
+      expect(StreakEngine.dayReward(log, '2026-10-10', 3), DayReward.counted);
+    });
+
+    test('dayReward returns perfect for a day with all setSize new concepts', () {
+      final log = {
+        '2026-10-10': {'concepts_read': ['c1', 'c2', 'c3']},
+      };
+      expect(StreakEngine.dayReward(log, '2026-10-10', 3), DayReward.perfect);
+    });
+
+    test('dayReward returns none for malformed entries and never throws', () {
+      final log = {
+        '2026-10-10': 'corrupt string',
+        '2026-10-11': {'concepts_read': 'not a list'},
+      };
+      expect(() => StreakEngine.dayReward(log, '2026-10-10', 3), returnsNormally);
+      expect(StreakEngine.dayReward(log, '2026-10-10', 3), DayReward.none);
+      expect(StreakEngine.dayReward(log, '2026-10-11', 3), DayReward.none);
+    });
+  });
 }

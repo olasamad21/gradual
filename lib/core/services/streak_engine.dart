@@ -223,6 +223,28 @@ abstract final class StreakEngine {
     return 'failed';
   }
 
+  static bool dayCountsForStreak(Map<String, dynamic> log, String dateId) {
+    try {
+      return countedDays(log).contains(dateId);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static DayReward dayReward(Map<String, dynamic> log, String dateId, int setSize) {
+    try {
+      if (isPerfectDay(log, dateId, setSize)) {
+        return DayReward.perfect;
+      }
+      if (dayCountsForStreak(log, dateId)) {
+        return DayReward.counted;
+      }
+    } catch (_) {
+      // Never throw on malformed data
+    }
+    return DayReward.none;
+  }
+
   static HeatmapCell heatmapCell(Map<String, dynamic> log, String dateId, int setSize) {
     try {
       final entry = log[dateId];
@@ -260,6 +282,18 @@ abstract final class StreakEngine {
     return HeatmapCell.none;
   }
 }
+
+enum DayReward {
+  none,
+  counted,
+  perfect,
+}
+
+bool dayCountsForStreak(Map<String, dynamic> log, String dateId) =>
+    StreakEngine.dayCountsForStreak(log, dateId);
+
+DayReward dayReward(Map<String, dynamic> log, String dateId, int setSize) =>
+    StreakEngine.dayReward(log, dateId, setSize);
 
 enum HeatmapCell {
   none,
