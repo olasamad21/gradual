@@ -18,6 +18,7 @@ import '../streak/streak_heatmap_widget.dart';
 
 import 'concept_flip_card.dart';
 import 'concept_reader.dart';
+import 'reader_logic.dart';
 import 'today_concepts_controller.dart';
 import 'read_aloud_controller.dart';
 import '../streak/streak_providers.dart';
@@ -346,76 +347,67 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 36, left: 4, right: 4, top: 4),
-                    child: ConceptFlipCard(
-                      concept: concept,
-                      index: index,
-                      isRead: isRead,
-                      isLastWord: index == state.concepts.length - 1,
-                      isReadingAloud: isReadingAloud,
-                      readingSection: isReadingAloud ? readAloudState.section : null,
-                      readingWordStart: isReadingAloud ? readAloudState.wordStart : null,
-                      readingWordEnd: isReadingAloud ? readAloudState.wordEnd : null,
-                      readingSpeed: isReadingAloud ? readAloudState.speed : 1.0,
-                      onToggleReadAloud: () async {
-                        final success = await ref.read(readAloudControllerProvider.notifier).toggle(concept);
-                        if (!context.mounted) return;
-                        if (!success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Read aloud isn't available on this device.")),
+                    child: RepaintBoundary(
+                      child: ConceptFlipCard(
+                        concept: concept,
+                        index: index,
+                        isRead: isRead,
+                        isLastWord: index == state.concepts.length - 1,
+                        isReadingAloud: isReadingAloud,
+                        readingSection: isReadingAloud ? readAloudState.section : null,
+                        readingWordStart: isReadingAloud ? readAloudState.wordStart : null,
+                        readingWordEnd: isReadingAloud ? readAloudState.wordEnd : null,
+                        readingSpeed: isReadingAloud ? readAloudState.speed : 1.0,
+                        onToggleReadAloudWithFace: ({bool fromBackFace = false}) async {
+                          final success = await ref
+                              .read(readAloudControllerProvider.notifier)
+                              .toggle(concept, fromBackFace: fromBackFace);
+                          if (!context.mounted) return;
+                          if (!success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Read aloud isn't available on this device.")),
+                            );
+                          }
+                        },
+                        onCycleSpeed: () {
+                          final currentSpeed = ref.read(readAloudControllerProvider).speed;
+                          final nextSpeed = nextReadingSpeed(currentSpeed);
+                          ref.read(readAloudControllerProvider.notifier).setSpeed(nextSpeed);
+                        },
+                        onMarkRead: () {
+                          ref.read(cardHintSeenProvider.notifier).markSeen();
+                          ref.read(todayConceptsControllerProvider.notifier).markRead(concept.id);
+                          
+                          Future.delayed(const Duration(milliseconds: 600), () {
+                            if (mounted && _pageController.hasClients) {
+                              if (index < state.concepts.length - 1) {
+                                _pageController.nextPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              }
+                            }
+                          });
+                        },
+                        onExpand: () async {
+                          ref.read(readAloudControllerProvider.notifier).stop();
+                          final targetIndex = await openConceptReader(
+                            context: context,
+                            concepts: state.concepts,
+                            initialIndex: index,
+                            onMarkRead: (conceptId) {
+                              ref.read(cardHintSeenProvider.notifier).markSeen();
+                              ref.read(todayConceptsControllerProvider.notifier).markRead(conceptId);
+                            },
                           );
-                        }
-                      },
-                      onCycleSpeed: () {
-                        final currentSpeed = ref.read(readAloudControllerProvider).speed;
-                        double nextSpeed = 1.0;
-                        if (currentSpeed == 0.75) {
-                          nextSpeed = 1.0;
-                        } else if (currentSpeed == 1.0) {
-                          nextSpeed = 1.25;
-                        } else {
-                          nextSpeed = 0.75;
-                        }
-                        ref.read(readAloudControllerProvider.notifier).setSpeed(nextSpeed);
-                      },
-                      onMarkRead: () {
-                        ref.read(cardHintSeenProvider.notifier).markSeen();
-                        ref.read(todayConceptsControllerProvider.notifier).markRead(concept.id);
-                        
-                        Future.delayed(const Duration(milliseconds: 600), () {
-                          if (mounted && _pageController.hasClients) {
-                            if (index < state.concepts.length - 1) {
-                              _pageController.nextPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
+                          if (targetIndex != null && mounted && _pageController.hasClients) {
+                            final currentCardIndex = _pageController.page?.round() ?? _pageController.initialPage;
+                            if (targetIndex != currentCardIndex) {
+                              _pageController.jumpToPage(targetIndex);
                             }
                           }
-                        });
-                      },
-                      onExpand: () {
-                        ref.read(readAloudControllerProvider.notifier).stop();
-                        openConceptReader(
-                          context,
-                          concept: concept,
-                          index: index,
-                          total: state.concepts.length,
-                          onMarkRead: () {
-                            ref.read(cardHintSeenProvider.notifier).markSeen();
-                            ref.read(todayConceptsControllerProvider.notifier).markRead(concept.id);
-                            
-                            Future.delayed(const Duration(milliseconds: 600), () {
-                              if (mounted && _pageController.hasClients) {
-                                if (index < state.concepts.length - 1) {
-                                  _pageController.nextPage(
-                                    duration: const Duration(milliseconds: 300),
-                                    curve: Curves.easeInOut,
-                                  );
-                                }
-                              }
-                            });
-                          },
-                        );
-                      },
+                        },
+                      ),
                     ),
                   );
                 },

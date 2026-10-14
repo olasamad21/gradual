@@ -46,5 +46,49 @@ void main() {
       expect(readerDragScale(100, 0), 1.0);
       expect(readerDragScale(100, -100), 1.0);
     });
+
+    test('accumulatePull adds for negative overscroll, ignores positive, zero, NaN and infinite, never goes negative', () {
+      expect(accumulatePull(10.0, -15.0), 25.0);
+      expect(accumulatePull(10.0, 5.0), 10.0);
+      expect(accumulatePull(10.0, 0.0), 10.0);
+      expect(accumulatePull(10.0, double.nan), 10.0);
+      expect(accumulatePull(10.0, double.infinity), 10.0);
+      expect(accumulatePull(10.0, double.negativeInfinity), 10.0);
+      expect(accumulatePull(-10.0, 5.0), 0.0);
+      expect(accumulatePull(-10.0, -5.0), 5.0);
+      expect(accumulatePull(double.nan, -5.0), 5.0);
+    });
+
+    test('pullVelocityFromSamples returns null for 0 or 1 samples or a zero time span, and a positive pixels-per-second value for samples moving down', () {
+      expect(pullVelocityFromSamples([]), isNull);
+      expect(pullVelocityFromSamples([(dy: 10.0, micros: 1000)]), isNull);
+      expect(pullVelocityFromSamples([(dy: 10.0, micros: 1000), (dy: 20.0, micros: 1000)]), isNull);
+      expect(pullVelocityFromSamples([(dy: 10.0, micros: 2000), (dy: 20.0, micros: 1000)]), isNull);
+
+      // 2 samples moving down
+      final v1 = pullVelocityFromSamples([
+        (dy: 0.0, micros: 0),
+        (dy: 100.0, micros: 500000), // 0.5s -> 200 px/s
+      ]);
+      expect(v1, closeTo(200.0, 0.001));
+
+      // Window of last 5 samples
+      final v2 = pullVelocityFromSamples([
+        (dy: 999.0, micros: -999999), // should be ignored (outside last 5)
+        (dy: 10.0, micros: 100000),
+        (dy: 20.0, micros: 200000),
+        (dy: 30.0, micros: 300000),
+        (dy: 40.0, micros: 400000),
+        (dy: 110.0, micros: 600000), // dt = 500000 us = 0.5s, dy = 100.0 -> 200 px/s
+      ]);
+      expect(v2, closeTo(200.0, 0.001));
+    });
+
+    test('nextReadingSpeed cycles 0.75 -> 1.0 -> 1.25 -> 0.75', () {
+      expect(nextReadingSpeed(0.75), 1.0);
+      expect(nextReadingSpeed(1.0), 1.25);
+      expect(nextReadingSpeed(1.25), 0.75);
+    });
   });
 }
+

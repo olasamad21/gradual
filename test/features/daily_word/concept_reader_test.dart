@@ -1,9 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:gradual/core/models/concept_model.dart';
+import 'package:gradual/core/services/speech_service.dart';
 import 'package:gradual/core/theme/app_theme.dart';
 import 'package:gradual/features/daily_word/concept_reader.dart';
+import 'package:gradual/features/daily_word/concept_section_style.dart';
 import 'package:gradual/features/daily_word/today_concepts_controller.dart';
 
 class FakeTodayConceptsController extends TodayConceptsController {
@@ -14,8 +20,46 @@ class FakeTodayConceptsController extends TodayConceptsController {
   Future<TodayConceptsState> build() async => _fakeState;
 }
 
+class FakeSpeechService implements SpeechService {
+  final spokenStrings = <String>[];
+  double currentRate = kSpeechRateNormal;
+  Completer<bool>? nextSpeakCompleter;
+
+  final _progressController = StreamController<SpeechProgress>.broadcast();
+  final _finishedController = StreamController<void>.broadcast();
+
+  @override
+  Stream<SpeechProgress> get onProgress => _progressController.stream;
+
+  @override
+  Stream<void> get onFinished => _finishedController.stream;
+
+  void emitProgress(int start, int end) {
+    _progressController.add(SpeechProgress(start, end));
+  }
+
+  @override
+  Future<void> setRate(double rate) async {
+    currentRate = rate;
+  }
+
+  @override
+  Future<bool> speak(String text) async {
+    spokenStrings.add(text);
+    nextSpeakCompleter = Completer<bool>();
+    return nextSpeakCompleter!.future;
+  }
+
+  @override
+  Future<void> stop() async {
+    if (nextSpeakCompleter != null && !nextSpeakCompleter!.isCompleted) {
+      nextSpeakCompleter!.complete(true);
+    }
+  }
+}
+
 void main() {
-  final fullConcept = Concept(
+  final concept1 = Concept(
     id: 'c1',
     term: 'Encapsulation',
     category: 'software_engineering',
@@ -27,22 +71,22 @@ void main() {
     related: ['OOP', 'Polymorphism'],
     quiz: const ConceptQuiz(
       question: 'What is encapsulation?',
-      options: ['Bundling data', 'Looping', 'Inheritance'],
+      options: ['Bundling data', 'Looping'],
       answerIndex: 0,
-      explanation: 'Bundling data and methods.',
+      explanation: 'Bundling data.',
     ),
   );
 
-  final minimalConcept = Concept(
+  final concept2 = Concept(
     id: 'c2',
-    term: 'Polymorphism',
+    term: 'Inheritance',
     category: 'software_engineering',
-    definition: 'Provision of a single interface to entities of different types.',
+    definition: 'Mechanisms of basing an object or class upon another object.',
     level: 'beginner',
-    analogy: '',
-    realWorldExample: 'Drawing shapes with a single draw call.',
-    confusedWith: null,
-    related: const [],
+    analogy: 'A child inheriting traits from parents.',
+    realWorldExample: 'A subclass extending a superclass.',
+    confusedWith: 'Composition',
+    related: ['OOP'],
     quiz: const ConceptQuiz(
       question: 'Question',
       options: ['A', 'B'],
@@ -51,15 +95,38 @@ void main() {
     ),
   );
 
+  final concept3 = Concept(
+    id: 'c3',
+    term: 'Polymorphism',
+    category: 'software_engineering',
+    definition: List.generate(40, (i) => 'Line $i: Provision of a single interface to entities of different types in object oriented programming systems.').join('\n\n'),
+    level: 'beginner',
+    analogy: 'A universal remote control.',
+    realWorldExample: 'Shape.draw() method.',
+    confusedWith: 'Overloading',
+    related: ['OOP'],
+    quiz: const ConceptQuiz(
+      question: 'Question',
+      options: ['A', 'B'],
+      answerIndex: 0,
+      explanation: 'Explanation',
+    ),
+  );
+
+  int? lastClosedIndex;
+
   Widget createTestHarness({
-    required Concept concept,
-    required VoidCallback onMarkRead,
+    List<Concept>? concepts,
+    int initialIndex = 0,
+    void Function(String)? onMarkRead,
     Set<String> readConceptIds = const {},
     bool disableAnimations = false,
     TextScaler textScaler = TextScaler.noScaling,
+    FakeSpeechService? fakeSpeech,
   }) {
+    final conceptList = concepts ?? [concept1, concept2, concept3];
     final fakeState = TodayConceptsState(
-      concepts: [concept],
+      concepts: conceptList,
       readConceptIds: readConceptIds,
       isFallback: false,
       userUid: 'uid123',
@@ -71,6 +138,8 @@ void main() {
         todayConceptsControllerProvider.overrideWith(
           () => FakeTodayConceptsController(fakeState),
         ),
+        if (fakeSpeech != null)
+          speechServiceProvider.overrideWithValue(fakeSpeech),
       ],
       child: MediaQuery(
         data: MediaQueryData(
@@ -82,13 +151,12 @@ void main() {
           home: Scaffold(
             body: Builder(
               builder: (ctx) => ElevatedButton(
-                onPressed: () {
-                  openConceptReader(
-                    ctx,
-                    concept: concept,
-                    index: 0,
-                    total: 1,
-                    onMarkRead: onMarkRead,
+                onPressed: () async {
+                  lastClosedIndex = await openConceptReader(
+                    context: ctx,
+                    concepts: conceptList,
+                    initialIndex: initialIndex,
+                    onMarkRead: onMarkRead ?? (_) {},
                   );
                 },
                 child: const Text('Open Reader'),
@@ -100,184 +168,179 @@ void main() {
     );
   }
 
+  setUp(() {
+    lastClosedIndex = null;
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('ConceptReader tests', () {
-    testWidgets('all sections show in order, empty analogy and confused-with are skipped', (tester) async {
-      await tester.pumpWidget(
-        createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () {},
-        ),
-      );
-
+    testWidgets('opens on initialIndex and shows that concept term and pill number', (tester) async {
+      await tester.pumpWidget(createTestHarness(initialIndex: 0));
       await tester.tap(find.text('Open Reader'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Check all section headers in fullConcept
-      final defFinder = find.text('DEFINITION');
-      final analogyFinder = find.text('ANALOGY');
-      final exampleFinder = find.text('REAL WORLD EXAMPLE');
-      final confusedFinder = find.text("DON'T CONFUSE WITH");
-      final relatedFinder = find.text('RELATED TERMS');
-
-      expect(defFinder, findsOneWidget);
-      expect(analogyFinder, findsOneWidget);
-      expect(exampleFinder, findsOneWidget);
-      expect(confusedFinder, findsOneWidget);
-      expect(relatedFinder, findsOneWidget);
-
-      // Verify order by vertical position
-      final defTop = tester.getTopLeft(defFinder).dy;
-      final analogyTop = tester.getTopLeft(analogyFinder).dy;
-      final exampleTop = tester.getTopLeft(exampleFinder).dy;
-      final confusedTop = tester.getTopLeft(confusedFinder).dy;
-      final relatedTop = tester.getTopLeft(relatedFinder).dy;
-
-      expect(defTop, lessThan(analogyTop));
-      expect(analogyTop, lessThan(exampleTop));
-      expect(exampleTop, lessThan(confusedTop));
-      expect(confusedTop, lessThan(relatedTop));
-
-      // Close reader
-      await tester.tap(find.byKey(const Key('reader_close_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // Now test minimalConcept where analogy and confused-with are empty/null
-      await tester.pumpWidget(
-        createTestHarness(
-          concept: minimalConcept,
-          onMarkRead: () {},
-        ),
-      );
-      await tester.tap(find.text('Open Reader'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-
-      expect(find.text('DEFINITION'), findsOneWidget);
-      expect(find.text('REAL WORLD EXAMPLE'), findsOneWidget);
-      expect(find.text('ANALOGY'), findsNothing);
-      expect(find.text("DON'T CONFUSE WITH"), findsNothing);
-      expect(find.text('RELATED TERMS'), findsNothing);
-
+      expect(find.text('Encapsulation'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Got it is enabled when the concept is unread and calls onMarkRead once', (tester) async {
-      var markReadCalls = 0;
-      await tester.pumpWidget(
-        createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () => markReadCalls++,
-          readConceptIds: {},
-        ),
-      );
-
+    testWidgets('swiping left (drag 400 px) shows the next concept term and updates pill number; swiping right returns', (tester) async {
+      await tester.pumpWidget(createTestHarness(initialIndex: 0));
       await tester.tap(find.text('Open Reader'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      final buttonFinder = find.descendant(
-        of: find.byType(ConceptReader),
-        matching: find.widgetWithText(ElevatedButton, 'Got it'),
-      );
-      expect(buttonFinder, findsOneWidget);
-      final button = tester.widget<ElevatedButton>(buttonFinder);
-      expect(button.onPressed, isNotNull);
+      expect(find.text('Encapsulation'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget);
 
-      await tester.tap(buttonFinder);
+      // Swipe left
+      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
       await tester.pump();
-      expect(markReadCalls, 1);
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Inheritance'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+
+      // Swipe right
+      await tester.fling(find.byType(PageView), const Offset(400, 0), 1000);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Encapsulation'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('there is no close button and the speaker button exists with finite size greater than 0', (tester) async {
+      await tester.pumpWidget(createTestHarness());
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
+
+      final speakerFinder = find.byIcon(Icons.volume_up_rounded);
+      expect(speakerFinder, findsOneWidget);
+      final speakerBox = tester.renderObject<RenderBox>(speakerFinder);
+      expect(speakerBox.size.width, greaterThan(0));
+      expect(speakerBox.size.height, greaterThan(0));
+      expect(speakerBox.size.width.isFinite, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('tapping the speaker calls toggle with the current page concept; speed chip appears only while reading', (tester) async {
+      final fakeSpeech = FakeSpeechService();
+      await tester.pumpWidget(createTestHarness(fakeSpeech: fakeSpeech));
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('1x'), findsNothing);
+
+      // Tap speaker
+      await tester.tap(find.byIcon(Icons.volume_up_rounded));
+      await tester.pump();
+
+      expect(fakeSpeech.spokenStrings, isNotEmpty);
+      expect(fakeSpeech.spokenStrings.first, contains('Encapsulation'));
+      expect(find.text('1x'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('changing page stops reading', (tester) async {
+      final fakeSpeech = FakeSpeechService();
+      await tester.pumpWidget(createTestHarness(fakeSpeech: fakeSpeech));
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      await tester.tap(find.byIcon(Icons.volume_up_rounded));
+      await tester.pump();
+      expect(find.text('1x'), findsOneWidget);
+
+      // Change page
+      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('1x'), findsNothing);
+      expect(find.byIcon(Icons.volume_up_rounded), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Got it on page 1 calls onMarkRead with that concept id, then after 600ms and 400ms second concept shows', (tester) async {
+      final markedIds = <String>[];
+      await tester.pumpWidget(
+        createTestHarness(
+          initialIndex: 0,
+          onMarkRead: (id) => markedIds.add(id),
+        ),
+      );
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Got it'));
+      await tester.pump();
+      expect(markedIds, ['c1']);
+
       await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Inheritance'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('when the concept is read the button shows the check and is disabled', (tester) async {
+    testWidgets('Got it on the last page calls onMarkRead and the route is popped', (tester) async {
+      final markedLast = <String>[];
       await tester.pumpWidget(
         createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () {},
-          readConceptIds: {'c1'},
+          initialIndex: 2,
+          onMarkRead: (id) => markedLast.add(id),
         ),
       );
-
       await tester.tap(find.text('Open Reader'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      final buttonFinder = find.descendant(
-        of: find.byType(ConceptReader),
-        matching: find.widgetWithText(ElevatedButton, 'Got it \u2713'),
-      );
-      expect(buttonFinder, findsOneWidget);
-      final button = tester.widget<ElevatedButton>(buttonFinder);
-      expect(button.onPressed, isNull);
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('the close button pops the route', (tester) async {
-      await tester.pumpWidget(
-        createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () {},
-        ),
-      );
-
-      await tester.tap(find.text('Open Reader'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Got it'));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(find.byType(ConceptReader), findsOneWidget);
+      expect(markedLast, ['c3']);
 
-      await tester.tap(find.byKey(const Key('reader_close_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(find.byType(ConceptReader), findsNothing);
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('dragging the top zone down 200 pixels and releasing pops the route', (tester) async {
-      await tester.pumpWidget(
-        createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () {},
-        ),
-      );
-
-      await tester.tap(find.text('Open Reader'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(find.byType(ConceptReader), findsOneWidget);
-
-      await tester.drag(
-        find.byKey(const Key('reader_top_drag_zone')),
-        const Offset(0, 200),
-      );
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.byType(ConceptReader), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('dragging 40 pixels and releasing keeps it open with content back at original position', (tester) async {
-      await tester.pumpWidget(
-        createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () {},
-        ),
-      );
-
+    testWidgets('pull down 300 px pops route and returns current index', (tester) async {
+      await tester.pumpWidget(createTestHarness(initialIndex: 1));
       await tester.tap(find.text('Open Reader'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
+
       expect(find.byType(ConceptReader), findsOneWidget);
+
+      await tester.drag(find.text('Inheritance'), const Offset(0, 300));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(ConceptReader), findsNothing);
+      expect(lastClosedIndex, 1);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('pull down 40 px keeps open and content returns to original position', (tester) async {
+      await tester.pumpWidget(createTestHarness(initialIndex: 0));
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       final initialTop = tester.getTopLeft(find.text('Encapsulation')).dy;
-
-      await tester.drag(
-        find.byKey(const Key('reader_top_drag_zone')),
-        const Offset(0, 40),
-      );
+      await tester.drag(find.byKey(const Key('reader_top_drag_zone')), const Offset(0, 40));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
@@ -287,71 +350,88 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('upward drag does nothing', (tester) async {
-      await tester.pumpWidget(
-        createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () {},
-        ),
-      );
-
+    testWidgets('on the long page, scroll down 300 px first, then dragging down 100 px scrolls back without closing', (tester) async {
+      await tester.pumpWidget(createTestHarness(initialIndex: 2));
       await tester.tap(find.text('Open Reader'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.byType(ConceptReader), findsOneWidget);
 
-      final initialTop = tester.getTopLeft(find.text('Encapsulation')).dy;
-
-      await tester.drag(
-        find.byKey(const Key('reader_top_drag_zone')),
-        const Offset(0, -60),
-      );
+      await tester.drag(find.text('Polymorphism'), const Offset(0, -300));
       await tester.pump();
 
+      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, 100));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
       expect(find.byType(ConceptReader), findsOneWidget);
-      final currentTop = tester.getTopLeft(find.text('Encapsulation')).dy;
-      expect(currentTop, closeTo(initialTop, 0.5));
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('the button and the close button have finite width greater than 0', (tester) async {
-      await tester.pumpWidget(
-        createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () {},
-        ),
-      );
-
+    testWidgets('dragging the top zone down 200 px still closes it', (tester) async {
+      await tester.pumpWidget(createTestHarness(initialIndex: 0));
       await tester.tap(find.text('Open Reader'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      final buttonBox = tester.renderObject<RenderBox>(
-        find.descendant(
-          of: find.byType(ConceptReader),
-          matching: find.widgetWithText(ElevatedButton, 'Got it'),
-        ),
-      );
-      expect(buttonBox.size.width.isFinite, isTrue);
-      expect(buttonBox.size.width, greaterThan(0));
+      await tester.drag(find.byKey(const Key('reader_top_drag_zone')), const Offset(0, 200));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
-      final closeBox = tester.renderObject<RenderBox>(
-        find.byKey(const Key('reader_close_button')),
+      expect(find.byType(ConceptReader), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets("the Semantics custom action 'Close reader' exists on top zone and pops the route", (tester) async {
+      final semanticsHandle = tester.ensureSemantics();
+      await tester.pumpWidget(createTestHarness(initialIndex: 0));
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final topZoneFinder = find.byKey(const Key('reader_top_drag_zone'));
+      final node = tester.getSemantics(topZoneFinder);
+      final data = node.getSemanticsData();
+
+      final customActionId = CustomSemanticsAction.getIdentifier(
+        const CustomSemanticsAction(label: 'Close reader'),
       );
-      expect(closeBox.size.width.isFinite, isTrue);
-      expect(closeBox.size.width, greaterThan(0));
+      expect(data.customSemanticsActionIds?.contains(customActionId), isTrue);
+
+      tester.binding.pipelineOwner.semanticsOwner!.performAction(
+        node.id,
+        SemanticsAction.customAction,
+        customActionId,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(ConceptReader), findsNothing);
+      semanticsHandle.dispose();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('with disableAnimations true all work without exceptions', (tester) async {
+      await tester.pumpWidget(createTestHarness(disableAnimations: true, initialIndex: 0));
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.byType(ConceptReader), findsOneWidget);
+
+      await tester.drag(find.byKey(const Key('reader_top_drag_zone')), const Offset(0, 200));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.byType(ConceptReader), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
     testWidgets('text scale 1.3 throws nothing', (tester) async {
       await tester.pumpWidget(
         createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () {},
           textScaler: const TextScaler.linear(1.3),
         ),
       );
-
       await tester.tap(find.text('Open Reader'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -359,25 +439,149 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('with disableAnimations true it opens and closes without exceptions', (tester) async {
+    testWidgets("reader's onMarkRead marks concept as read but does not advance the card pager", (tester) async {
+      final pageController = PageController(initialPage: 0);
+      addTearDown(pageController.dispose);
+      final markedConcepts = <String>[];
+
+      void readerOnMarkRead(String conceptId) {
+        markedConcepts.add(conceptId);
+      }
+
       await tester.pumpWidget(
-        createTestHarness(
-          concept: fullConcept,
-          onMarkRead: () {},
-          disableAnimations: true,
+        MaterialApp(
+          theme: AppTheme.light,
+          home: Scaffold(
+            body: PageView(
+              controller: pageController,
+              children: const [
+                Text('Card 0'),
+                Text('Card 1'),
+              ],
+            ),
+          ),
         ),
       );
+      await tester.pump();
+      expect(pageController.page, 0);
 
+      readerOnMarkRead('c1');
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(markedConcepts, ['c1']);
+      expect(pageController.page, 0);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('after the reader reports a different closing index, the pager jumps to it', (tester) async {
+      final pageController = PageController(initialPage: 0);
+      addTearDown(pageController.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            todayConceptsControllerProvider.overrideWith(
+              () => FakeTodayConceptsController(TodayConceptsState(
+                concepts: [concept1, concept2, concept3],
+                readConceptIds: const {},
+                isFallback: false,
+                userUid: 'u',
+                liveStreak: 0,
+              )),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light,
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => ElevatedButton(
+                  onPressed: () async {
+                    final targetIndex = await openConceptReader(
+                      context: ctx,
+                      concepts: [concept1, concept2, concept3],
+                      initialIndex: 0,
+                      onMarkRead: (_) {},
+                    );
+                    if (targetIndex != null && pageController.hasClients) {
+                      final currentCardIndex = pageController.page?.round() ?? pageController.initialPage;
+                      if (targetIndex != currentCardIndex) {
+                        pageController.jumpToPage(targetIndex);
+                      }
+                    }
+                  },
+                  child: const Text('Open'),
+                ),
+              ),
+              bottomNavigationBar: SizedBox(
+                height: 100,
+                child: PageView(
+                  controller: pageController,
+                  children: const [
+                    Text('Card 0'),
+                    Text('Card 1'),
+                    Text('Card 2'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(pageController.page, 0);
+
+      await tester.tap(find.text('Open'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // In reader, swipe to page 1
+      await tester.fling(find.byType(PageView).first, const Offset(-400, 0), 1000);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Inheritance'), findsOneWidget);
+
+      // Close reader by pull down
+      await tester.drag(find.byKey(const Key('reader_top_drag_zone')), const Offset(0, 300));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // The card pager has jumped to index 1
+      expect(pageController.page, 1);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('pinned term header remains fixed in place when reader content is scrolled down', (tester) async {
+      await tester.pumpWidget(createTestHarness(initialIndex: 2));
       await tester.tap(find.text('Open Reader'));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
-      expect(find.byType(ConceptReader), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 400));
 
-      await tester.tap(find.byKey(const Key('reader_close_button')));
+      final initialTermTop = tester.getTopLeft(find.text('Polymorphism')).dy;
+      final initialDefTop = tester.getTopLeft(find.text('DEFINITION')).dy;
+
+      // Scroll content down by 200px
+      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -200));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
-      expect(find.byType(ConceptReader), findsNothing);
+
+      final scrolledTermTop = tester.getTopLeft(find.text('Polymorphism')).dy;
+      final scrolledDefTop = tester.getTopLeft(find.text('DEFINITION')).dy;
+
+      // Term remains pinned at the exact same vertical position
+      expect(scrolledTermTop, equals(initialTermTop));
+      // Definition content has scrolled up
+      expect(scrolledDefTop, lessThan(initialDefTop));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('ScrollFadeMask wraps the scroll view in reader and renders ShaderMask', (tester) async {
+      await tester.pumpWidget(createTestHarness(initialIndex: 0));
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(ScrollFadeMask), findsWidgets);
+      expect(find.byType(ShaderMask), findsWidgets);
       expect(tester.takeException(), isNull);
     });
   });
 }
+

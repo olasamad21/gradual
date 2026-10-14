@@ -196,4 +196,24 @@ void main() {
     expect(res, isFalse);
     expect(container.read(readAloudControllerProvider).conceptId, isNull);
   });
+
+  test('toggle with fromBackFace: true starts speaking directly from analogy', () async {
+    SharedPreferences.setMockInitialValues({'read_aloud_speed': 1.0});
+    final fakeService = FakeSpeechService();
+    final container = ProviderContainer(
+      overrides: [
+        speechServiceProvider.overrideWithValue(fakeService),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await Future.microtask(() {});
+    final controller = container.read(readAloudControllerProvider.notifier);
+
+    controller.toggle(concept, fromBackFace: true);
+    await Future.microtask(() {});
+
+    expect(fakeService.spokenStrings, ['Analogy. Ana']);
+    expect(container.read(readAloudControllerProvider).section, ReadSectionKind.analogy);
+  });
 }

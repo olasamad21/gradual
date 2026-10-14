@@ -4,6 +4,8 @@ import 'package:gradual/core/models/concept_model.dart';
 import 'package:gradual/core/theme/app_theme.dart';
 import 'package:gradual/features/daily_word/concept_flip_card.dart';
 import 'package:gradual/core/services/read_aloud_text.dart';
+import 'package:gradual/features/daily_word/concept_section_style.dart';
+import 'package:gradual/features/daily_word/read_along_text.dart';
 
 void main() {
   final testConcept = Concept(
@@ -27,6 +29,7 @@ void main() {
     bool disableAnimations = false,
     bool isReadingAloud = false,
     VoidCallback? onToggleReadAloud,
+    void Function({bool fromBackFace})? onToggleReadAloudWithFace,
     ReadSectionKind? readingSection,
     int? readingWordStart,
     int? readingWordEnd,
@@ -51,6 +54,7 @@ void main() {
                 onMarkRead: onMarkRead ?? () {},
                 isReadingAloud: isReadingAloud,
                 onToggleReadAloud: onToggleReadAloud,
+                onToggleReadAloudWithFace: onToggleReadAloudWithFace,
                 readingSection: readingSection,
                 readingWordStart: readingWordStart,
                 readingWordEnd: readingWordEnd,
@@ -413,34 +417,35 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('tapping the handle calls it once', (tester) async {
-      var expandCalls = 0;
-      await tester.pumpWidget(buildTestCard(concept: testConcept, onExpand: () => expandCalls++));
-
-      final handleFinder = find.byKey(const Key('concept_card_expand_handle'));
-      expect(handleFinder, findsOneWidget);
-
-      await tester.tap(handleFinder);
-      await tester.pump();
-
-      expect(expandCalls, 1);
-      expect(find.text('DEFINITION'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('the handle is present on both faces after a flip (pump() then pump(Duration(milliseconds: 800)))', (tester) async {
+    testWidgets('the expand handle is not rendered on front or back face (reclaiming vertical space)', (tester) async {
       await tester.pumpWidget(buildTestCard(concept: testConcept, onExpand: () {}));
 
-      // Front face
-      expect(find.byKey(const Key('concept_card_expand_handle')), findsOneWidget);
+      // Front face - handle is absent
+      expect(find.byKey(const Key('concept_card_expand_handle')), findsNothing);
 
       // Flip card
       await tester.tap(find.byType(ConceptFlipCard));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 800));
 
-      // Back face
-      expect(find.byKey(const Key('concept_card_expand_handle')), findsOneWidget);
+      // Back face - handle is absent
+      expect(find.byKey(const Key('concept_card_expand_handle')), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('long press expands the card while normal tap still flips', (tester) async {
+      var expandCalls = 0;
+      await tester.pumpWidget(buildTestCard(concept: testConcept, onExpand: () => expandCalls++));
+
+      await tester.longPress(find.byType(ConceptFlipCard));
+      await tester.pump();
+      expect(expandCalls, 1);
+
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+      expect(find.text('Tap to flip back'), findsOneWidget);
+      expect(expandCalls, 1);
       expect(tester.takeException(), isNull);
     });
 
@@ -480,4 +485,122 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('ConceptFlipCard Analogy and ConfusedWith styling', () {
+    testWidgets("the Analogy section's icon on the card back is the same icon the reader uses", (tester) async {
+      await tester.pumpWidget(buildTestCard(concept: testConcept));
+      // Flip to back
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      expect(find.byWidget(analogySectionIcon), findsOneWidget);
+      expect(find.byIcon(analogySectionIconData), findsOneWidget);
+    });
+
+    testWidgets("Don't confuse with has same number of DecoratedBox ancestors as Real World Example and no container with background color", (tester) async {
+      await tester.pumpWidget(buildTestCard(concept: testConcept));
+      // Flip to back
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      final exampleFinder = find.text('Flutter StatefulWidget.');
+      final confusedFinder = find.text('Stateless');
+
+      expect(exampleFinder, findsOneWidget);
+      expect(confusedFinder, findsOneWidget);
+
+      final exampleDecorations = find.ancestor(of: exampleFinder, matching: find.byType(DecoratedBox)).evaluate().length;
+      final confusedDecorations = find.ancestor(of: confusedFinder, matching: find.byType(DecoratedBox)).evaluate().length;
+
+      expect(confusedDecorations, exampleDecorations);
+
+      final exampleContainers = find.ancestor(
+        of: exampleFinder,
+        matching: find.byType(Container),
+      ).evaluate().map((e) => e.widget).toSet();
+
+      final confusedReadAlong = find.byWidgetPredicate((w) => w is ReadAlongText && w.text == testConcept.confusedWith);
+      final outerConfusedContainers = find.ancestor(
+        of: confusedReadAlong,
+        matching: find.byType(Container),
+      ).evaluate().where((e) => !exampleContainers.contains(e.widget));
+
+      expect(outerConfusedContainers, isEmpty);
+    });
+
+    testWidgets("read-along highlight reaches Don't confuse with text when readingSection is confusedWith", (tester) async {
+      await tester.pumpWidget(
+        buildTestCard(
+          concept: testConcept,
+          isReadingAloud: true,
+          readingSection: ReadSectionKind.confusedWith,
+          readingWordStart: 0,
+          readingWordEnd: 5,
+        ),
+      );
+      // Flip to back
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      final readAlongTexts = tester.widgetList<ReadAlongText>(find.byType(ReadAlongText)).toList();
+      final confusedReadAlong = readAlongTexts.firstWhere((w) => w.text == 'Stateless');
+      expect(confusedReadAlong.sectionActive, isTrue);
+      expect(confusedReadAlong.highlightStart, 0);
+      expect(confusedReadAlong.highlightEnd, 5);
+    });
+
+    testWidgets('ScrollFadeMask wraps scrollable areas on front and back faces', (tester) async {
+      await tester.pumpWidget(buildTestCard(concept: testConcept));
+
+      // Front face
+      expect(find.byType(ScrollFadeMask), findsOneWidget);
+      expect(find.byType(ShaderMask), findsOneWidget);
+
+      // Flip to back
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      // Back face
+      expect(find.byType(ScrollFadeMask), findsWidgets);
+      expect(find.byType(ShaderMask), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('speaker button passes fromBackFace true when tapped on back face, false on front face', (tester) async {
+      bool? lastFromBackFace;
+      await tester.pumpWidget(
+        buildTestCard(
+          concept: testConcept,
+          onToggleReadAloudWithFace: ({bool fromBackFace = false}) {
+            lastFromBackFace = fromBackFace;
+          },
+        ),
+      );
+
+      // Tap speaker on front face
+      final speakerFinder = find.byTooltip('Read aloud');
+      expect(speakerFinder, findsOneWidget);
+      await tester.tap(speakerFinder);
+      await tester.pump();
+
+      expect(lastFromBackFace, isFalse);
+
+      // Flip to back
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      // Tap speaker on back face
+      await tester.tap(speakerFinder);
+      await tester.pump();
+
+      expect(lastFromBackFace, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
+

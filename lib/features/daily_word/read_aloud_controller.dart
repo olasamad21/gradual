@@ -89,7 +89,7 @@ class ReadAloudController extends Notifier<ReadAloudState> {
     _currentConcept = null;
   }
 
-  Future<bool> toggle(Concept concept) async {
+  Future<bool> toggle(Concept concept, {bool fromBackFace = false}) async {
     final speechService = ref.read(speechServiceProvider);
 
     if (state.conceptId == concept.id) {
@@ -102,8 +102,17 @@ class ReadAloudController extends Notifier<ReadAloudState> {
     _generation++;
     await speechService.stop();
     _currentConcept = concept;
+
+    int startIndex = 0;
+    if (fromBackFace) {
+      final sections = buildReadAloudSections(concept);
+      final backIdx = sections.indexWhere((s) => s.kind.onBackFace);
+      if (backIdx != -1) {
+        startIndex = backIdx;
+      }
+    }
     
-    return _speakConcept(concept, startingSectionIndex: 0);
+    return _speakConcept(concept, startingSectionIndex: startIndex);
   }
 
   Future<bool> _speakConcept(Concept concept, {required int startingSectionIndex}) async {
