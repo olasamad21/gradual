@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,6 +54,9 @@ class DailyWordScreen extends ConsumerStatefulWidget {
 
 class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsBindingObserver {
   final PageController _pageController = PageController();
+  bool _isRetrying = false;
+  Timer? _retryTimer;
+  ReadAloudController? _readAloudNotifier;
 
   @override
   void initState() {
@@ -62,11 +66,29 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _readAloudNotifier = ref.read(readAloudControllerProvider.notifier);
+  }
+
+  @override
   void dispose() {
-    ref.read(readAloudControllerProvider.notifier).stop();
+    _retryTimer?.cancel();
+    _readAloudNotifier?.stop();
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _onRetry() {
+    setState(() => _isRetrying = true);
+    _retryTimer?.cancel();
+    _retryTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted && _isRetrying) {
+        setState(() => _isRetrying = false);
+      }
+    });
+    retryLoadConcepts(ref);
   }
 
   @override
@@ -115,6 +137,21 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
   Widget build(BuildContext context) {
     final userAsync = ref.watch(appUserProvider);
     final conceptsAsync = ref.watch(todayConceptsControllerProvider);
+
+    ref.listen<AsyncValue<TodayConceptsState>>(
+      todayConceptsControllerProvider,
+      (previous, next) {
+        if (_isRetrying) {
+          if (!next.hasError) {
+            _retryTimer?.cancel();
+            setState(() => _isRetrying = false);
+          } else if (previous != null && (previous.isLoading || previous.isReloading) && !next.isLoading) {
+            _retryTimer?.cancel();
+            setState(() => _isRetrying = false);
+          }
+        }
+      },
+    );
     
     ref.listen<AsyncValue<AppUser?>>(
       appUserProvider,
@@ -435,11 +472,14 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
               if (FirestoreErrors.shouldRetry(e)) ...[
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: () {
-                    ref.invalidate(statsResetProvider);
-                    ref.invalidate(todayConceptsControllerProvider);
-                  },
-                  child: const Text('Retry'),
+                  onPressed: _isRetrying ? null : _onRetry,
+                  child: _isRetrying
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Retry'),
                 ),
               ],
             ],

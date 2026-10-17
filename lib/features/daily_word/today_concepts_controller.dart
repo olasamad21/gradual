@@ -98,6 +98,14 @@ final todayConceptsControllerProvider =
   TodayConceptsController.new,
 );
 
+/// Invalidates all providers in the chain that can hold a cached failure.
+/// Does NOT invalidate appUserProvider.
+void retryLoadConcepts(dynamic ref) {
+  ref.invalidate(statsResetProvider);
+  ref.invalidate(todaysConceptsProvider);
+  ref.invalidate(todayConceptsControllerProvider);
+}
+
 final cardHintSeenProvider = AsyncNotifierProvider<CardHintNotifier, bool>(CardHintNotifier.new);
 
 class CardHintNotifier extends AsyncNotifier<bool> {

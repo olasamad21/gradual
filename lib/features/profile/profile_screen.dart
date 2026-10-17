@@ -12,6 +12,7 @@ import '../../shared/widgets/error_state_widget.dart';
 import '../../shared/widgets/firestore_permission_widget.dart';
 import '../streak/streak_heatmap_widget.dart';
 import 'profile_providers.dart';
+import 'profile_quiz_stats.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -58,23 +59,9 @@ class _ProfileBody extends ConsumerWidget {
   const _ProfileBody({required this.user});
   final AppUser user;
 
-  String _totalQuizzesDone(AppUser u) {
-    final total =
-        u.activityLog.values.where((e) => e.isWeeklyQuiz).length;
-    return '$total';
-  }
+  String _totalQuizzesDone(AppUser u) => totalQuizzesDone(u);
 
-  String _allTimeCorrectPercent(AppUser u) {
-    int totalCorrect = 0;
-    int totalQuestions = 0;
-    for (final entry in u.activityLog.values) {
-      if (entry.quizScore == null || entry.quizTotal == null) continue;
-      totalCorrect += entry.quizScore!;
-      totalQuestions += entry.quizTotal!;
-    }
-    if (totalQuestions == 0) return '--';
-    return '${(totalCorrect / totalQuestions * 100).round()}%';
-  }
+  String _allTimeCorrectPercent(AppUser u) => allTimeCorrectPercent(u);
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {
     showDialog(
@@ -441,10 +428,7 @@ class _QuizHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = user.activityLog.entries
-        .where((e) => e.value.isWeeklyQuiz)
-        .toList()
-      ..sort((a, b) => b.key.compareTo(a.key));
+    final entries = sortedQuizHistoryEntries(user);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -466,7 +450,7 @@ class _QuizHistoryCard extends StatelessWidget {
               const Text('Quiz History',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
               const Spacer(),
-              Text('${entries.where((e) => e.value.isWeeklyQuiz).length} weeks',
+              Text('${entries.length} weeks',
                   style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
             ],
           ),

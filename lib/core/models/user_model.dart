@@ -135,18 +135,65 @@ class ActivityLogEntry {
     final rawConcepts = json['concepts_read'] as List<dynamic>? ?? <dynamic>[];
     final conceptsRead = rawConcepts.map((e) => e.toString()).toList();
 
+    final rawQuizScore = json['quiz_score'];
+    final rawQuizTotal = json['quiz_total'];
+    final isNewStyleQuiz = rawQuizScore is num &&
+        rawQuizTotal is num &&
+        rawQuizScore >= 0 &&
+        rawQuizTotal > 0;
+
+    if (isNewStyleQuiz) {
+      final score = rawQuizScore.toInt();
+      final totalQuestions = rawQuizTotal.toInt();
+      final rawQuizTier = json['quiz_tier'] as String?;
+      final tier = (rawQuizTier != null &&
+              const ['excellent', 'good', 'fair', 'failed', 'missed'].contains(rawQuizTier.toLowerCase()))
+          ? tierFromId(rawQuizTier)
+          : tierFromId(StreakEngine.quizTier(score, totalQuestions));
+
+      return ActivityLogEntry(
+        quizType: 'weekly',
+        score: score,
+        totalQuestions: totalQuestions,
+        tier: tier,
+        streakCounted: json['streak_counted'] as bool? ?? false,
+        conceptsRead: conceptsRead,
+        quizScore: score,
+        quizTotal: totalQuestions,
+        quizTier: tier.id,
+      );
+    }
+
     if (quizType == 'weekly') {
-      final score = (json['score'] as num?)?.toInt() ?? 0;
+      final rawScore = json['score'];
+      final rawTotal = json['total_questions'];
+      // Malformed values check: negative numbers are not counted as weekly quiz
+      if ((rawScore is num && rawScore < 0) || (rawTotal is num && rawTotal <= 0)) {
+        return ActivityLogEntry(
+          quizType: 'legacy',
+          score: 0,
+          totalQuestions: 0,
+          tier: WeeklyScoreTier.legacy,
+          streakCounted: false,
+          conceptsRead: conceptsRead,
+        );
+      }
+      final score = (rawScore as num?)?.toInt() ?? 0;
+      final total = (rawTotal as num?)?.toInt() ?? 10;
       final tierRaw = json['tier'] as String?;
       return ActivityLogEntry(
         quizType: 'weekly',
         score: score,
-        totalQuestions: (json['total_questions'] as num?)?.toInt() ?? 10,
+        totalQuestions: total,
         tier: tierRaw != null ? tierFromId(tierRaw) : tierFromScore(score),
         streakCounted: json['streak_counted'] as bool? ?? false,
         conceptsRead: conceptsRead,
-        quizScore: (json['quiz_score'] as num?)?.toInt(),
-        quizTotal: (json['quiz_total'] as num?)?.toInt(),
+        quizScore: (rawQuizScore is num && rawQuizScore >= 0)
+            ? rawQuizScore.toInt()
+            : score,
+        quizTotal: (rawQuizTotal is num && rawQuizTotal > 0)
+            ? rawQuizTotal.toInt()
+            : total,
         quizTier: json['quiz_tier'] as String?,
       );
     }
@@ -178,6 +225,9 @@ class ActivityLogEntry {
         'total_questions': totalQuestions,
         'tier': tier.id,
         'streak_counted': streakCounted,
+        if (quizScore != null) 'quiz_score': quizScore,
+        if (quizTotal != null) 'quiz_total': quizTotal,
+        if (quizTier != null) 'quiz_tier': quizTier,
         if (conceptsRead.isNotEmpty) 'concepts_read': conceptsRead,
       };
     }
@@ -225,13 +275,23 @@ class AppUser {
   }
 
   factory AppUser.fromJson(String uid, Map<String, dynamic> json) {
-    final rawLog =
-        json['activity_log'] as Map<String, dynamic>? ?? <String, dynamic>{};
+    final dynamic rawActivity = json['activity_log'];
+    final Map<String, dynamic> rawLog;
+    if (rawActivity is Map<String, dynamic>) {
+      rawLog = rawActivity;
+    } else if (rawActivity is Map) {
+      rawLog = Map<String, dynamic>.from(rawActivity);
+    } else {
+      rawLog = <String, dynamic>{};
+    }
+
     final log = <String, ActivityLogEntry>{};
     for (final entry in rawLog.entries) {
       final value = entry.value;
       if (value is Map<String, dynamic>) {
         log[entry.key] = ActivityLogEntry.fromJson(value);
+      } else if (value is Map) {
+        log[entry.key] = ActivityLogEntry.fromJson(Map<String, dynamic>.from(value));
       }
     }
 
