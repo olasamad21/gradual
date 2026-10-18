@@ -5,12 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:gradual/core/firebase/firebase_providers.dart';
 import 'package:gradual/core/models/concept_model.dart';
+import 'package:gradual/core/models/user_model.dart';
+import 'package:gradual/core/repositories/user_repository.dart';
 import 'package:gradual/core/services/speech_service.dart';
 import 'package:gradual/core/theme/app_theme.dart';
 import 'package:gradual/features/daily_word/concept_reader.dart';
 import 'package:gradual/features/daily_word/concept_section_style.dart';
 import 'package:gradual/features/daily_word/today_concepts_controller.dart';
+import 'package:gradual/features/quiz/quiz_models.dart';
 
 class FakeTodayConceptsController extends TodayConceptsController {
   FakeTodayConceptsController(this._fakeState);
@@ -18,6 +22,53 @@ class FakeTodayConceptsController extends TodayConceptsController {
 
   @override
   Future<TodayConceptsState> build() async => _fakeState;
+}
+
+class FakeUserRepositoryForReader implements UserRepository {
+  final List<String> toggledConceptIds = [];
+
+  @override
+  Future<void> setConceptSaved({
+    required String uid,
+    required String conceptId,
+    required bool saved,
+    required int savedAtMillis,
+  }) async {
+    toggledConceptIds.add(conceptId);
+  }
+
+  @override
+  Future<AppUser?> getUser(String uid) async => null;
+
+  @override
+  Future<void> createOrUpdateUser(AppUser user) async {}
+
+  @override
+  Future<void> initNewUserIfMissing(String uid) async {}
+
+  @override
+  Stream<AppUser?> userStream(String uid) => Stream.value(null);
+
+  @override
+  Future<void> recordConceptRead({
+    required String uid,
+    required String conceptId,
+    required String dateId,
+  }) async {}
+
+  @override
+  Future<void> resetStatsIfNeeded(String uid) async {}
+
+  @override
+  Future<QuizSaveResult> saveQuizScore({
+    required String uid,
+    required String dateId,
+    required int score,
+    required int total,
+    required String tier,
+    String? fieldOfStudy,
+  }) async =>
+      QuizSaveResult.saved;
 }
 
 class FakeSpeechService implements SpeechService {
@@ -123,6 +174,8 @@ void main() {
     bool disableAnimations = false,
     TextScaler textScaler = TextScaler.noScaling,
     FakeSpeechService? fakeSpeech,
+    bool showGotIt = true,
+    List<dynamic> extraOverrides = const [],
   }) {
     final conceptList = concepts ?? [concept1, concept2, concept3];
     final fakeState = TodayConceptsState(
@@ -140,6 +193,7 @@ void main() {
         ),
         if (fakeSpeech != null)
           speechServiceProvider.overrideWithValue(fakeSpeech),
+        ...extraOverrides,
       ],
       child: MediaQuery(
         data: MediaQueryData(
@@ -157,6 +211,7 @@ void main() {
                     concepts: conceptList,
                     initialIndex: initialIndex,
                     onMarkRead: onMarkRead ?? (_) {},
+                    showGotIt: showGotIt,
                   );
                 },
                 child: const Text('Open Reader'),
@@ -580,6 +635,81 @@ void main() {
 
       expect(find.byType(ScrollFadeMask), findsWidgets);
       expect(find.byType(ShaderMask), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Got it bar is absent when showGotIt is false and present when true', (tester) async {
+      // showGotIt: false
+      await tester.pumpWidget(createTestHarness(showGotIt: false));
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.widgetWithText(ElevatedButton, 'Got it'), findsNothing);
+      expect(find.widgetWithText(ElevatedButton, 'Got it \u2713'), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      // Close reader
+      await tester.drag(find.byKey(const Key('reader_top_drag_zone')), const Offset(0, 300));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // showGotIt: true
+      await tester.pumpWidget(createTestHarness(showGotIt: true));
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.widgetWithText(ElevatedButton, 'Got it'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('reader bookmark toggles for the current page', (tester) async {
+      final fakeUserRepo = FakeUserRepositoryForReader();
+      final user = AppUser(
+        uid: 'uid123',
+        email: 'test@example.com',
+        fieldOfStudy: 'software_engineering',
+        currentStreak: 0,
+        lastActivityDate: null,
+        activityLog: const {},
+        savedConcepts: const {'c1': 100},
+      );
+
+      await tester.pumpWidget(
+        createTestHarness(
+          initialIndex: 0,
+          extraOverrides: [
+            appUserProvider.overrideWith((ref) => Stream.value(user)),
+            userRepositoryProvider.overrideWithValue(fakeUserRepo),
+          ],
+        ),
+      );
+
+      await tester.tap(find.text('Open Reader'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Page 0 (concept1: id 'c1' which is saved)
+      expect(find.byIcon(Icons.bookmark_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.bookmark_border_rounded), findsNothing);
+
+      // Tap bookmark on current page
+      await tester.tap(find.byIcon(Icons.bookmark_rounded));
+      await tester.pump();
+      expect(fakeUserRepo.toggledConceptIds, ['c1']);
+
+      // Swipe to next page (concept2: id 'c2' which is unsaved)
+      await tester.fling(find.byType(PageView), const Offset(-400, 0), 1000);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byIcon(Icons.bookmark_border_rounded), findsOneWidget);
+
+      // Tap bookmark on page 2
+      await tester.tap(find.byIcon(Icons.bookmark_border_rounded));
+      await tester.pump();
+      expect(fakeUserRepo.toggledConceptIds, ['c1', 'c2']);
       expect(tester.takeException(), isNull);
     });
   });

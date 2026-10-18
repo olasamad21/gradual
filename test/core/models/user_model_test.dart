@@ -231,4 +231,72 @@ void main() {
       expect(user.activityLog['2026-10-10']?.isWeeklyQuiz, isTrue);
     });
   });
+
+  group('AppUser saved_concepts tests', () {
+    test('fromJson with saved_concepts {"a": 3, "b": 5} gives savedConceptIdsNewestFirst ["b", "a"]', () {
+      final json = {
+        'saved_concepts': {'a': 3, 'b': 5},
+      };
+      final user = AppUser.fromJson('u1', json);
+      expect(user.savedConcepts, {'a': 3, 'b': 5});
+      expect(user.savedConceptIdsNewestFirst, ['b', 'a']);
+    });
+
+    test('ties sort by id ascending', () {
+      final json = {
+        'saved_concepts': {'z': 5, 'a': 5, 'm': 5},
+      };
+      final user = AppUser.fromJson('u1', json);
+      expect(user.savedConceptIdsNewestFirst, ['a', 'm', 'z']);
+    });
+
+    test('strings, nulls and non-map values are ignored without throwing', () {
+      final json1 = {
+        'saved_concepts': 'not a map',
+      };
+      final user1 = AppUser.fromJson('u1', json1);
+      expect(user1.savedConcepts, isEmpty);
+      expect(user1.savedConceptIdsNewestFirst, isEmpty);
+
+      final json2 = {
+        'saved_concepts': null,
+      };
+      final user2 = AppUser.fromJson('u1', json2);
+      expect(user2.savedConcepts, isEmpty);
+
+      final json3 = {
+        'saved_concepts': {
+          '': 123,
+          'valid': 456,
+          'null_val': null,
+          'str_val': '789',
+          'double_val': 100.0,
+        },
+      };
+      final user3 = AppUser.fromJson('u1', json3);
+      expect(user3.savedConcepts, {'valid': 456, 'double_val': 100});
+      expect(user3.savedConceptIdsNewestFirst, ['valid', 'double_val']);
+    });
+
+    test('no saved_concepts gives an empty map', () {
+      final json = <String, dynamic>{};
+      final user = AppUser.fromJson('u1', json);
+      expect(user.savedConcepts, isEmpty);
+      expect(user.savedConceptIdsNewestFirst, isEmpty);
+    });
+
+    test('toJson does not contain saved_concepts', () {
+      final user = AppUser(
+        uid: 'u1',
+        email: 'test@example.com',
+        fieldOfStudy: 'software_engineering',
+        currentStreak: 0,
+        lastActivityDate: null,
+        activityLog: const {},
+        savedConcepts: const {'c1': 100, 'c2': 200},
+      );
+      final json = user.toJson();
+      expect(json.containsKey('saved_concepts'), isFalse);
+    });
+  });
 }

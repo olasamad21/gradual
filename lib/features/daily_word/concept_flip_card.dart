@@ -6,6 +6,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import '../../core/models/concept_model.dart';
 import '../../core/services/read_aloud_text.dart';
+import '../../core/theme/app_theme.dart';
 import 'auto_scroll_logic.dart';
 import 'concept_section_style.dart';
 import 'read_along_text.dart';
@@ -27,6 +28,8 @@ class ConceptFlipCard extends StatefulWidget {
     this.readingSpeed = 1.0,
     this.onCycleSpeed,
     this.onExpand,
+    this.isSaved = false,
+    this.onToggleSaved,
   });
 
   final Concept concept;
@@ -43,6 +46,8 @@ class ConceptFlipCard extends StatefulWidget {
   final double readingSpeed;
   final VoidCallback? onCycleSpeed;
   final VoidCallback? onExpand;
+  final bool isSaved;
+  final VoidCallback? onToggleSaved;
 
   @override
   State<ConceptFlipCard> createState() => _ConceptFlipCardState();
@@ -218,6 +223,26 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
     );
   }
 
+  Widget _buildBookmarkButton() {
+    if (widget.onToggleSaved == null) return const SizedBox.shrink();
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: IconButton(
+        icon: Icon(
+          widget.isSaved
+              ? Icons.bookmark_rounded
+              : Icons.bookmark_border_rounded,
+          color: widget.isSaved
+              ? AppTheme.primaryColor
+              : Colors.grey.shade600,
+        ),
+        tooltip: widget.isSaved ? 'Remove from saved' : 'Save word',
+        onPressed: widget.onToggleSaved,
+      ),
+    );
+  }
+
   Widget _buildCardBase({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -257,6 +282,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (widget.index == 0) const SwipeHintAnimation(),
+                      if (widget.onToggleSaved != null) _buildBookmarkButton(),
                       _buildSpeakerAndSpeed(isBackFace: false),
                     ],
                   ),
@@ -387,7 +413,13 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                   Flexible(
                     child: WordIndexPill(index: widget.index, isRead: widget.isRead),
                   ),
-                  _buildSpeakerAndSpeed(isBackFace: true),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.onToggleSaved != null) _buildBookmarkButton(),
+                      _buildSpeakerAndSpeed(isBackFace: true),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 16),

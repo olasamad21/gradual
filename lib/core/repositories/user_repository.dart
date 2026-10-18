@@ -103,6 +103,20 @@ class UserRepository {
     );
   }
 
+  Future<void> setConceptSaved({
+    required String uid,
+    required String conceptId,
+    required bool saved,
+    required int savedAtMillis,
+  }) async {
+    return FirestoreErrors.guardFuture(
+      _usersCollection.doc(uid).update({
+        FieldPath(['saved_concepts', conceptId]):
+            saved ? savedAtMillis : FieldValue.delete(),
+      }),
+    );
+  }
+
   Future<void> resetStatsIfNeeded(String uid) async {
     final doc = await FirestoreErrors.guardFuture(_usersCollection.doc(uid).get());
     if (!doc.exists) return;

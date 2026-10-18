@@ -22,6 +22,7 @@ import 'concept_reader.dart';
 import 'reader_logic.dart';
 import 'today_concepts_controller.dart';
 import 'read_aloud_controller.dart';
+import '../saved/saved_controller.dart';
 import '../streak/streak_providers.dart';
 
 int _conceptCountForDate(Map<String, dynamic> log, String dateId) {
@@ -379,6 +380,8 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                 itemBuilder: (context, index) {
                   final concept = state.concepts[index];
                   final isRead = state.readConceptIds.contains(concept.id);
+                  final savedIds = ref.watch(savedIdsProvider);
+                  final isSaved = savedIds.contains(concept.id);
                   final readAloudState = ref.watch(readAloudControllerProvider);
                   final isReadingAloud = readAloudState.conceptId == concept.id;
 
@@ -390,6 +393,10 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                         index: index,
                         isRead: isRead,
                         isLastWord: index == state.concepts.length - 1,
+                        isSaved: isSaved,
+                        onToggleSaved: () {
+                          ref.read(savedControllerProvider.notifier).toggle(concept.id);
+                        },
                         isReadingAloud: isReadingAloud,
                         readingSection: isReadingAloud ? readAloudState.section : null,
                         readingWordStart: isReadingAloud ? readAloudState.wordStart : null,

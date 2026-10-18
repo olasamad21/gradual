@@ -4,6 +4,7 @@ import '../../features/daily_word/daily_word_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
 import '../../features/quiz/quiz_providers.dart';
+import '../../features/saved/saved_screen.dart';
 import 'animated_quiz_icon.dart';
 
 class AppShellTabNotifier extends Notifier<int> {
@@ -25,6 +26,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   final List<Widget> _screens = const [
     DailyWordScreen(),
     QuizScreen(),
+    SavedScreen(),
     ProfileScreen(),
   ];
 
@@ -116,6 +118,11 @@ class _AppShellState extends ConsumerState<AppShell> {
             icon: AnimatedQuizIcon(),
             selectedIcon: Icon(Icons.quiz_rounded),
             label: 'Quiz',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bookmark_outline_rounded),
+            selectedIcon: Icon(Icons.bookmark_rounded),
+            label: 'Saved',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),

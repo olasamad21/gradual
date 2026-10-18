@@ -36,9 +36,15 @@ void main() {
     double readingSpeed = 1.0,
     VoidCallback? onCycleSpeed,
     VoidCallback? onExpand,
+    bool isSaved = false,
+    VoidCallback? onToggleSaved,
+    TextScaler textScaler = TextScaler.noScaling,
   }) {
     return MediaQuery(
-      data: MediaQueryData(disableAnimations: disableAnimations),
+      data: MediaQueryData(
+        disableAnimations: disableAnimations,
+        textScaler: textScaler,
+      ),
       child: MaterialApp(
         theme: AppTheme.light,
         home: Scaffold(
@@ -61,6 +67,8 @@ void main() {
                 readingSpeed: readingSpeed,
                 onCycleSpeed: onCycleSpeed,
                 onExpand: onExpand,
+                isSaved: isSaved,
+                onToggleSaved: onToggleSaved,
               ),
             ),
           ),
@@ -600,6 +608,74 @@ void main() {
 
       expect(lastFromBackFace, isTrue);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('card with onToggleSaved null has no bookmark', (tester) async {
+      await tester.pumpWidget(buildTestCard(concept: testConcept, onToggleSaved: null));
+      expect(find.byIcon(Icons.bookmark_rounded), findsNothing);
+      expect(find.byIcon(Icons.bookmark_border_rounded), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('with onToggleSaved set the bookmark is on both faces after a flip, tapping calls it once, and isSaved switches icon', (tester) async {
+      int toggleCalls = 0;
+      await tester.pumpWidget(
+        buildTestCard(
+          concept: testConcept,
+          isSaved: false,
+          onToggleSaved: () => toggleCalls++,
+        ),
+      );
+
+      // Front face has unsaved bookmark icon
+      expect(find.byIcon(Icons.bookmark_border_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.bookmark_rounded), findsNothing);
+
+      // Tap bookmark
+      await tester.tap(find.byIcon(Icons.bookmark_border_rounded));
+      await tester.pump();
+      expect(toggleCalls, 1);
+
+      // Re-pump with isSaved: true
+      await tester.pumpWidget(
+        buildTestCard(
+          concept: testConcept,
+          isSaved: true,
+          onToggleSaved: () => toggleCalls++,
+        ),
+      );
+      expect(find.byIcon(Icons.bookmark_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.bookmark_border_rounded), findsNothing);
+
+      // Flip to back face
+      await tester.tap(find.byType(ConceptFlipCard));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+
+      // Back face has saved bookmark icon
+      expect(find.byIcon(Icons.bookmark_rounded), findsWidgets);
+      await tester.tap(find.byIcon(Icons.bookmark_rounded).first);
+      await tester.pump();
+      expect(toggleCalls, 2);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('no overflow at text scale 1.3 with the speed chip showing', (tester) async {
+      await tester.pumpWidget(
+        buildTestCard(
+          concept: testConcept,
+          isReadingAloud: true,
+          onToggleReadAloud: () {},
+          onCycleSpeed: () {},
+          onToggleSaved: () {},
+          isSaved: true,
+          textScaler: const TextScaler.linear(1.3),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.byIcon(Icons.bookmark_rounded), findsOneWidget);
+      expect(find.text('1x'), findsOneWidget);
     });
   });
 }

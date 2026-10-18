@@ -50,6 +50,14 @@ class FakeUserRepository implements UserRepository {
   Future<void> resetStatsIfNeeded(String uid) async {}
 
   @override
+  Future<void> setConceptSaved({
+    required String uid,
+    required String conceptId,
+    required bool saved,
+    required int savedAtMillis,
+  }) async {}
+
+  @override
   Future<QuizSaveResult> saveQuizScore({
     required String uid,
     required String dateId,

@@ -4,6 +4,8 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/models/concept_model.dart';
+import '../../core/theme/app_theme.dart';
+import '../saved/saved_controller.dart';
 import 'read_aloud_controller.dart';
 import '../../core/services/read_aloud_text.dart';
 import 'auto_scroll_logic.dart';
@@ -17,6 +19,7 @@ Future<int?> openConceptReader({
   required List<Concept> concepts,
   required int initialIndex,
   required void Function(String conceptId) onMarkRead,
+  bool showGotIt = true,
 }) async {
   final disableAnimations = MediaQuery.disableAnimationsOf(context);
   final result = await Navigator.of(context).push<int>(
@@ -31,6 +34,7 @@ Future<int?> openConceptReader({
           concepts: concepts,
           initialIndex: initialIndex,
           onMarkRead: onMarkRead,
+          showGotIt: showGotIt,
         );
       },
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -58,11 +62,13 @@ class ConceptReader extends ConsumerStatefulWidget {
     required this.concepts,
     required this.initialIndex,
     required this.onMarkRead,
+    this.showGotIt = true,
   });
 
   final List<Concept> concepts;
   final int initialIndex;
   final void Function(String conceptId) onMarkRead;
+  final bool showGotIt;
 
   @override
   ConsumerState<ConceptReader> createState() => _ConceptReaderState();
@@ -279,6 +285,25 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
     );
   }
 
+  Widget _buildBookmarkButton(Concept currentConcept) {
+    final savedIds = ref.watch(savedIdsProvider);
+    final isSaved = savedIds.contains(currentConcept.id);
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: IconButton(
+        icon: Icon(
+          isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+          color: isSaved ? AppTheme.primaryColor : Colors.grey.shade600,
+        ),
+        tooltip: isSaved ? 'Remove from saved' : 'Save word',
+        onPressed: () {
+          ref.read(savedControllerProvider.notifier).toggle(currentConcept.id);
+        },
+      ),
+    );
+  }
+
   Widget _buildSpeakerButton(bool isReadingCurrent, Concept currentConcept) {
     return Semantics(
       label: isReadingCurrent ? 'Stop reading' : 'Read aloud',
@@ -378,6 +403,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      _buildBookmarkButton(currentConcept),
                       if (isReadingCurrent) ...[
                         _buildSpeedChip(readAloudState.speed),
                         const SizedBox(width: 4),
@@ -511,7 +537,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                 child: SingleChildScrollView(
                   key: _getScrollViewKey(index),
                   controller: _getScrollController(index),
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+                  padding: EdgeInsets.fromLTRB(20, 8, 20, widget.showGotIt ? 96 : 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -736,7 +762,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                     itemBuilder: (context, index) => _buildPage(index),
                   ),
                 ),
-                _buildBottomBar(isReadCurrent),
+                if (widget.showGotIt) _buildBottomBar(isReadCurrent),
               ],
             ),
           ),

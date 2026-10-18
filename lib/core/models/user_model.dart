@@ -252,6 +252,7 @@ class AppUser {
     required this.lastActivityDate,
     required this.activityLog,
     this.rawActivityLog = const <String, dynamic>{},
+    this.savedConcepts = const <String, int>{},
   });
 
   final String uid;
@@ -261,13 +262,21 @@ class AppUser {
   final Timestamp? lastActivityDate;
   final ActivityLog activityLog;
   final Map<String, dynamic> rawActivityLog;
+  final Map<String, int> savedConcepts;
+
+  List<String> get savedConceptIdsNewestFirst {
+    final entries = savedConcepts.entries.toList();
+    entries.sort((a, b) {
+      final valueComp = b.value.compareTo(a.value);
+      if (valueComp != 0) return valueComp;
+      return a.key.compareTo(b.key);
+    });
+    return entries.map((e) => e.key).toList();
+  }
 
   int streakAt(DateTime today) => StreakEngine.currentStreak(rawActivityLog, today);
 
   int get liveStreak => streakAt(DateTime.now());
-
-
-
 
   factory AppUser.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
@@ -295,6 +304,18 @@ class AppUser {
       }
     }
 
+    final rawSaved = json['saved_concepts'];
+    final savedConcepts = <String, int>{};
+    if (rawSaved is Map) {
+      for (final entry in rawSaved.entries) {
+        final key = entry.key;
+        final value = entry.value;
+        if (key is String && key.isNotEmpty && value is num) {
+          savedConcepts[key] = value.toInt();
+        }
+      }
+    }
+
     return AppUser(
       uid: uid,
       email: json['email'] as String? ?? '',
@@ -304,6 +325,7 @@ class AppUser {
       lastActivityDate: json['last_activity_date'] as Timestamp?,
       activityLog: log,
       rawActivityLog: rawLog,
+      savedConcepts: savedConcepts,
     );
   }
 
@@ -326,6 +348,7 @@ class AppUser {
     int? currentStreak,
     Timestamp? lastActivityDate,
     ActivityLog? activityLog,
+    Map<String, int>? savedConcepts,
   }) {
     return AppUser(
       uid: uid,
@@ -334,6 +357,7 @@ class AppUser {
       currentStreak: currentStreak ?? this.currentStreak,
       lastActivityDate: lastActivityDate ?? this.lastActivityDate,
       activityLog: activityLog ?? this.activityLog,
+      savedConcepts: savedConcepts ?? this.savedConcepts,
     );
   }
 }
