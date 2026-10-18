@@ -10,6 +10,7 @@ import 'package:gradual/core/repositories/user_repository.dart';
 import 'package:gradual/features/quiz/quiz_models.dart';
 import 'package:gradual/features/quiz/quiz_providers.dart';
 import 'package:gradual/features/saved/saved_controller.dart';
+import 'package:gradual/features/saved/saved_filter.dart';
 
 class RecordedSavedCall {
   final String uid;
@@ -123,139 +124,238 @@ void main() {
     );
   }
 
-  test('toggle on an unsaved concept calls setConceptSaved with saved true and millis from todayProvider', () async {
-    final fakeRepo = FakeUserRepository();
-    final user = createTestUser(savedConcepts: {'existing': 100});
+  group('savedViewProvider tests', () {
+    test('initial state has empty query, null category, and newest sort', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
 
-    final container = ProviderContainer(
-      overrides: [
-        appUserProvider.overrideWith((ref) => Stream.value(user)),
-        todayProvider.overrideWithValue(() => fixedDate),
-        userRepositoryProvider.overrideWithValue(fakeRepo),
-      ],
-    );
-    addTearDown(container.dispose);
+      final state = container.read(savedViewProvider);
+      expect(state.query, '');
+      expect(state.category, isNull);
+      expect(state.sort, SavedSort.newest);
+    });
 
-    container.listen(appUserProvider, (_, _) {});
-    await container.read(appUserProvider.future);
+    test('setQuery updates query', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
 
-    container.read(savedControllerProvider.notifier).toggle('new_concept');
-    await Future<void>.delayed(Duration.zero);
+      container.read(savedViewProvider.notifier).setQuery('algorithms');
+      expect(container.read(savedViewProvider).query, 'algorithms');
+    });
 
-    expect(fakeRepo.savedCalls.length, 1);
-    expect(fakeRepo.savedCalls.first.uid, 'u1');
-    expect(fakeRepo.savedCalls.first.conceptId, 'new_concept');
-    expect(fakeRepo.savedCalls.first.saved, isTrue);
-    expect(fakeRepo.savedCalls.first.savedAtMillis, fixedMillis);
+    test('setCategory sets category and re-selecting it clears it', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container.read(savedViewProvider.notifier).setCategory('fruits');
+      expect(container.read(savedViewProvider).category, 'fruits');
+
+      // Re-selecting same category clears it
+      container.read(savedViewProvider.notifier).setCategory('fruits');
+      expect(container.read(savedViewProvider).category, isNull);
+
+      // Selecting different category changes it
+      container.read(savedViewProvider.notifier).setCategory('fruits');
+      container.read(savedViewProvider.notifier).setCategory('vegetables');
+      expect(container.read(savedViewProvider).category, 'vegetables');
+
+      // Selecting null clears it
+      container.read(savedViewProvider.notifier).setCategory(null);
+      expect(container.read(savedViewProvider).category, isNull);
+    });
+
+    test('setSort changes sort order', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container.read(savedViewProvider.notifier).setSort(SavedSort.alphabetical);
+      expect(container.read(savedViewProvider).sort, SavedSort.alphabetical);
+
+      container.read(savedViewProvider.notifier).setSort(SavedSort.newest);
+      expect(container.read(savedViewProvider).sort, SavedSort.newest);
+    });
+
+    test('reset restores initial state', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(savedViewProvider.notifier);
+      notifier.setQuery('test');
+      notifier.setCategory('cat');
+      notifier.setSort(SavedSort.alphabetical);
+
+      notifier.reset();
+      final state = container.read(savedViewProvider);
+      expect(state.query, '');
+      expect(state.category, isNull);
+      expect(state.sort, SavedSort.newest);
+    });
   });
 
-  test('toggle on a saved concept calls it with saved false', () async {
-    final fakeRepo = FakeUserRepository();
-    final user = createTestUser(savedConcepts: {'saved_concept': 100});
+  group('savedControllerProvider tests', () {
+    test('toggle on an unsaved concept calls setConceptSaved with saved true and returns null', () async {
+      final fakeRepo = FakeUserRepository();
+      final user = createTestUser(savedConcepts: {'existing': 100});
 
-    final container = ProviderContainer(
-      overrides: [
-        appUserProvider.overrideWith((ref) => Stream.value(user)),
-        todayProvider.overrideWithValue(() => fixedDate),
-        userRepositoryProvider.overrideWithValue(fakeRepo),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          appUserProvider.overrideWith((ref) => Stream.value(user)),
+          todayProvider.overrideWithValue(() => fixedDate),
+          userRepositoryProvider.overrideWithValue(fakeRepo),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    container.listen(appUserProvider, (_, _) {});
-    await container.read(appUserProvider.future);
+      container.listen(appUserProvider, (_, _) {});
+      await container.read(appUserProvider.future);
 
-    container.read(savedControllerProvider.notifier).toggle('saved_concept');
-    await Future<void>.delayed(Duration.zero);
+      final result = container.read(savedControllerProvider.notifier).toggle('new_concept');
+      await Future<void>.delayed(Duration.zero);
 
-    expect(fakeRepo.savedCalls.length, 1);
-    expect(fakeRepo.savedCalls.first.conceptId, 'saved_concept');
-    expect(fakeRepo.savedCalls.first.saved, isFalse);
-    expect(fakeRepo.savedCalls.first.savedAtMillis, fixedMillis);
-  });
+      expect(result, isNull);
+      expect(fakeRepo.savedCalls.length, 1);
+      expect(fakeRepo.savedCalls.first.uid, 'u1');
+      expect(fakeRepo.savedCalls.first.conceptId, 'new_concept');
+      expect(fakeRepo.savedCalls.first.saved, isTrue);
+      expect(fakeRepo.savedCalls.first.savedAtMillis, fixedMillis);
+    });
 
-  test('with no user nothing is called', () async {
-    final fakeRepo = FakeUserRepository();
+    test('toggle on a saved concept calls it with saved false and returns old millis', () async {
+      final fakeRepo = FakeUserRepository();
+      final user = createTestUser(savedConcepts: {'saved_concept': 12345});
 
-    final container = ProviderContainer(
-      overrides: [
-        appUserProvider.overrideWith((ref) => Stream.value(null)),
-        todayProvider.overrideWithValue(() => fixedDate),
-        userRepositoryProvider.overrideWithValue(fakeRepo),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          appUserProvider.overrideWith((ref) => Stream.value(user)),
+          todayProvider.overrideWithValue(() => fixedDate),
+          userRepositoryProvider.overrideWithValue(fakeRepo),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    container.listen(appUserProvider, (_, _) {});
-    await container.read(appUserProvider.future);
+      container.listen(appUserProvider, (_, _) {});
+      await container.read(appUserProvider.future);
 
-    container.read(savedControllerProvider.notifier).toggle('any_concept');
-    await Future<void>.delayed(Duration.zero);
+      final result = container.read(savedControllerProvider.notifier).toggle('saved_concept');
+      await Future<void>.delayed(Duration.zero);
 
-    expect(fakeRepo.savedCalls, isEmpty);
-  });
+      expect(result, 12345);
+      expect(fakeRepo.savedCalls.length, 1);
+      expect(fakeRepo.savedCalls.first.conceptId, 'saved_concept');
+      expect(fakeRepo.savedCalls.first.saved, isFalse);
+      expect(fakeRepo.savedCalls.first.savedAtMillis, fixedMillis);
+    });
 
-  test('a repository that throws does not crash the toggle', () async {
-    final fakeRepo = FakeUserRepository()..throwException = true;
-    final user = createTestUser(savedConcepts: {});
+    test('restore calls setConceptSaved with the given millis and saved true', () async {
+      final fakeRepo = FakeUserRepository();
+      final user = createTestUser(savedConcepts: {});
 
-    final container = ProviderContainer(
-      overrides: [
-        appUserProvider.overrideWith((ref) => Stream.value(user)),
-        todayProvider.overrideWithValue(() => fixedDate),
-        userRepositoryProvider.overrideWithValue(fakeRepo),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          appUserProvider.overrideWith((ref) => Stream.value(user)),
+          todayProvider.overrideWithValue(() => fixedDate),
+          userRepositoryProvider.overrideWithValue(fakeRepo),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    container.listen(appUserProvider, (_, _) {});
-    await container.read(appUserProvider.future);
+      container.listen(appUserProvider, (_, _) {});
+      await container.read(appUserProvider.future);
 
-    expect(() => container.read(savedControllerProvider.notifier).toggle('c1'), returnsNormally);
-    await Future<void>.delayed(Duration.zero);
-  });
+      await container.read(savedControllerProvider.notifier).restore('restored_concept', 99999);
+      expect(fakeRepo.savedCalls.length, 1);
+      expect(fakeRepo.savedCalls.first.conceptId, 'restored_concept');
+      expect(fakeRepo.savedCalls.first.saved, isTrue);
+      expect(fakeRepo.savedCalls.first.savedAtMillis, 99999);
+    });
 
-  test('savedConceptsProvider returns [] and never calls content repository when nothing is saved', () async {
-    final fakeContent = FakeContentRepository();
-    final user = createTestUser(savedConcepts: {});
+    test('with no user nothing is called by toggle or restore', () async {
+      final fakeRepo = FakeUserRepository();
 
-    final container = ProviderContainer(
-      overrides: [
-        appUserProvider.overrideWith((ref) => Stream.value(user)),
-        contentRepositoryProvider.overrideWithValue(fakeContent),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          appUserProvider.overrideWith((ref) => Stream.value(null)),
+          todayProvider.overrideWithValue(() => fixedDate),
+          userRepositoryProvider.overrideWithValue(fakeRepo),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    container.listen(appUserProvider, (_, _) {});
-    await container.read(appUserProvider.future);
+      container.listen(appUserProvider, (_, _) {});
+      await container.read(appUserProvider.future);
 
-    final concepts = await container.read(savedConceptsProvider.future);
-    expect(concepts, isEmpty);
-    expect(fakeContent.getConceptsCalls, isEmpty);
-  });
+      final result = container.read(savedControllerProvider.notifier).toggle('any_concept');
+      await container.read(savedControllerProvider.notifier).restore('any_concept', 123);
+      await Future<void>.delayed(Duration.zero);
 
-  test('with ids [b, a] it asks for them in that order', () async {
-    final fakeContent = FakeContentRepository();
-    final user = createTestUser(savedConcepts: {'a': 100, 'b': 200});
+      expect(result, isNull);
+      expect(fakeRepo.savedCalls, isEmpty);
+    });
 
-    final container = ProviderContainer(
-      overrides: [
-        appUserProvider.overrideWith((ref) => Stream.value(user)),
-        contentRepositoryProvider.overrideWithValue(fakeContent),
-      ],
-    );
-    addTearDown(container.dispose);
+    test('a repository that throws does not crash toggle or restore', () async {
+      final fakeRepo = FakeUserRepository()..throwException = true;
+      final user = createTestUser(savedConcepts: {'c1': 100});
 
-    container.listen(appUserProvider, (_, _) {});
-    await container.read(appUserProvider.future);
+      final container = ProviderContainer(
+        overrides: [
+          appUserProvider.overrideWith((ref) => Stream.value(user)),
+          todayProvider.overrideWithValue(() => fixedDate),
+          userRepositoryProvider.overrideWithValue(fakeRepo),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    final ids = container.read(savedIdsProvider);
-    expect(ids, ['b', 'a']);
+      container.listen(appUserProvider, (_, _) {});
+      await container.read(appUserProvider.future);
 
-    final concepts = await container.read(savedConceptsProvider.future);
-    expect(concepts.map((c) => c.id).toList(), ['b', 'a']);
-    expect(fakeContent.getConceptsCalls.length, 1);
-    expect(fakeContent.getConceptsCalls.first, ['b', 'a']);
+      expect(() => container.read(savedControllerProvider.notifier).toggle('c1'), returnsNormally);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(() async => await container.read(savedControllerProvider.notifier).restore('c1', 100), returnsNormally);
+    });
+
+    test('savedConceptsProvider returns [] and never calls content repository when nothing is saved', () async {
+      final fakeContent = FakeContentRepository();
+      final user = createTestUser(savedConcepts: {});
+
+      final container = ProviderContainer(
+        overrides: [
+          appUserProvider.overrideWith((ref) => Stream.value(user)),
+          contentRepositoryProvider.overrideWithValue(fakeContent),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.listen(appUserProvider, (_, _) {});
+      await container.read(appUserProvider.future);
+
+      final concepts = await container.read(savedConceptsProvider.future);
+      expect(concepts, isEmpty);
+      expect(fakeContent.getConceptsCalls, isEmpty);
+    });
+
+    test('with ids [b, a] it asks for them in that order', () async {
+      final fakeContent = FakeContentRepository();
+      final user = createTestUser(savedConcepts: {'a': 100, 'b': 200});
+
+      final container = ProviderContainer(
+        overrides: [
+          appUserProvider.overrideWith((ref) => Stream.value(user)),
+          contentRepositoryProvider.overrideWithValue(fakeContent),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.listen(appUserProvider, (_, _) {});
+      await container.read(appUserProvider.future);
+
+      final ids = container.read(savedIdsProvider);
+      expect(ids, ['b', 'a']);
+
+      final concepts = await container.read(savedConceptsProvider.future);
+      expect(concepts.map((c) => c.id).toList(), ['b', 'a']);
+      expect(fakeContent.getConceptsCalls.length, 1);
+      expect(fakeContent.getConceptsCalls.first, ['b', 'a']);
+    });
   });
 }
