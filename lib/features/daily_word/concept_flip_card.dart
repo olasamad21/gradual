@@ -646,7 +646,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                 fit: StackFit.expand,
                 children: <Widget>[
                   ...previousChildren,
-                  if (currentChild != null) currentChild,
+                  ?currentChild,
                 ],
               );
             },

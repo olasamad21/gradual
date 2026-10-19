@@ -23,7 +23,7 @@ class ProfileScreen extends ConsumerWidget {
     final cachedUser = profile.when(
       data: (d) => d,
       loading: () => null,
-      error: (_, __) => null,
+      error: (_, _) => null,
     );
 
     return Scaffold(

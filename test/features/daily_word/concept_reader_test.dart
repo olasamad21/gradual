@@ -452,7 +452,7 @@ void main() {
       );
       expect(data.customSemanticsActionIds?.contains(customActionId), isTrue);
 
-      tester.binding.pipelineOwner.semanticsOwner!.performAction(
+      node.owner!.performAction(
         node.id,
         SemanticsAction.customAction,
         customActionId,

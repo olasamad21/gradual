@@ -214,7 +214,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
     final cachedUser = userAsync.when(
       data: (d) => d,
       loading: () => null,
-      error: (_, __) => null,
+      error: (_, _) => null,
     );
 
     return PopScope(
@@ -281,7 +281,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
     final user = userAsync.when(
       data: (d) => d,
       loading: () => null,
-      error: (_, __) => null,
+      error: (_, _) => null,
     );
     if (user == null && userAsync.isLoading) {
       return const SizedBox(height: 52);

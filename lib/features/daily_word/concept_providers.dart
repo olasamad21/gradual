@@ -12,7 +12,7 @@ final todaysConceptsProvider = FutureProvider<TodaysConceptsResult>((ref) async 
       (asyncUser) => asyncUser.when(
         data: (d) => d,
         loading: () => null,
-        error: (_, __) => null,
+        error: (_, _) => null,
       ),
     ),
   );

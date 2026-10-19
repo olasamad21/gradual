@@ -45,7 +45,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF388E3C).withOpacity(0.3),
+                            color: const Color(0xFF388E3C).withValues(alpha: 0.3),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           )

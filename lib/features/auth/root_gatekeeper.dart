@@ -16,7 +16,7 @@ class RootGatekeeper extends ConsumerWidget {
     return authState.when(
       loading: () => const _SplashView(),
 
-      error: (_, __) {
+      error: (_, _) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!context.mounted) return;
           Navigator.pushReplacementNamed(context, AppRoutes.onboarding);

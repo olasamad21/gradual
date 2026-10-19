@@ -53,7 +53,7 @@ final appUserProvider = StreamProvider<AppUser?>((ref) {
     // Emit null while auth resolves so dependents stay in data state (no flicker).
     loading: () => Stream.value(null),
 
-    error: (_, __) => Stream.value(null),
+    error: (_, _) => Stream.value(null),
 
     data: (user) {
       if (user == null) return Stream.value(null);
