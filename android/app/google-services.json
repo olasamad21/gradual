@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "263590322064-rab87jluojtq2npltplnkgq3dhhcpes5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.samad.gradual",
+            "certificate_hash": "826d68d244772f9091769cff15de8c066faabac7"
+          }
+        },
+        {
           "client_id": "263590322064-s54u844qpddga6tr7n3onb1fikuoq4vq.apps.googleusercontent.com",
           "client_type": 3
         }
