@@ -20,6 +20,7 @@ Future<int?> openConceptReader({
   required int initialIndex,
   required void Function(String conceptId) onMarkRead,
   bool showGotIt = true,
+  bool isWeekendReview = false,
 }) async {
   final disableAnimations = MediaQuery.disableAnimationsOf(context);
   final result = await Navigator.of(context).push<int>(
@@ -35,6 +36,7 @@ Future<int?> openConceptReader({
           initialIndex: initialIndex,
           onMarkRead: onMarkRead,
           showGotIt: showGotIt,
+          isWeekendReview: isWeekendReview,
         );
       },
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -63,12 +65,14 @@ class ConceptReader extends ConsumerStatefulWidget {
     required this.initialIndex,
     required this.onMarkRead,
     this.showGotIt = true,
+    this.isWeekendReview = false,
   });
 
   final List<Concept> concepts;
   final int initialIndex;
   final void Function(String conceptId) onMarkRead;
   final bool showGotIt;
+  final bool isWeekendReview;
 
   @override
   ConsumerState<ConceptReader> createState() => _ConceptReaderState();
@@ -398,6 +402,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                       index: _currentIndex,
                       isRead: isReadCurrent,
                       total: widget.concepts.length,
+                      label: widget.isWeekendReview ? 'WEEKEND REVIEW' : 'WORDS OF THE DAY',
                     ),
                   ),
                   Row(

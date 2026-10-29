@@ -38,9 +38,10 @@ bool shouldTriggerReward({
   required int newCount,
   required DayReward reward,
   required bool isFallback,
+  bool isWeekendReview = false,
   required bool alreadyShown,
 }) {
-  if (isFallback) return false;
+  if (isFallback || isWeekendReview) return false;
   if (alreadyShown) return false;
   if (reward != DayReward.perfect) return false;
   return newCount > previousCount;
@@ -177,6 +178,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
 
         final conceptsState = ref.read(todayConceptsControllerProvider).asData?.value;
         final isFallback = conceptsState?.isFallback ?? false;
+        final isWeekendReview = conceptsState?.isWeekendReview ?? false;
 
         final reward = StreakEngine.dayReward(
           nextUser.rawActivityLog,
@@ -194,6 +196,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
           newCount: nextCount,
           reward: reward,
           isFallback: isFallback,
+          isWeekendReview: isWeekendReview,
           alreadyShown: !shouldShow,
         );
 
@@ -393,6 +396,8 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                         index: index,
                         isRead: isRead,
                         isLastWord: index == state.concepts.length - 1,
+                        totalCount: state.concepts.length,
+                        isWeekendReview: state.isWeekendReview,
                         isSaved: isSaved,
                         onToggleSaved: () {
                           ref.read(savedControllerProvider.notifier).toggle(concept.id);
@@ -439,6 +444,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                             context: context,
                             concepts: state.concepts,
                             initialIndex: index,
+                            isWeekendReview: state.isWeekendReview,
                             onMarkRead: (conceptId) {
                               ref.read(cardHintSeenProvider.notifier).markSeen();
                               ref.read(todayConceptsControllerProvider.notifier).markRead(conceptId);

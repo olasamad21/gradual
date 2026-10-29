@@ -2,17 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../errors/firestore_errors.dart';
 import '../models/concept_model.dart';
+import '../utils/date_utils.dart';
 
 class TodaysConceptsResult {
   const TodaysConceptsResult({
     this.dailySet,
     this.concepts = const [],
     this.isFallback = false,
+    this.isWeekendReview = false,
   });
 
   final DailySet? dailySet;
   final List<Concept> concepts;
   final bool isFallback;
+  final bool isWeekendReview;
 }
 
 class ContentRepository {
@@ -80,6 +83,50 @@ class ContentRepository {
   }
 
   Future<TodaysConceptsResult> getTodaysConcepts(String fieldOfStudy, String dateId) async {
+    final dateTime = DateUtilsGradual.dateFromId(dateId);
+    final isWeekend = dateTime.weekday == DateTime.saturday || dateTime.weekday == DateTime.sunday;
+
+    if (isWeekend) {
+      final monday = DateTime(dateTime.year, dateTime.month, dateTime.day - (dateTime.weekday - 1));
+      final friday = DateTime(monday.year, monday.month, monday.day + 4);
+      final mondayId = DateUtilsGradual.localDateId(monday);
+      final fridayId = DateUtilsGradual.localDateId(friday);
+
+      final query = await FirestoreErrors.guardFuture(
+        _dailySetsCollectionForField(fieldOfStudy)
+            .where(FieldPath.documentId, isGreaterThanOrEqualTo: mondayId)
+            .where(FieldPath.documentId, isLessThanOrEqualTo: fridayId)
+            .orderBy(FieldPath.documentId)
+            .get(),
+      );
+
+      final allConceptIds = <String>[];
+      for (final doc in query.docs) {
+        final dailySet = DailySet.fromFirestore(doc);
+        for (final id in dailySet.conceptIds) {
+          if (!allConceptIds.contains(id)) {
+            allConceptIds.add(id);
+          }
+        }
+      }
+
+      if (allConceptIds.isNotEmpty) {
+        final concepts = await getConceptsByIds(fieldOfStudy, allConceptIds);
+        final reviewSet = DailySet(
+          date: dateId,
+          field: fieldOfStudy,
+          theme: 'Weekend Review',
+          conceptIds: allConceptIds,
+        );
+        return TodaysConceptsResult(
+          dailySet: reviewSet,
+          concepts: concepts,
+          isFallback: false,
+          isWeekendReview: true,
+        );
+      }
+    }
+
     DailySet? set = await getDailySet(fieldOfStudy, dateId);
     var isFallback = false;
 
@@ -97,6 +144,7 @@ class ContentRepository {
       dailySet: set,
       concepts: concepts,
       isFallback: isFallback,
+      isWeekendReview: false,
     );
   }
 }

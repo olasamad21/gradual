@@ -26,8 +26,26 @@ abstract final class StreakEngine {
     return '${d.year}-$mm-$dd';
   }
 
+  /// Parses yyyy-MM-dd into ints, builds DateTime(y, m, d) and returns true when
+  /// weekday is Saturday or Sunday. Keys that do not parse return false.
+  static bool isWeekendDateId(String dateId) {
+    try {
+      final parts = dateId.split('-');
+      if (parts.length != 3) return false;
+      final y = int.parse(parts[0]);
+      final m = int.parse(parts[1]);
+      final d = int.parse(parts[2]);
+      final dt = DateTime(y, m, d);
+      return dt.weekday == DateTime.saturday || dt.weekday == DateTime.sunday;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Processes the log chronologically. A day counts if it introduces
   /// at least one concept ID not read on any previous day.
+  /// Weekend reads still count as seen, but a weekend date key is never
+  /// added to the counted set.
   static Set<String> countedDays(Map<String, dynamic> log) {
     final sortedKeys = log.keys.toList()..sort();
     final seen = <String>{};
@@ -52,30 +70,58 @@ abstract final class StreakEngine {
 
       if (hasNew) {
         seen.addAll(dayConcepts);
-        counted.add(date);
+        if (!isWeekendDateId(date)) {
+          counted.add(date);
+        }
       }
     }
 
     return counted;
   }
 
-  /// Computes the current streak from today, walking backwards one day at a time.
+  /// Computes the current streak from today, walking backwards one day at a time,
+  /// skipping weekends.
   static int currentStreak(Map<String, dynamic> log, DateTime today) {
     final counted = countedDays(log);
     var streak = 0;
-    
+
+    DateTime stepBack(DateTime dt) => DateTime(dt.year, dt.month, dt.day - 1);
+    bool isWeekend(DateTime dt) => dt.weekday == DateTime.saturday || dt.weekday == DateTime.sunday;
+
     var cursor = DateTime(today.year, today.month, today.day);
-    
-    // Alive via yesterday if today is unlogged
-    if (!counted.contains(_dateId(cursor))) {
-      cursor = DateTime(cursor.year, cursor.month, cursor.day - 1);
+
+    // First move the cursor back while it is Saturday or Sunday.
+    while (isWeekend(cursor)) {
+      cursor = stepBack(cursor);
     }
 
-    while (counted.contains(_dateId(cursor))) {
-      streak++;
-      cursor = DateTime(cursor.year, cursor.month, cursor.day - 1);
+    // Then if the cursor equals today (a weekday) and today is not counted,
+    // move back one day and again back over weekends (alive through yesterday).
+    if (cursor.year == today.year && cursor.month == today.month && cursor.day == today.day) {
+      if (!counted.contains(_dateId(cursor))) {
+        cursor = stepBack(cursor);
+        while (isWeekend(cursor)) {
+          cursor = stepBack(cursor);
+        }
+      }
     }
-    
+
+    // Then count consecutive counted days walking backwards; whenever the cursor
+    // lands on a weekend day, skip it without counting and without breaking.
+    // Stop at the first weekday that is not counted.
+    while (true) {
+      if (isWeekend(cursor)) {
+        cursor = stepBack(cursor);
+        continue;
+      }
+      if (counted.contains(_dateId(cursor))) {
+        streak++;
+        cursor = stepBack(cursor);
+      } else {
+        break;
+      }
+    }
+
     return streak;
   }
 
@@ -91,10 +137,11 @@ abstract final class StreakEngine {
       final currParts = counted[i].split('-');
       if (prevParts.length == 3 && currParts.length == 3) {
         final prevDt = DateTime(int.parse(prevParts[0]), int.parse(prevParts[1]), int.parse(prevParts[2]));
-        // Next day is prevDt + 1 day
-        final expectedNext = DateTime(prevDt.year, prevDt.month, prevDt.day + 1);
+        // Weekend skip: if prevDt was Friday, the next consecutive weekday is Monday (+3 days)
+        final daysToAdd = (prevDt.weekday == DateTime.friday) ? 3 : 1;
+        final expectedNext = DateTime(prevDt.year, prevDt.month, prevDt.day + daysToAdd);
         final expectedNextStr = _dateId(expectedNext);
-        
+
         if (counted[i] == expectedNextStr) {
           currentStreak++;
           if (currentStreak > maxStreak) {

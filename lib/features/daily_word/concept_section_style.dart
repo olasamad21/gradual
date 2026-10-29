@@ -17,11 +17,13 @@ class WordIndexPill extends StatelessWidget {
     required this.index,
     required this.isRead,
     this.total = 3,
+    this.label = 'WORDS OF THE DAY',
   });
 
   final int index;
   final bool isRead;
   final int total;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +44,7 @@ class WordIndexPill extends StatelessWidget {
           children: [
             Flexible(
               child: Text(
-                'WORDS OF THE DAY',
+                label,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,

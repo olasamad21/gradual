@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/firebase/firebase_providers.dart';
 import '../../core/models/concept_model.dart';
+import '../../core/services/streak_engine.dart';
 import '../../core/utils/date_utils.dart';
 import 'concept_providers.dart';
 import '../streak/streak_providers.dart';
@@ -12,6 +13,7 @@ class TodayConceptsState {
     required this.concepts,
     required this.readConceptIds,
     required this.isFallback,
+    this.isWeekendReview = false,
     required this.userUid,
     required this.liveStreak,
   });
@@ -19,6 +21,7 @@ class TodayConceptsState {
   final List<Concept> concepts;
   final Set<String> readConceptIds;
   final bool isFallback;
+  final bool isWeekendReview;
   final String? userUid;
   final int liveStreak;
 
@@ -29,6 +32,7 @@ class TodayConceptsState {
     List<Concept>? concepts,
     Set<String>? readConceptIds,
     bool? isFallback,
+    bool? isWeekendReview,
     String? userUid,
     int? liveStreak,
   }) {
@@ -36,6 +40,7 @@ class TodayConceptsState {
       concepts: concepts ?? this.concepts,
       readConceptIds: readConceptIds ?? this.readConceptIds,
       isFallback: isFallback ?? this.isFallback,
+      isWeekendReview: isWeekendReview ?? this.isWeekendReview,
       userUid: userUid ?? this.userUid,
       liveStreak: liveStreak ?? this.liveStreak,
     );
@@ -50,14 +55,22 @@ class TodayConceptsController extends AsyncNotifier<TodayConceptsState> {
     final conceptsResult = await ref.watch(todaysConceptsProvider.future);
 
     final todayId = DateUtilsGradual.todayLocalDateId();
+    final today = DateUtilsGradual.dateFromId(todayId);
     final rawLog = user?.rawActivityLog ?? {};
-    final todayLog = rawLog[todayId] as Map<String, dynamic>? ?? {};
-    final rawRead = todayLog['concepts_read'] as List<dynamic>? ?? [];
-    final readIds = rawRead.map((e) => e.toString()).toSet();
+
+    final Set<String> readIds;
+    if (conceptsResult.isWeekendReview) {
+      readIds = StreakEngine.conceptsReadInWeek(rawLog, today);
+    } else {
+      final todayLog = rawLog[todayId] as Map<String, dynamic>? ?? {};
+      final rawRead = todayLog['concepts_read'] as List<dynamic>? ?? [];
+      readIds = rawRead.map((e) => e.toString()).toSet();
+    }
 
     return TodayConceptsState(
       concepts: conceptsResult.concepts,
       isFallback: conceptsResult.isFallback,
+      isWeekendReview: conceptsResult.isWeekendReview,
       readConceptIds: readIds,
       userUid: user?.uid,
       liveStreak: user?.liveStreak ?? 0,

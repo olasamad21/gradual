@@ -30,6 +30,8 @@ class ConceptFlipCard extends StatefulWidget {
     this.onExpand,
     this.isSaved = false,
     this.onToggleSaved,
+    this.totalCount = 3,
+    this.isWeekendReview = false,
   });
 
   final Concept concept;
@@ -48,6 +50,8 @@ class ConceptFlipCard extends StatefulWidget {
   final VoidCallback? onExpand;
   final bool isSaved;
   final VoidCallback? onToggleSaved;
+  final int totalCount;
+  final bool isWeekendReview;
 
   @override
   State<ConceptFlipCard> createState() => _ConceptFlipCardState();
@@ -276,7 +280,12 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Flexible(
-                    child: WordIndexPill(index: widget.index, isRead: widget.isRead),
+                    child: WordIndexPill(
+                      index: widget.index,
+                      isRead: widget.isRead,
+                      total: widget.totalCount,
+                      label: widget.isWeekendReview ? 'WEEKEND REVIEW' : 'WORDS OF THE DAY',
+                    ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -411,7 +420,12 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Flexible(
-                    child: WordIndexPill(index: widget.index, isRead: widget.isRead),
+                    child: WordIndexPill(
+                      index: widget.index,
+                      isRead: widget.isRead,
+                      total: widget.totalCount,
+                      label: widget.isWeekendReview ? 'WEEKEND REVIEW' : 'WORDS OF THE DAY',
+                    ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -529,12 +543,17 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                               children: [
                                 Icon(Icons.celebration_rounded, color: Colors.orange.shade400, size: 20),
                                 const SizedBox(width: 8),
-                                const Text(
-                                  'All done for today',
-                                  style: TextStyle(
-                                    color: Colors.black87,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
+                                Flexible(
+                                  child: Text(
+                                    widget.isWeekendReview
+                                        ? 'All caught up for this week!'
+                                        : 'All done for today',
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ],

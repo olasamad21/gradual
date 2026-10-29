@@ -26,7 +26,7 @@ void main() {
     test('2. user.streakAt returns 1 for the populated log', () {
       final json = {
         'activity_log': {
-          '2026-10-03': {
+          '2026-10-02': {
             'concepts_read': ['a', 'b']
           }
         }
@@ -34,7 +34,7 @@ void main() {
       
       final user = AppUser.fromJson('u1', json);
       
-      expect(user.streakAt(DateTime(2026, 10, 3)), 1);
+      expect(user.streakAt(DateTime(2026, 10, 2)), 1);
     });
 
     test('3. StreakEngine.conceptsReadInWeek returns correctly', () {
