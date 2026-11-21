@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class QuizSubmitFailedBanner extends StatelessWidget {
   const QuizSubmitFailedBanner({
@@ -17,14 +18,14 @@ class QuizSubmitFailedBanner extends StatelessWidget {
       label: 'Quiz score not saved',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        color: const Color(0xFFFEF2F2),
+        color: context.colors.dangerSoft,
         child: Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 "Couldn't save your score. Check your connection and retry.",
                 style: TextStyle(
-                  color: Color(0xFF991B1B),
+                  color: context.colors.onDangerSoft,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -38,21 +39,21 @@ class QuizSubmitFailedBanner extends StatelessWidget {
                   onPressed: isSaving ? null : onRetry,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(120, 48),
-                    backgroundColor: const Color(0xFFEF4444),
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFFECACA),
+                    backgroundColor: context.colors.danger,
+                    foregroundColor: context.colors.onBrand,
+                    disabledBackgroundColor: context.colors.dangerBorder,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: isSaving
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: context.colors.onBrand,
                           ),
                         )
                       : const Text('Retry'),

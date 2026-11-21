@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../shared/widgets/dot_pattern.dart';
+import '../../core/theme/app_colors.dart';
 import 'quiz_models.dart';
-import 'quiz_screen.dart'; // For DotPatternPainter
 
 class QuizReviewScreen extends StatefulWidget {
   const QuizReviewScreen({
@@ -36,7 +37,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         title: const Text('Review answers'),
         leading: IconButton(
@@ -45,7 +46,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
         ),
       ),
       body: CustomPaint(
-        painter: DotPatternPainter(),
+        painter: DotPatternPainter(color: context.colors.dotPattern),
         child: SafeArea(
           child: widget.answers.isEmpty
               ? const Center(child: Text('No answers to review.'))
@@ -86,10 +87,10 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: isCorrect ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2),
+                                  color: isCorrect ? context.colors.successSoft : context.colors.dangerSoft,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isCorrect ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                                    color: isCorrect ? context.colors.successBright : context.colors.danger,
                                     width: isActive ? 3.0 : 1.5,
                                   ),
                                 ),
@@ -99,7 +100,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
                                       child: Text(
                                         '${index + 1}',
                                         style: TextStyle(
-                                          color: isCorrect ? const Color(0xFF065F46) : const Color(0xFF991B1B),
+                                          color: isCorrect ? context.colors.onSuccessSoft : context.colors.onDangerSoft,
                                           fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                                         ),
                                       ),
@@ -110,7 +111,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
                                       child: Icon(
                                         isCorrect ? Icons.check : Icons.close,
                                         size: 12,
-                                        color: isCorrect ? const Color(0xFF065F46) : const Color(0xFF991B1B),
+                                        color: isCorrect ? context.colors.onSuccessSoft : context.colors.onDangerSoft,
                                       ),
                                     ),
                                   ],
@@ -156,15 +157,15 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isCorrect ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2),
+          color: isCorrect ? context.colors.successSoft : context.colors.dangerSoft,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: context.colors.shadow.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -180,12 +181,12 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: isCorrect ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                  color: isCorrect ? context.colors.successBright : context.colors.danger,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   isCorrect ? Icons.check_rounded : Icons.close_rounded,
-                  color: Colors.white,
+                  color: context.colors.onBrand,
                   size: 18,
                 ),
               ),
@@ -199,16 +200,16 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: isCorrect ? const Color(0xFF059669) : const Color(0xFFDC2626),
+                        color: isCorrect ? context.colors.success : context.colors.dangerStrong,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       answer.question.text,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1F2937),
+                        color: context.colors.textPrimary,
                         height: 1.4,
                       ),
                     ),
@@ -232,23 +233,23 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
             ),
           ],
           if (answer.question.explanation.isNotEmpty) ...[
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(top: 16, bottom: 8),
-              child: Divider(color: Color(0xFFF3F4F6), height: 1),
+              child: Divider(color: context.colors.surfaceSunken, height: 1),
             ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.lightbulb_outline_rounded,
-                    size: 18, color: Color(0xFFD97706)),
+                Icon(Icons.lightbulb_outline_rounded,
+                    size: 18, color: context.colors.warningStrong),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     answer.question.explanation,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF4B5563),
+                      color: context.colors.textSecondary,
                       height: 1.5,
                     ),
                   ),
@@ -269,10 +270,10 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isCorrect ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+        color: isCorrect ? context.colors.successSoft : context.colors.dangerSoft,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isCorrect ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
+          color: isCorrect ? context.colors.successBorder : context.colors.dangerBorder,
         ),
       ),
       child: Row(
@@ -283,7 +284,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isUserPick ? FontWeight.w600 : FontWeight.w500,
-                color: isCorrect ? const Color(0xFF166534) : const Color(0xFF991B1B),
+                color: isCorrect ? context.colors.onSuccessSoft : context.colors.onDangerSoft,
               ),
             ),
           ),
@@ -291,15 +292,15 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: isCorrect ? const Color(0xFF166534) : const Color(0xFF991B1B),
+                color: isCorrect ? context.colors.onSuccessSoft : context.colors.onDangerSoft,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text(
+              child: Text(
                 'Your Answer',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: context.colors.onBrand,
                 ),
               ),
             ),

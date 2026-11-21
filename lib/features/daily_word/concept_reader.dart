@@ -243,10 +243,10 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
       padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF9CA3AF),
+          color: context.colors.textMuted,
           letterSpacing: 0.5,
         ),
       ),
@@ -270,7 +270,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: context.colors.border,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -280,7 +280,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey.shade700,
+                color: context.colors.textBody,
               ),
             ),
           ),
@@ -298,7 +298,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
       child: IconButton(
         icon: Icon(
           isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-          color: isSaved ? AppTheme.primaryColor : Colors.grey.shade600,
+          color: isSaved ? context.colors.brand : context.colors.textTertiary,
         ),
         tooltip: isSaved ? 'Remove from saved' : 'Save word',
         onPressed: () {
@@ -319,7 +319,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
           tooltip: isReadingCurrent ? 'Stop reading' : 'Read aloud',
           icon: Icon(
             isReadingCurrent ? Icons.stop_rounded : Icons.volume_up_rounded,
-            color: Colors.grey.shade600,
+            color: context.colors.textTertiary,
           ),
           onPressed: () async {
             final success = await ref
@@ -387,7 +387,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD1D5DB),
+                    color: context.colors.borderStrong,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -482,10 +482,10 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
               children: [
                 Text(
                   concept.term,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF1F2937),
+                    color: context.colors.textPrimary,
                     letterSpacing: -0.5,
                     height: 1.1,
                   ),
@@ -493,7 +493,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                 const SizedBox(height: 16),
                 Container(
                   height: 1,
-                  color: const Color(0xFFF3F4F6),
+                  color: context.colors.surfaceSunken,
                 ),
               ],
             ),
@@ -549,9 +549,9 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                       _buildSectionHeader('Definition'),
                       ReadAlongText(
                         text: concept.definition,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
-                          color: Color(0xFF374151),
+                          color: context.colors.textBody,
                           height: 1.6,
                         ),
                         sectionActive: isReadingThisConcept && readingSection == ReadSectionKind.definition,
@@ -565,21 +565,21 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                           width: double.infinity,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
+                            color: context.colors.successSoft,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                            border: Border.all(color: context.colors.successBorder),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              analogySectionIcon,
+                              const AnalogySectionIcon(),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: ReadAlongText(
                                   text: concept.analogy!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: Color(0xFF166534),
+                                    color: context.colors.onSuccessSoft,
                                     height: 1.5,
                                   ),
                                   sectionActive: isReadingThisConcept && readingSection == ReadSectionKind.analogy,
@@ -596,9 +596,9 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                         _buildSectionHeader('Real World Example'),
                         ReadAlongText(
                           text: concept.realWorldExample,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF374151),
+                            color: context.colors.textBody,
                             height: 1.5,
                           ),
                           sectionActive: isReadingThisConcept && readingSection == ReadSectionKind.example,
@@ -611,9 +611,9 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                         _buildSectionHeader("Don't confuse with"),
                         ReadAlongText(
                           text: concept.confusedWith!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF374151),
+                            color: context.colors.textBody,
                             height: 1.5,
                           ),
                           sectionActive: isReadingThisConcept && readingSection == ReadSectionKind.confusedWith,
@@ -631,15 +631,15 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF3F4F6),
+                                color: context.colors.surfaceSunken,
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
                                 term,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF4B5563),
+                                  color: context.colors.textSecondary,
                                 ),
                               ),
                             );
@@ -660,10 +660,10 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
   Widget _buildBottomBar(bool isReadCurrent) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFAFAFA),
+      decoration: BoxDecoration(
+        color: context.colors.background,
         border: Border(
-          top: BorderSide(color: Color(0xFFF3F4F6), width: 1),
+          top: BorderSide(color: context.colors.surfaceSunken, width: 1),
         ),
       ),
       child: SafeArea(
@@ -674,10 +674,10 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
-              backgroundColor: Colors.black87,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey.shade300,
-              disabledForegroundColor: Colors.grey.shade600,
+              backgroundColor: context.colors.inverseSurface,
+              foregroundColor: context.colors.onInverseSurface,
+              disabledBackgroundColor: context.colors.borderStrong,
+              disabledForegroundColor: context.colors.textTertiary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -735,7 +735,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
         Navigator.of(context).pop(_currentIndex);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFFAFAFA),
+        backgroundColor: context.colors.background,
         body: SafeArea(
           child: AnimatedBuilder(
             animation: _pullNotifier,

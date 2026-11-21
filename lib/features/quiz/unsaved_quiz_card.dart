@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class UnsavedQuizCard extends StatelessWidget {
   const UnsavedQuizCard({
@@ -19,17 +20,17 @@ class UnsavedQuizCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         margin: const EdgeInsets.only(top: 24, left: 20, right: 20),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF2F2),
+          color: context.colors.dangerSoft,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFECACA)),
+          border: Border.all(color: context.colors.dangerBorder),
         ),
         child: Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'You have an unsaved quiz result',
                 style: TextStyle(
-                  color: Color(0xFF991B1B),
+                  color: context.colors.onDangerSoft,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -43,21 +44,21 @@ class UnsavedQuizCard extends StatelessWidget {
                   onPressed: isSaving ? null : onRetry,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(120, 48),
-                    backgroundColor: const Color(0xFFEF4444),
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFFECACA),
+                    backgroundColor: context.colors.danger,
+                    foregroundColor: context.colors.onBrand,
+                    disabledBackgroundColor: context.colors.dangerBorder,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: isSaving
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: context.colors.onBrand,
                           ),
                         )
                       : const Text('Retry save'),

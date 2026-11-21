@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/word_colors.dart';
+import '../../core/theme/app_colors.dart';
 
 const IconData analogySectionIconData = Icons.lightbulb_outline_rounded;
 const double analogySectionIconSize = 18.0;
-const Color analogySectionIconColor = Color(0xFF16A34A);
+/// Lightbulb icon shown beside the analogy section heading.
+class AnalogySectionIcon extends StatelessWidget {
+  const AnalogySectionIcon({super.key});
 
-const Icon analogySectionIcon = Icon(
-  analogySectionIconData,
-  size: analogySectionIconSize,
-  color: analogySectionIconColor,
-);
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      analogySectionIconData,
+      size: analogySectionIconSize,
+      color: context.colors.success,
+    );
+  }
+}
 
 class WordIndexPill extends StatelessWidget {
   const WordIndexPill({
@@ -28,7 +34,7 @@ class WordIndexPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
-    final color = isRead ? doneGreen : wordColor(index);
+    final color = isRead ? context.colors.brand : context.colors.wordAccent(index);
     final bgColor = color.withValues(alpha: 0.10);
 
     return Semantics(
@@ -71,14 +77,14 @@ class WordIndexPill extends StatelessWidget {
                     child: FadeTransition(opacity: animation, child: child),
                   ),
                   child: isRead
-                      ? const Icon(Icons.check, key: ValueKey('check'), color: Colors.white, size: 12)
+                      ? Icon(Icons.check, key: ValueKey('check'), color: context.colors.onBrand, size: 12)
                       : Text(
                           '${index + 1}',
                           key: const ValueKey('number'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: context.colors.onBrand,
                           ),
                         ),
                 ),

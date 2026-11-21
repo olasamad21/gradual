@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 /// Displays text with a word-by-word colour highlight that tracks
 /// the current read-aloud position.
@@ -28,7 +29,7 @@ class ReadAlongText extends StatefulWidget {
 }
 
 class _ReadAlongTextState extends State<ReadAlongText> {
-  static const _spokenColor = Color(0xFF388E3C);
+  Color get _spokenColor => context.colors.brand;
 
   bool get _hasValidRange =>
       widget.highlightStart != null &&

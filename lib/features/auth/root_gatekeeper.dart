@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase/firebase_providers.dart'; // CHANGED: use existing provider
@@ -61,13 +62,13 @@ class _SplashView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF388E3C),
+    return Scaffold(
+      backgroundColor: context.colors.brand,
       body: Center(
         child: Text(
           'Gradual',
           style: TextStyle(
-            color: Colors.white,
+            color: context.colors.onBrand,
             fontSize: 36,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.5,

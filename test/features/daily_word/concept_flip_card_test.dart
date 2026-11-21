@@ -502,7 +502,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 800));
 
-      expect(find.byWidget(analogySectionIcon), findsOneWidget);
+      expect(find.byType(AnalogySectionIcon), findsOneWidget);
       expect(find.byIcon(analogySectionIconData), findsOneWidget);
     });
 

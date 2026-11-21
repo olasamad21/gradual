@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 import '../../core/services/streak_engine.dart';
 import '../../shared/widgets/streak_box.dart';
@@ -112,10 +113,10 @@ class _QuizResultBoxState extends State<QuizResultBox>
         const SizedBox(height: 8),
         Text(
           caption,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF374151),
+            color: context.colors.textBody,
           ),
           textAlign: TextAlign.center,
         ),

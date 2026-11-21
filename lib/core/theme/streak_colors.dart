@@ -1,16 +1,29 @@
 import 'package:flutter/material.dart';
+import '../models/user_model.dart';
 import '../services/streak_engine.dart';
+import 'app_colors.dart';
 
 class StreakColors {
-  static Color colorFor(HeatmapCell cell) {
+  static Color colorFor(HeatmapCell cell, AppColors c) {
     switch (cell) {
-      case HeatmapCell.none: return const Color(0xFFEAECEF);
-      case HeatmapCell.partial: return const Color(0xFFC8E6C9);
-      case HeatmapCell.perfect: return const Color(0xFF388E3C);
-      case HeatmapCell.quizExcellent: return const Color(0xFF22C55E);
-      case HeatmapCell.quizGood: return const Color(0xFFF59E0B);
-      case HeatmapCell.quizFair: return const Color(0xFFF97316);
-      case HeatmapCell.quizFailed: return const Color(0xFFEF4444);
+      case HeatmapCell.none: return c.heatmapEmpty;
+      case HeatmapCell.partial: return c.brandSoft;
+      case HeatmapCell.perfect: return c.brand;
+      case HeatmapCell.quizExcellent: return c.successBright;
+      case HeatmapCell.quizGood: return c.warning;
+      case HeatmapCell.quizFair: return c.caution;
+      case HeatmapCell.quizFailed: return c.danger;
+    }
+  }
+
+  static Color tierColor(WeeklyScoreTier tier, AppColors c) {
+    switch (tier) {
+      case WeeklyScoreTier.excellent: return c.successBright;
+      case WeeklyScoreTier.good: return c.warning;
+      case WeeklyScoreTier.fair: return c.caution;
+      case WeeklyScoreTier.failed: return c.danger;
+      case WeeklyScoreTier.missed: return c.textMuted;
+      case WeeklyScoreTier.legacy: return c.heatmapEmpty;
     }
   }
 

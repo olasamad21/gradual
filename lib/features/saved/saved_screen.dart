@@ -122,7 +122,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                             )
                           : null,
                       filled: true,
-                      fillColor: const Color(0xFFF3F4F6),
+                      fillColor: context.colors.surfaceSunken,
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 16),
                       border: OutlineInputBorder(
@@ -135,8 +135,8 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: AppTheme.primaryColor,
+                        borderSide: BorderSide(
+                          color: context.colors.brand,
                           width: 1.5,
                         ),
                       ),
@@ -189,7 +189,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
+                          color: context.colors.textTertiary,
                         ),
                       ),
                     ),
@@ -223,16 +223,16 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                               viewState.sort == SavedSort.newest
                                   ? 'Newest'
                                   : 'A to Z',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF374151),
+                                color: context.colors.textBody,
                               ),
                             ),
-                            const Icon(
+                            Icon(
                               Icons.arrow_drop_down_rounded,
                               size: 20,
-                              color: Color(0xFF374151),
+                              color: context.colors.textBody,
                             ),
                           ],
                         ),
@@ -251,10 +251,10 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                     keyboardDismissBehavior:
                         ScrollViewKeyboardDismissBehavior.onDrag,
                     itemCount: displayedConcepts.length,
-                    separatorBuilder: (context, index) => const Divider(
+                    separatorBuilder: (context, index) => Divider(
                       height: 1,
                       thickness: 1,
-                      color: Color(0xFFF3F4F6),
+                      color: context.colors.surfaceSunken,
                     ),
                     itemBuilder: (context, index) {
                       final concept = displayedConcepts[index];
@@ -284,15 +284,15 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             Icon(
               Icons.bookmark_border_rounded,
               size: 64,
-              color: Colors.grey.shade400,
+              color: context.colors.textMuted,
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No saved words yet',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1F2937),
+                color: context.colors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -301,7 +301,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
               'Tap the bookmark on any card to keep it here.',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade600,
+                color: context.colors.textTertiary,
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
@@ -325,15 +325,15 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: Colors.grey.shade400,
+              color: context.colors.textMuted,
             ),
             const SizedBox(height: 12),
             Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF374151),
+                color: context.colors.textBody,
               ),
               textAlign: TextAlign.center,
             ),
@@ -341,7 +341,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             TextButton(
               style: TextButton.styleFrom(
                 minimumSize: const Size(120, 48),
-                foregroundColor: AppTheme.primaryColor,
+                foregroundColor: context.colors.brand,
               ),
               onPressed: () {
                 ref.read(savedViewProvider.notifier).reset();
@@ -364,14 +364,14 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             Icon(
               Icons.wifi_off_rounded,
               size: 48,
-              color: Colors.grey.shade300,
+              color: context.colors.borderStrong,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Failed to load saved words.',
               style: TextStyle(
                 fontSize: 15,
-                color: Color(0xFF4B5563),
+                color: context.colors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -379,8 +379,8 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(120, 48),
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
+                backgroundColor: context.colors.brand,
+                foregroundColor: context.colors.onBrand,
               ),
               onPressed: () => ref.invalidate(savedConceptsProvider),
               child: const Text('Retry'),
@@ -419,10 +419,10 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                 children: [
                   Text(
                     concept.term,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
+                      color: context.colors.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -430,9 +430,9 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                   const SizedBox(height: 4),
                   Text(
                     concept.definition,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF6B7280),
+                      color: context.colors.textTertiary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -445,9 +445,9 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
               width: 48,
               height: 48,
               child: IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.bookmark_rounded,
-                  color: AppTheme.primaryColor,
+                  color: context.colors.brand,
                 ),
                 tooltip: 'Remove from saved',
                 onPressed: () {

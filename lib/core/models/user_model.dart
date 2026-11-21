@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 
 import '../services/streak_engine.dart';
 
@@ -50,22 +49,6 @@ extension WeeklyScoreTierX on WeeklyScoreTier {
     }
   }
 
-  Color get color {
-    switch (this) {
-      case WeeklyScoreTier.excellent:
-        return const Color(0xFF22C55E);
-      case WeeklyScoreTier.good:
-        return const Color(0xFFF59E0B);
-      case WeeklyScoreTier.fair:
-        return const Color(0xFFF97316);
-      case WeeklyScoreTier.failed:
-        return const Color(0xFFEF4444);
-      case WeeklyScoreTier.missed:
-        return const Color(0xFF9CA3AF);
-      case WeeklyScoreTier.legacy:
-        return const Color(0xFFEAECEF);
-    }
-  }
 }
 
 WeeklyScoreTier tierFromScore(int score) {

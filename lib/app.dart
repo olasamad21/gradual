@@ -12,6 +12,10 @@ class GradualApp extends StatelessWidget {
       title: 'Gradual',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      // Dark tokens exist but screens are not yet reviewed in dark mode.
+      // Switch to ThemeMode.system once they are.
+      themeMode: ThemeMode.light,
       onGenerateRoute: AppRouter.onGenerateRoute,
       // FIXED: Always start at root so RootGatekeeper decides where to go.
       // Never read auth state here — it's always loading on cold start.
@@ -20,7 +24,7 @@ class GradualApp extends StatelessWidget {
       builder: (context, child) {
         return Container(
           // Background color for the empty space on wide web screens
-          color: const Color(0xFFE5E7EB),
+          color: context.colors.webBackdrop,
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),

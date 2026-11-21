@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/quiz/quiz_providers.dart';
@@ -67,15 +68,15 @@ class _AnimatedQuizIconState extends ConsumerState<AnimatedQuizIcon> with Single
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            const Icon(Icons.quiz_rounded, color: Color(0xFF388E3C)),
+            Icon(Icons.quiz_rounded, color: context.colors.brand),
             Positioned(
               top: -2,
               right: -2,
               child: Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF59E0B), // Gold
+                decoration: BoxDecoration(
+                  color: context.colors.warning, // Gold
                   shape: BoxShape.circle,
                 ),
               ),
@@ -121,7 +122,7 @@ class _AnimatedQuizIconState extends ConsumerState<AnimatedQuizIcon> with Single
                     height: 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF388E3C).withValues(alpha: ringOpacity * 0.4),
+                      color: context.colors.brand.withValues(alpha: ringOpacity * 0.4),
                     ),
                   ),
                 ),
@@ -133,7 +134,7 @@ class _AnimatedQuizIconState extends ConsumerState<AnimatedQuizIcon> with Single
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      const Icon(Icons.quiz_rounded, color: Color(0xFF388E3C)),
+                      Icon(Icons.quiz_rounded, color: context.colors.brand),
                       Positioned(
                         top: -2,
                         right: -2,
@@ -142,8 +143,8 @@ class _AnimatedQuizIconState extends ConsumerState<AnimatedQuizIcon> with Single
                           child: Container(
                             width: 8,
                             height: 8,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
+                            decoration: BoxDecoration(
+                              color: context.colors.warning,
                               shape: BoxShape.circle,
                             ),
                           ),

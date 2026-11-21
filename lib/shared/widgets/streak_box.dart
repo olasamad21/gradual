@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/services/streak_engine.dart';
 import '../../core/theme/streak_colors.dart';
 
@@ -18,7 +19,7 @@ class StreakBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = StreakColors.colorFor(cell);
+    final color = StreakColors.colorFor(cell, context.colors);
     
     Widget box = Container(
       width: size,
@@ -28,13 +29,13 @@ class StreakBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(size * (3.0 / 14.0)),
         border: Border.all(
           color: isToday
-              ? const Color(0xFF388E3C)
-              : const Color(0x0D000000), // 0.05 opacity black
+              ? context.colors.brand
+              : context.colors.shadow.withValues(alpha: 0.05),
           width: isToday ? 1.5 : 1.0,
         ),
       ),
       child: cell == HeatmapCell.perfect
-          ? Icon(Icons.star_rounded, size: size * (10.0 / 14.0), color: Colors.white)
+          ? Icon(Icons.star_rounded, size: size * (10.0 / 14.0), color: context.colors.onBrand)
           : null,
     );
 

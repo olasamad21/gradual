@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 import '../../core/errors/firestore_errors.dart';
 
@@ -25,13 +26,13 @@ class FirestorePermissionWidget extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.lock_outline_rounded,
-                  size: 48, color: Colors.grey.shade400),
+                  size: 48, color: context.colors.textMuted),
               const SizedBox(height: 16),
               Text(
                 'Access denied',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1F2937),
+                      color: context.colors.textPrimary,
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -41,7 +42,7 @@ class FirestorePermissionWidget extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade600,
+                  color: context.colors.textTertiary,
                   height: 1.4,
                 ),
               ),

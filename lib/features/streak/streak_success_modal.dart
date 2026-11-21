@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class StreakSuccessModal extends StatelessWidget {
   const StreakSuccessModal({
@@ -44,8 +45,8 @@ class StreakSuccessModal extends StatelessWidget {
                       width: 14,
                       decoration: BoxDecoration(
                         color: index == 13
-                            ? const Color(0xFF388E3C)
-                            : const Color(0xFFC8E6C9),
+                            ? context.colors.brand
+                            : context.colors.brandSoft,
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),

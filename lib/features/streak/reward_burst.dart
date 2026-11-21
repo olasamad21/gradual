@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class RewardBurst extends StatefulWidget {
@@ -66,7 +67,10 @@ class _RewardBurstState extends State<RewardBurst> with SingleTickerProviderStat
       animation: _animation,
       builder: (context, child) {
         return CustomPaint(
-          painter: _BurstPainter(progress: _animation.value),
+          painter: _BurstPainter(
+            progress: _animation.value,
+            colors: [context.colors.brand, context.colors.warning, context.colors.infoStrong],
+          ),
           child: child,
         );
       },
@@ -76,15 +80,12 @@ class _RewardBurstState extends State<RewardBurst> with SingleTickerProviderStat
 }
 
 class _BurstPainter extends CustomPainter {
-  _BurstPainter({required this.progress});
+  _BurstPainter({required this.progress, required List<Color> colors}) : _colors = colors;
 
   final double progress;
 
-  static const List<Color> _colors = [
-    Color(0xFF388E3C), // App green
-    Color(0xFFF59E0B), // Gold
-    Color(0xFF2563EB), // Blue
-  ];
+  /// Brand green, gold and blue particles.
+  final List<Color> _colors;
 
   @override
   void paint(Canvas canvas, Size size) {

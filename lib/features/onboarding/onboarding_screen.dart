@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../shared/widgets/dot_pattern.dart';
+import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../shared/widgets/primary_button.dart';
 import 'onboarding_view_model.dart';
@@ -25,7 +27,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           // 1. Background Logic
           Positioned.fill(
             child: CustomPaint(
-              painter: DotPatternPainter(),
+              painter: DotPatternPainter(color: context.colors.dotPattern),
             ),
           ),
 
@@ -41,19 +43,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       height: 80,
                       width: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF388E3C), // Your brand green
+                        color: context.colors.brand, // Your brand green
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF388E3C).withValues(alpha: 0.3),
+                            color: context.colors.brand.withValues(alpha: 0.3),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           )
                         ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.auto_graph_rounded, // Represents "Gradual" growth
-                        color: Colors.white,
+                        color: context.colors.onBrand,
                         size: 40,
                       ),
                     ),
@@ -64,7 +66,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       'Gradual',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w900,
-                        color: const Color(0xFF1F2937),
+                        color: context.colors.textPrimary,
                         letterSpacing: -1.0,
                       ),
                     ),
@@ -74,7 +76,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey.shade600,
+                        color: context.colors.textTertiary,
                         height: 1.4,
                       ),
                     ),
@@ -98,14 +100,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             fieldOfStudy: _selectedField,
                           );
 
-                          if (!mounted) return;
+                          if (!context.mounted) return;
 
                           // Final Navigation Lock
                           Navigator.of(context).pushNamedAndRemoveUntil(
                             '/home', (_) => false,
                           );
                         } catch (_) {
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Sign-in failed. Please try again.'),
@@ -129,19 +131,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE6E8EE)),
+        border: Border.all(color: context.colors.border),
       ),
       child: DropdownButtonHideUnderline(
                 child: DropdownButtonFormField<String>(
-          value: _selectedField,
-          decoration: const InputDecoration(
+          initialValue: _selectedField,
+          decoration: InputDecoration(
             labelText: 'Your Field of Study',
-            labelStyle: TextStyle(color: Color(0xFF388E3C), fontWeight: FontWeight.w600),
+            labelStyle: TextStyle(color: context.colors.brand, fontWeight: FontWeight.w600),
             border: InputBorder.none,
           ),
-          items: const [
+          items: [
             DropdownMenuItem(
               value: 'software_engineering',
               child: Text('Computer Science & Software Engineering', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -152,9 +154,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Data Science', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  Text('Data Science', style: TextStyle(fontSize: 13, color: context.colors.textMuted)),
                   SizedBox(width: 8),
-                  Text('Coming soon', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                  Text('Coming soon', style: TextStyle(fontSize: 11, color: context.colors.textMuted, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -164,9 +166,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Product Management', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  Text('Product Management', style: TextStyle(fontSize: 13, color: context.colors.textMuted)),
                   SizedBox(width: 8),
-                  Text('Coming soon', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                  Text('Coming soon', style: TextStyle(fontSize: 11, color: context.colors.textMuted, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -178,21 +180,4 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     );
   }
-}
-class DotPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFD1D5DB).withValues(alpha: 0.4)
-      ..strokeWidth = 1;
-    const spacing = 24.0;
-    for (double i = 0; i < size.width; i += spacing) {
-      for (double j = 0; j < size.height; j += spacing) {
-        canvas.drawCircle(Offset(i, j), 1.5, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

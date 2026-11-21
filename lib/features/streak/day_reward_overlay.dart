@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/services/streak_engine.dart';
@@ -127,13 +128,13 @@ class _DayRewardOverlayState extends State<DayRewardOverlay>
               margin: const EdgeInsets.symmetric(horizontal: 32),
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.colors.surface,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0x1F000000),
+                    color: context.colors.shadow.withValues(alpha: 0.12),
                     blurRadius: 24,
-                    offset: Offset(0, 8),
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -144,20 +145,20 @@ class _DayRewardOverlayState extends State<DayRewardOverlay>
                   const SizedBox(height: 20),
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1F2937),
+                      color: context.colors.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     caption,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF6B7280),
+                      color: context.colors.textTertiary,
                     ),
                     textAlign: TextAlign.center,
                   ),

@@ -190,7 +190,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
+                    color: context.colors.border,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -198,7 +198,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
+                      color: context.colors.textBody,
                     ),
                   ),
                 ),
@@ -211,7 +211,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
           child: IconButton(
             icon: Icon(
               widget.isReadingAloud ? Icons.stop_rounded : Icons.volume_up_rounded,
-              color: Colors.grey.shade600,
+              color: context.colors.textTertiary,
             ),
             tooltip: widget.isReadingAloud ? 'Stop reading' : 'Read aloud',
             onPressed: () {
@@ -238,8 +238,8 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               ? Icons.bookmark_rounded
               : Icons.bookmark_border_rounded,
           color: widget.isSaved
-              ? AppTheme.primaryColor
-              : Colors.grey.shade600,
+              ? context.colors.brand
+              : context.colors.textTertiary,
         ),
         tooltip: widget.isSaved ? 'Remove from saved' : 'Save word',
         onPressed: widget.onToggleSaved,
@@ -252,11 +252,11 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
       padding: const EdgeInsets.all(24),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: context.colors.shadow.withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -302,10 +302,10 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               // Word
               ReadAlongText(
                 text: widget.concept.term,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF1F2937),
+                  color: context.colors.textPrimary,
                   letterSpacing: -0.5,
                   height: 1.1,
                 ),
@@ -317,17 +317,17 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               // Divider
               Container(
                 height: 1,
-                color: const Color(0xFFF3F4F6),
+                color: context.colors.surfaceSunken,
               ),
               const SizedBox(height: 16),
 
               // Definition Header
-              const Text(
+              Text(
                 'DEFINITION',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF9CA3AF),
+                  color: context.colors.textMuted,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -347,9 +347,9 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                       controller: _frontScrollController,
                       child: ReadAlongText(
                         text: widget.concept.definition,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
-                          color: Color(0xFF374151),
+                          color: context.colors.textBody,
                           height: 1.6,
                         ),
                         sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.definition,
@@ -368,13 +368,13 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.flip_rounded, size: 14, color: Colors.grey.shade400),
+                  Icon(Icons.flip_rounded, size: 14, color: context.colors.textMuted),
                   const SizedBox(width: 5),
                   Text(
                     'Tap to see more',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade400,
+                      color: context.colors.textMuted,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -392,10 +392,10 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF9CA3AF),
+          color: context.colors.textMuted,
           letterSpacing: 1.0,
         ),
       ),
@@ -458,21 +458,21 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF0FDF4),
+                              color: context.colors.successSoft,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFBBF7D0)),
+                              border: Border.all(color: context.colors.successBorder),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                analogySectionIcon,
+                                const AnalogySectionIcon(),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: ReadAlongText(
                                     text: widget.concept.analogy!,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFF166534),
+                                      color: context.colors.onSuccessSoft,
                                       height: 1.5,
                                     ),
                                     sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.analogy,
@@ -491,7 +491,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                           _buildSectionHeader('Real World Example'),
                           ReadAlongText(
                             text: widget.concept.realWorldExample,
-                            style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+                            style: TextStyle(fontSize: 14, color: context.colors.textBody, height: 1.5),
                             sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.example,
                             highlightStart: widget.readingSection == ReadSectionKind.example ? widget.readingWordStart : null,
                             highlightEnd: widget.readingSection == ReadSectionKind.example ? widget.readingWordEnd : null,
@@ -504,7 +504,7 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                           _buildSectionHeader("Don't confuse with"),
                           ReadAlongText(
                             text: widget.concept.confusedWith!,
-                            style: const TextStyle(fontSize: 14, color: Color(0xFF374151), height: 1.5),
+                            style: TextStyle(fontSize: 14, color: context.colors.textBody, height: 1.5),
                             sectionActive: widget.isReadingAloud && widget.readingSection == ReadSectionKind.confusedWith,
                             highlightStart: widget.readingSection == ReadSectionKind.confusedWith ? widget.readingWordStart : null,
                             highlightEnd: widget.readingSection == ReadSectionKind.confusedWith ? widget.readingWordEnd : null,
@@ -521,12 +521,12 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                           children: widget.concept.related.map((t) => Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF3F4F6),
+                              color: context.colors.surfaceSunken,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               t,
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563), fontWeight: FontWeight.w500),
+                              style: TextStyle(fontSize: 12, color: context.colors.textSecondary, fontWeight: FontWeight.w500),
                             ),
                           )).toList(),
                         ),
@@ -541,15 +541,15 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.celebration_rounded, color: Colors.orange.shade400, size: 20),
+                                Icon(Icons.celebration_rounded, color: context.colors.warning, size: 20),
                                 const SizedBox(width: 8),
                                 Flexible(
                                   child: Text(
                                     widget.isWeekendReview
                                         ? 'All caught up for this week!'
                                         : 'All done for today',
-                                    style: const TextStyle(
-                                      color: Colors.black87,
+                                    style: TextStyle(
+                                      color: context.colors.textPrimary,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
                                     ),
@@ -570,9 +570,10 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
                                 },
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                            backgroundColor: Colors.black87,
-                            disabledBackgroundColor: Colors.grey.shade300,
-                            disabledForegroundColor: Colors.grey.shade600,
+                            backgroundColor: context.colors.inverseSurface,
+                            foregroundColor: context.colors.onInverseSurface,
+                            disabledBackgroundColor: context.colors.borderStrong,
+                            disabledForegroundColor: context.colors.textTertiary,
                           ),
                           child: Text(
                             widget.isRead ? 'Got it \u2713' : 'Got it',
@@ -594,13 +595,13 @@ class _ConceptFlipCardState extends State<ConceptFlipCard> with SingleTickerProv
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.flip_rounded, size: 14, color: Colors.grey.shade500),
+                  Icon(Icons.flip_rounded, size: 14, color: context.colors.textMuted),
                   const SizedBox(width: 5),
                   Text(
                     'Tap to flip back',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade500,
+                      color: context.colors.textMuted,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -760,7 +761,7 @@ class _SwipeHintAnimationState extends State<SwipeHintAnimation> with SingleTick
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.keyboard_double_arrow_left_rounded, color: const Color(0xFF388E3C).withValues(alpha: 0.8), size: 28),
+                Icon(Icons.keyboard_double_arrow_left_rounded, color: context.colors.brand.withValues(alpha: 0.8), size: 28),
               ],
             ),
           ),

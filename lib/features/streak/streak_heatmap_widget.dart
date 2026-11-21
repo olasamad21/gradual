@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/services/streak_engine.dart';
 import '../../core/theme/streak_colors.dart';
 import '../../shared/widgets/streak_box.dart';
@@ -59,11 +60,11 @@ class StreakHeatmapWidget extends StatelessWidget {
                       ),
                     ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Skipped days stay grey.',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: context.colors.textMuted,
                   ),
                 ),
               ],
@@ -103,24 +104,24 @@ class StreakHeatmapWidget extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'Streak Map',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey,
+                        color: context.colors.textMuted,
                       ),
                     ),
                     const SizedBox(width: 4),
                     InkWell(
                       onTap: () => _showInfoSheet(context),
                       borderRadius: BorderRadius.circular(12),
-                      child: const Padding(
+                      child: Padding(
                         padding: EdgeInsets.all(4.0),
                         child: Icon(
                           Icons.help_outline_rounded,
                           size: 16,
-                          color: Colors.grey,
+                          color: context.colors.textMuted,
                         ),
                       ),
                     ),
@@ -132,8 +133,8 @@ class StreakHeatmapWidget extends StatelessWidget {
                       Icons.local_fire_department,
                       size: 16,
                       color: liveStreak > 0
-                          ? Colors.orange
-                          : Colors.grey.shade400,
+                          ? context.colors.warning
+                          : context.colors.textMuted,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -142,8 +143,8 @@ class StreakHeatmapWidget extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: liveStreak > 0
-                            ? Colors.orange
-                            : Colors.grey.shade400,
+                            ? context.colors.warning
+                            : context.colors.textMuted,
                       ),
                     ),
                   ],

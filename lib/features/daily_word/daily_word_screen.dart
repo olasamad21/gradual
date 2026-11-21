@@ -1,4 +1,6 @@
 import 'dart:async';
+import '../../shared/widgets/dot_pattern.dart';
+import '../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -226,15 +228,15 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
         if (!didPop) SystemNavigator.pop();
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFFAFAFA),
+        backgroundColor: context.colors.background,
         appBar: AppBar(
-          title: const Text(
+          title: Text(
             'Gradual',
             style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 22,
               letterSpacing: -0.5,
-              color: Color(0xFF1F2937),
+              color: context.colors.textPrimary,
             ),
           ),
           backgroundColor: Colors.transparent,
@@ -242,15 +244,15 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
           automaticallyImplyLeading: false,
           actions: [
             IconButton(
-              icon: const Icon(Icons.person_outline_rounded,
-                  color: Color(0xFF374151)),
+              icon: Icon(Icons.person_outline_rounded,
+                  color: context.colors.textBody),
               onPressed: () => Navigator.of(context).pushNamed('/profile'),
             ),
             const SizedBox(width: 4),
           ],
         ),
         body: CustomPaint(
-          painter: DotPatternPainter(),
+          painter: DotPatternPainter(color: context.colors.dotPattern),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
             child: Column(
@@ -300,19 +302,19 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
         overflow: TextOverflow.ellipsis,
         text: TextSpan(
           text: '${_getGreeting()}, ',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF6B7280),
+            color: context.colors.textTertiary,
             letterSpacing: -0.5,
             
           ),
           children: [
             TextSpan(
               text: name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF1F2937),
+                color: context.colors.textPrimary,
               ),
             ),
           ],
@@ -357,12 +359,12 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.hourglass_empty_rounded, size: 48, color: Colors.grey.shade300),
+                Icon(Icons.hourglass_empty_rounded, size: 48, color: context.colors.borderStrong),
                 const SizedBox(height: 12),
                 Text(
                   'No concepts available.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
+                  style: TextStyle(color: context.colors.textMuted, fontSize: 15),
                 ),
               ],
             ),
@@ -476,11 +478,11 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey.shade300),
+              Icon(Icons.wifi_off_rounded, size: 48, color: context.colors.borderStrong),
               const SizedBox(height: 12),
               Text(
                 'Failed to load today\'s concepts.',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
+                style: TextStyle(color: context.colors.textMuted, fontSize: 15),
               ),
               if (FirestoreErrors.shouldRetry(e)) ...[
                 const SizedBox(height: 8),
@@ -502,22 +504,3 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
     );
   }
 }
-
-class DotPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFD1D5DB).withValues(alpha: 0.4)
-      ..strokeWidth = 1;
-    const spacing = 24.0;
-    for (double i = 0; i < size.width; i += spacing) {
-      for (double j = 0; j < size.height; j += spacing) {
-        canvas.drawCircle(Offset(i, j), 1.5, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-

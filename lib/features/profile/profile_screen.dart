@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../core/theme/streak_colors.dart';
+import '../../shared/widgets/dot_pattern.dart';
+import '../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -27,7 +30,7 @@ class ProfileScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: context.colors.background,
       body: profile.when(
         loading: () {
           if (cachedUser != null) return _ProfileBody(user: cachedUser);
@@ -69,12 +72,12 @@ class _ProfileBody extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Sign out?', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: const Text('You will be returned to the login screen.',
-            style: TextStyle(color: Color(0xFF6B7280))),
+        content: Text('You will be returned to the login screen.',
+            style: TextStyle(color: context.colors.textTertiary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF6B7280))),
+            child: Text('Cancel', style: TextStyle(color: context.colors.textTertiary)),
           ),
           TextButton(
             onPressed: () async {
@@ -86,8 +89,8 @@ class _ProfileBody extends ConsumerWidget {
               await ref.read(firebaseAuthProvider).signOut();
               nav.pushNamedAndRemoveUntil(AppRoutes.root, (_) => false);
             },
-            child: const Text('Sign Out',
-                style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w700)),
+            child: Text('Sign Out',
+                style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -100,7 +103,7 @@ class _ProfileBody extends ConsumerWidget {
     final username = user.email.split('@').first;
 
     return CustomPaint(
-      painter: DotPatternPainter(),
+      painter: DotPatternPainter(color: context.colors.dotPattern),
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
@@ -111,13 +114,13 @@ class _ProfileBody extends ConsumerWidget {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1F2937)),
+                    icon: Icon(Icons.arrow_back_rounded, color: context.colors.textPrimary),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
                   ),
                   const Spacer(),
-                  const Text('Profile',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF1F2937))),
+                  Text('Profile',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
                   const Spacer(),
                   const SizedBox(width: 40),
                 ],
@@ -129,33 +132,33 @@ class _ProfileBody extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 6))],
+                  boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 6))],
                 ),
                 child: Column(
                   children: [
                     Container(
                       width: 80, height: 80,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF388E3C), Color(0xFF1B5E20)],
+                        gradient: LinearGradient(
+                          colors: [context.colors.brand, context.colors.brandStrong],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: const Color(0xFF388E3C).withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+                        boxShadow: [BoxShadow(color: context.colors.brand.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
                       ),
                       child: Center(
                         child: Text(initials,
-                            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white)),
+                            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: context.colors.onBrand)),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(username,
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1F2937), letterSpacing: -0.5)),
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: context.colors.textPrimary, letterSpacing: -0.5)),
                     const SizedBox(height: 4),
-                    Text(user.email, style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
+                    Text(user.email, style: TextStyle(fontSize: 13, color: context.colors.textMuted)),
                   ],
                 ),
               ),
@@ -166,7 +169,7 @@ class _ProfileBody extends ConsumerWidget {
                 children: [
                   _StatCard(
                     icon: Icons.local_fire_department_rounded,
-                    iconColor: const Color(0xFFF97316),
+                    iconColor: context.colors.caution,
                     label: 'Current Streak',
                     value: user.liveStreak == 1
                         ? '1 day'
@@ -175,14 +178,14 @@ class _ProfileBody extends ConsumerWidget {
                   const SizedBox(width: 12),
                   _StatCard(
                     icon: Icons.quiz_rounded,
-                    iconColor: const Color(0xFF22C55E),
+                    iconColor: context.colors.successBright,
                     label: 'Quizzes Done',
                     value: _totalQuizzesDone(user),
                   ),
                   const SizedBox(width: 12),
                   _StatCard(
                     icon: Icons.percent_rounded,
-                    iconColor: const Color(0xFFF59E0B),
+                    iconColor: context.colors.warning,
                     label: 'Correct Rate',
                     value: _allTimeCorrectPercent(user),
                   ),
@@ -195,9 +198,9 @@ class _ProfileBody extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                  boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
                 ),
                 child: StreakHeatmapWidget(
                   rawActivityLog: user.rawActivityLog,
@@ -217,11 +220,11 @@ class _ProfileBody extends ConsumerWidget {
                 width: double.infinity, height: 52,
                 child: OutlinedButton.icon(
                   onPressed: () => _confirmSignOut(context, ref),
-                  icon: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 20),
-                  label: const Text('Sign Out',
-                      style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w700, fontSize: 15)),
+                  icon: Icon(Icons.logout_rounded, color: context.colors.danger, size: 20),
+                  label: Text('Sign Out',
+                      style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w700, fontSize: 15)),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFFECACA), width: 2),
+                    side: BorderSide(color: context.colors.dangerBorder, width: 2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
@@ -249,18 +252,18 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
         ),
         child: Column(
           children: [
             Icon(icon, color: iconColor, size: 24),
             const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1F2937))),
+            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: context.colors.textPrimary)),
             const SizedBox(height: 2),
             Text(label,
-                style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 10, color: context.colors.textMuted, fontWeight: FontWeight.w500),
                 textAlign: TextAlign.center),
           ],
         ),
@@ -316,8 +319,8 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+        color: context.colors.surface, borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,20 +329,20 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
             children: [
               Container(
                 width: 36, height: 36,
-                decoration: BoxDecoration(color: const Color(0xFF3B82F6).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.school_rounded, color: Color(0xFF3B82F6), size: 20),
+                decoration: BoxDecoration(color: context.colors.info.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                child: Icon(Icons.school_rounded, color: context.colors.info, size: 20),
               ),
               const SizedBox(width: 12),
-              const Text('Field of Study',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
+              Text('Field of Study',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
               const Spacer(),
               if (!_isEditing)
                 GestureDetector(
                   onTap: () => setState(() => _isEditing = true),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFF388E3C).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-                    child: const Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF388E3C))),
+                    decoration: BoxDecoration(color: context.colors.brand.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+                    child: Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.colors.brand)),
                   ),
                 ),
             ],
@@ -349,11 +352,11 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
+                  color: context.colors.surfaceMuted,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE5E7EB))),
+                  border: Border.all(color: context.colors.border)),
               child: Text(_labels[widget.user.fieldOfStudy] ?? widget.user.fieldOfStudy,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.colors.textBody)),
             )
           else ...[
             ..._fields.map((field) {
@@ -365,10 +368,10 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF388E3C).withValues(alpha: 0.06) : const Color(0xFFF9FAFB),
+                    color: isSelected ? context.colors.brand.withValues(alpha: 0.06) : context.colors.surfaceMuted,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                        color: isSelected ? const Color(0xFF388E3C) : const Color(0xFFE5E7EB),
+                        color: isSelected ? context.colors.brand : context.colors.border,
                         width: isSelected ? 2 : 1),
                   ),
                   child: Row(
@@ -378,9 +381,9 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
                             style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? const Color(0xFF388E3C) : const Color(0xFF374151))),
+                                color: isSelected ? context.colors.brand : context.colors.textBody)),
                       ),
-                      if (isSelected) const Icon(Icons.check_circle_rounded, color: Color(0xFF388E3C), size: 18),
+                      if (isSelected) Icon(Icons.check_circle_rounded, color: context.colors.brand, size: 18),
                     ],
                   ),
                 ),
@@ -393,9 +396,9 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
                   child: OutlinedButton(
                     onPressed: _isSaving ? null : () => setState(() { _isEditing = false; _selected = widget.user.fieldOfStudy; }),
                     style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        side: BorderSide(color: context.colors.border),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                    child: const Text('Cancel', style: TextStyle(color: Color(0xFF6B7280))),
+                    child: Text('Cancel', style: TextStyle(color: context.colors.textTertiary)),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -403,12 +406,12 @@ class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _save,
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF388E3C),
+                        backgroundColor: context.colors.brand,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         elevation: 0),
                     child: _isSaving
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                        ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: context.colors.onBrand, strokeWidth: 2))
+                        : Text('Save', style: TextStyle(color: context.colors.onBrand, fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],
@@ -433,8 +436,8 @@ class _QuizHistoryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+        color: context.colors.surface, borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,15 +446,15 @@ class _QuizHistoryCard extends StatelessWidget {
             children: [
               Container(
                 width: 36, height: 36,
-                decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.history_rounded, color: Color(0xFF8B5CF6), size: 20),
+                decoration: BoxDecoration(color: context.colors.accentPurple.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                child: Icon(Icons.history_rounded, color: context.colors.accentPurple, size: 20),
               ),
               const SizedBox(width: 12),
-              const Text('Quiz History',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
+              Text('Quiz History',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
               const Spacer(),
               Text('${entries.length} weeks',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+                  style: TextStyle(fontSize: 12, color: context.colors.textMuted)),
             ],
           ),
           const SizedBox(height: 14),
@@ -461,10 +464,10 @@ class _QuizHistoryCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Column(
                   children: [
-                    Icon(Icons.quiz_outlined, size: 36, color: Colors.grey.shade300),
+                    Icon(Icons.quiz_outlined, size: 36, color: context.colors.borderStrong),
                     const SizedBox(height: 8),
                     Text('No quiz sessions yet.',
-                        style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+                        style: TextStyle(color: context.colors.textMuted, fontSize: 13)),
                   ],
                 ),
               ),
@@ -476,7 +479,7 @@ class _QuizHistoryCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8),
               child: Center(
                 child: Text('+ ${entries.length - 10} more',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+                    style: TextStyle(fontSize: 12, color: context.colors.textMuted)),
               ),
             ),
         ],
@@ -505,9 +508,9 @@ class _HistoryRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: context.colors.surfaceMuted,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: context.colors.border),
       ),
       child: Row(
         children: [
@@ -516,9 +519,9 @@ class _HistoryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(dateId,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: context.colors.textBody)),
                 const SizedBox(height: 4),
-                _badge(tier.label, tier.color),
+                _badge(tier.label, StreakColors.tierColor(tier, context.colors)),
               ],
             ),
           ),
@@ -527,15 +530,15 @@ class _HistoryRow extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 14),
+                  Icon(Icons.star_rounded, color: context.colors.warning, size: 14),
                   const SizedBox(width: 3),
                   Text('${entry.score}/${entry.totalQuestions}',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1F2937))),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
                 ],
               ),
               Text(
                 '${entry.totalQuestions == 0 ? 0 : (entry.score / entry.totalQuestions * 100).round()}%',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                style: TextStyle(fontSize: 11, color: context.colors.textMuted),
               ),
             ],
           ),
@@ -543,21 +546,4 @@ class _HistoryRow extends StatelessWidget {
       ),
     );
   }
-}
-class DotPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFD1D5DB).withValues(alpha: 0.4)
-      ..strokeWidth = 1;
-    const spacing = 24.0;
-    for (double i = 0; i < size.width; i += spacing) {
-      for (double j = 0; j < size.height; j += spacing) {
-        canvas.drawCircle(Offset(i, j), 1.5, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

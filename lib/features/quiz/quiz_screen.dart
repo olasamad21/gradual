@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../shared/widgets/dot_pattern.dart';
+import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:gradual/features/quiz/quiz_providers.dart';
@@ -140,17 +142,17 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     final isSubmitting = ref.watch(quizControllerProvider).whenOrNull(data: (d) => d)?.isSubmitting ?? false;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.school_rounded, size: 64, color: Color(0xFF388E3C)),
+              Icon(Icons.school_rounded, size: 64, color: context.colors.brand),
               const SizedBox(height: 24),
               const Text('Weekly Quiz', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              Text(buttonState.label, style: const TextStyle(fontSize: 16, color: Colors.grey)),
+              Text(buttonState.label, style: TextStyle(fontSize: 16, color: context.colors.textMuted)),
               if (unsavedInfo != null && unsavedInfo.hasUnsaved)
                 UnsavedQuizCard(
                   isSaving: isSubmitting,
@@ -210,8 +212,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                     ref.read(quizControllerProvider.notifier).generateQuiz(_sessionDate!);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF388E3C),
-                    foregroundColor: Colors.white,
+                    backgroundColor: context.colors.brand,
+                    foregroundColor: context.colors.onBrand,
                     minimumSize: const Size(200, 48),
                   ),
                   child: Text(buttonState.isCompleted ? 'View Results' : 'Start Quiz'),
@@ -232,10 +234,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     final sessionAsync = ref.watch(quizControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: context.colors.background,
       body: sessionAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: Color(0xFF388E3C)),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: context.colors.brand),
         ),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (sessionState) {
@@ -254,7 +256,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
             canPop: !sessionState.isSubmitting,
             child: SafeArea(
               child: CustomPaint(
-              painter: DotPatternPainter(),
+              painter: DotPatternPainter(color: context.colors.dotPattern),
               child: Column(
                 children: [
                   _buildHeader(context, displayQuestions.length, isSubmitting: sessionState.isSubmitting),
@@ -311,20 +313,20 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: Color(0xFF1F2937)),
+            icon: Icon(Icons.close, color: context.colors.textPrimary),
             onPressed: isSubmitting ? null : () => ref.read(appShellTabProvider.notifier).state = 0,
           ),
           const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF388E3C).withValues(alpha: 0.1),
+              color: context.colors.brand.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
+            child: Text(
               'Quiz',
               style: TextStyle(
-                color: Color(0xFF388E3C),
+                color: context.colors.brand,
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
@@ -333,10 +335,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
           const Spacer(),
           Text(
             '${_currentIndex + 1} / $total',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
+              color: context.colors.textTertiary,
             ),
           ),
         ],
@@ -352,8 +354,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
         borderRadius: BorderRadius.circular(4),
         child: LinearProgressIndicator(
           value: progress,
-          backgroundColor: const Color(0xFFE5E7EB),
-          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF388E3C)),
+          backgroundColor: context.colors.border,
+          valueColor: AlwaysStoppedAnimation<Color>(context.colors.brand),
           minHeight: 6,
         ),
       ),
@@ -365,11 +367,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: context.colors.shadow.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -381,15 +383,15 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
+              color: context.colors.surfaceSunken,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Text(
+            child: Text(
               'MULTIPLE CHOICE',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF6B7280),
+                color: context.colors.textTertiary,
                 letterSpacing: 0.5,
               ),
             ),
@@ -397,10 +399,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
           const SizedBox(height: 14),
           Text(
             question.text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
+              color: context.colors.textPrimary,
               height: 1.5,
             ),
           ),
@@ -425,18 +427,18 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF388E3C).withValues(alpha: 0.05)
-              : Colors.white,
+              ? context.colors.brand.withValues(alpha: 0.05)
+              : context.colors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFF388E3C)
-                : const Color(0xFFE5E7EB),
+                ? context.colors.brand
+                : context.colors.border,
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: context.colors.shadow.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -449,8 +451,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
               height: 32,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF388E3C)
-                    : const Color(0xFFF3F4F6),
+                    ? context.colors.brand
+                    : context.colors.surfaceSunken,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
@@ -459,7 +461,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    color: isSelected ? Colors.white : const Color(0xFF9CA3AF),
+                    color: isSelected ? context.colors.onBrand : context.colors.textMuted,
                   ),
                 ),
               ),
@@ -468,17 +470,17 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
             Expanded(
               child: Text(
                 text,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF374151),
+                  color: context.colors.textBody,
                   height: 1.4,
                 ),
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle_rounded,
-                  color: Color(0xFF388E3C), size: 20),
+              Icon(Icons.check_circle_rounded,
+                  color: context.colors.brand, size: 20),
           ],
         ),
       ),
@@ -499,10 +501,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
+        color: context.colors.background,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: context.colors.shadow.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -517,11 +519,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                  border: Border.all(color: context.colors.border, width: 2),
                 ),
-                child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF374151)),
+                child: Icon(Icons.arrow_back_rounded, color: context.colors.textBody),
               ),
             ),
           if (_currentIndex > 0) const SizedBox(width: 12),
@@ -536,19 +538,19 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                     : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: canSubmit
-                      ? const Color(0xFF1D4ED8)
-                      : const Color(0xFF388E3C),
-                  disabledBackgroundColor: const Color(0xFFD1D5DB),
+                      ? context.colors.wordAccents[0]
+                      : context.colors.brand,
+                  disabledBackgroundColor: context.colors.borderStrong,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 0,
                 ),
                 child: isSubmitting
-                    ? const SizedBox(
+                    ? SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  child: CircularProgressIndicator(color: context.colors.onBrand, strokeWidth: 2),
                 )
                     : Text(
                   canSubmit
@@ -556,10 +558,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                       : isLast
                       ? 'Answer to submit'
                       : 'Next Question',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: context.colors.onBrand,
                   ),
                 ),
               ),
@@ -612,19 +614,19 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
     IconData scoreIcon;
     
     if (pct >= 0.8) {
-      scoreColor = const Color(0xFF388E3C);
+      scoreColor = context.colors.brand;
       scoreLabel = 'Excellent!';
       scoreIcon = Icons.emoji_events_rounded;
     } else if (pct >= 0.5) {
-      scoreColor = const Color(0xFF2563EB);
+      scoreColor = context.colors.infoStrong;
       scoreLabel = 'Good effort!';
       scoreIcon = Icons.thumb_up_rounded;
     } else if (pct >= 0.3) {
-      scoreColor = const Color(0xFFD97706);
+      scoreColor = context.colors.warningStrong;
       scoreLabel = 'Fair attempt';
       scoreIcon = Icons.trending_up_rounded;
     } else {
-      scoreColor = const Color(0xFFDC2626);
+      scoreColor = context.colors.dangerStrong;
       scoreLabel = 'Keep practicing';
       scoreIcon = Icons.refresh_rounded;
     }
@@ -636,9 +638,9 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
         _onDone();
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFFAFAFA),
+        backgroundColor: context.colors.background,
         body: CustomPaint(
-          painter: DotPatternPainter(),
+          painter: DotPatternPainter(color: context.colors.dotPattern),
           child: SafeArea(
             child: Column(
               children: [
@@ -647,15 +649,15 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1F2937)),
+                        icon: Icon(Icons.arrow_back_rounded, color: context.colors.textPrimary),
                         onPressed: _onDone,
                       ),
-                      const Text(
+                      Text(
                         'Results',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF1F2937),
+                          color: context.colors.textPrimary,
                         ),
                       ),
                     ],
@@ -671,11 +673,11 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(28),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.colors.surface,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: context.colors.shadow.withValues(alpha: 0.05),
                                 blurRadius: 20,
                                 offset: const Offset(0, 6),
                               ),
@@ -704,31 +706,31 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
                               const SizedBox(height: 8),
                               Text(
                                 'You scored $percentInt%',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF6B7280),
+                                  color: context.colors.textTertiary,
                                 ),
                               ),
                               const SizedBox(height: 24),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF9FAFB),
+                                  color: context.colors.surfaceMuted,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFFF3F4F6)),
+                                  border: Border.all(color: context.colors.surfaceSunken),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    _buildStatColumn('Correct', correct.toString(), const Color(0xFF388E3C)),
+                                    _buildStatColumn('Correct', correct.toString(), context.colors.brand),
                                     Container(
                                       width: 1,
                                       height: 32,
-                                      color: const Color(0xFFE5E7EB),
+                                      color: context.colors.border,
                                       margin: const EdgeInsets.symmetric(horizontal: 24),
                                     ),
-                                    _buildStatColumn('Total', total.toString(), const Color(0xFF6B7280)),
+                                    _buildStatColumn('Total', total.toString(), context.colors.textTertiary),
                                   ],
                                 ),
                               ),
@@ -754,17 +756,17 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
                                     );
                                   },
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Color(0xFFE5E7EB), width: 2),
+                                    side: BorderSide(color: context.colors.border, width: 2),
                                   ),
                                   child: const Text('Review answers'),
                                 ),
                               )
                             else
-                              const Text(
+                              Text(
                                 "Answer details aren't available on this device.",
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Color(0xFF6B7280),
+                                  color: context.colors.textTertiary,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -775,7 +777,7 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
                               child: FilledButton(
                                 onPressed: _onDone,
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xFF388E3C),
+                                  backgroundColor: context.colors.brand,
                                 ),
                                 child: const Text('Done'),
                               ),
@@ -809,31 +811,14 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF6B7280),
+            color: context.colors.textTertiary,
             letterSpacing: 0.5,
           ),
         ),
       ],
     );
   }
-}
-class DotPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFD1D5DB).withValues(alpha: 0.4)
-      ..strokeWidth = 1;
-    const spacing = 24.0;
-    for (double i = 0; i < size.width; i += spacing) {
-      for (double j = 0; j < size.height; j += spacing) {
-        canvas.drawCircle(Offset(i, j), 1.5, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

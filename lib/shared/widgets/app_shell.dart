@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/daily_word/daily_word_screen.dart';
 import '../../features/profile/profile_screen.dart';
@@ -79,20 +80,20 @@ class _AppShellState extends ConsumerState<AppShell> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1F2937),
+                      color: context.colors.inverseSurface,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
+                          color: context.colors.shadow.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: const Text(
+                    child: Text(
                       "This week's quiz is open",
                       style: TextStyle(
-                        color: Colors.white,
+                        color: context.colors.onInverseSurface,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
