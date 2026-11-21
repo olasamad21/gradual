@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase/firebase_providers.dart'; // CHANGED: use existing provider
 import '../../router/app_router.dart';
+import '../../shared/widgets/gradual_mark.dart';
 
 class RootGatekeeper extends ConsumerWidget {
   const RootGatekeeper({super.key});
@@ -55,24 +56,25 @@ class RootGatekeeper extends ConsumerWidget {
   }
 }
 
-/// Branded splash shown while Firebase initializes.
+/// Shown while Firebase initializes. Matches the native launch screen
+/// (see flutter_native_splash in pubspec.yaml) so the hand-off is seamless.
 /// No AppBar = no back button possible.
 class _SplashView extends StatelessWidget {
   const _SplashView();
 
+  /// Launch screen colours, same as the native splash config.
+  static const _lightBackground = Color(0xFF2E7D32);
+
   @override
   Widget build(BuildContext context) {
+    // Follow the device setting, as the native splash does.
+    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return Scaffold(
-      backgroundColor: context.colors.brand,
+      backgroundColor: isDark ? AppColors.dark.background : _lightBackground,
       body: Center(
-        child: Text(
-          'Gradual',
-          style: TextStyle(
-            color: context.colors.onBrand,
-            fontSize: 36,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.5,
-          ),
+        child: GradualMark(
+          size: 96,
+          color: isDark ? AppColors.dark.brand : Colors.white,
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../shared/widgets/dot_pattern.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../shared/widgets/gradual_mark.dart';
 import '../../shared/widgets/primary_button.dart';
 import 'onboarding_view_model.dart';
 
@@ -38,27 +39,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // 2. Code-Generated Logo (Replacing the image)
-                    Container(
-                      height: 80,
-                      width: 80,
-                      decoration: BoxDecoration(
-                        color: context.colors.brand, // Your brand green
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: context.colors.brand.withValues(alpha: 0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          )
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.auto_graph_rounded, // Represents "Gradual" growth
-                        color: context.colors.onBrand,
-                        size: 40,
-                      ),
-                    ),
+                    // 2. Brand logo
+                    const GradualLogoTile(size: 80),
                     const SizedBox(height: 40),
 
                     // 3. Typography
