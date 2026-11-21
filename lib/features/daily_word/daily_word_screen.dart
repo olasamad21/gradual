@@ -2,6 +2,7 @@ import 'dart:async';
 import '../../shared/widgets/dot_pattern.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import '../../core/services/haptics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,7 +13,9 @@ import '../../core/firebase/firebase_providers.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/streak_engine.dart';
 import '../../core/utils/date_utils.dart';
+import '../../core/utils/display_name.dart';
 import '../../shared/widgets/firestore_permission_widget.dart';
+import '../../shared/widgets/gradual_mark.dart';
 import '../../shared/widgets/loading_indicator.dart';
 
 import '../streak/day_reward_overlay.dart';
@@ -230,26 +233,25 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
       child: Scaffold(
         backgroundColor: context.colors.background,
         appBar: AppBar(
-          title: Text(
-            'Gradual',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 22,
-              letterSpacing: -0.5,
-              color: context.colors.textPrimary,
-            ),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const GradualMark(size: 26),
+              const SizedBox(width: 8),
+              Text(
+                'Gradual',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  letterSpacing: -0.5,
+                  color: context.colors.textPrimary,
+                ),
+              ),
+            ],
           ),
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.person_outline_rounded,
-                  color: context.colors.textBody),
-              onPressed: () => Navigator.of(context).pushNamed('/profile'),
-            ),
-            const SizedBox(width: 4),
-          ],
         ),
         body: CustomPaint(
           painter: DotPatternPainter(color: context.colors.dotPattern),
@@ -292,8 +294,8 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
       return const SizedBox(height: 52);
     }
     
-    final rawName = user?.email.split('@').first ?? 'Dev';
-    final name = rawName.isNotEmpty ? '${rawName[0].toUpperCase()}${rawName.substring(1)}' : rawName;
+    final account = ref.watch(accountProfileProvider);
+    final name = firstNameFor(displayName: account.displayName, email: user?.email ?? '');
 
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
@@ -402,6 +404,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                         isWeekendReview: state.isWeekendReview,
                         isSaved: isSaved,
                         onToggleSaved: () {
+                          Haptics.light();
                           ref.read(savedControllerProvider.notifier).toggle(concept.id);
                         },
                         isReadingAloud: isReadingAloud,
@@ -426,6 +429,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                           ref.read(readAloudControllerProvider.notifier).setSpeed(nextSpeed);
                         },
                         onMarkRead: () {
+                          Haptics.medium();
                           ref.read(cardHintSeenProvider.notifier).markSeen();
                           ref.read(todayConceptsControllerProvider.notifier).markRead(concept.id);
                           

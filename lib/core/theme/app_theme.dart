@@ -90,6 +90,18 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: c.background,
       textTheme: textTheme,
       dividerColor: c.border,
+      // Fade-and-slide routes on Android, web and desktop; native swipe-back
+      // routes on Apple platforms.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: c.background,
         surfaceTintColor: Colors.transparent,

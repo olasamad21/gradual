@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/services/haptics.dart';
 import '../../shared/widgets/dot_pattern.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,6 +56,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
   }
 
   void _selectOption(int index) {
+    if (_selections[_currentIndex] != index) Haptics.selection();
     setState(() => _selections[_currentIndex] = index);
   }
 
@@ -91,6 +93,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     }
 
     final correctCount = answers.where((a) => a.isCorrect).length;
+    Haptics.medium();
 
     final result = await ref.read(quizControllerProvider.notifier).submitQuiz(
       today: _sessionDate!,

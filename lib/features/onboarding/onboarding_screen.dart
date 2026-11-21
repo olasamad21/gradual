@@ -120,6 +120,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: DropdownButtonHideUnderline(
                 child: DropdownButtonFormField<String>(
           initialValue: _selectedField,
+          isExpanded: true,
           decoration: InputDecoration(
             labelText: 'Your Field of Study',
             labelStyle: TextStyle(color: context.colors.brand, fontWeight: FontWeight.w600),
@@ -128,7 +129,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           items: [
             DropdownMenuItem(
               value: 'software_engineering',
-              child: Text('Computer Science & Software Engineering', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              child: Text('Computer Science & Software Engineering', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
             DropdownMenuItem(
               value: 'data_science',

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/services/haptics.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -302,6 +303,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
         ),
         tooltip: isSaved ? 'Remove from saved' : 'Save word',
         onPressed: () {
+          Haptics.light();
           ref.read(savedControllerProvider.notifier).toggle(currentConcept.id);
         },
       ),
@@ -686,6 +688,7 @@ class _ConceptReaderState extends ConsumerState<ConceptReader>
                 ? null
                 : () {
                     final currentConcept = widget.concepts[_currentIndex];
+                    Haptics.medium();
                     widget.onMarkRead(currentConcept.id);
                     _gotItTimer?.cancel();
                     _gotItTimer = Timer(const Duration(milliseconds: 500), () {

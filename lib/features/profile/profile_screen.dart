@@ -4,6 +4,7 @@ import '../../shared/widgets/dot_pattern.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_mode_controller.dart';
 import 'package:flutter/material.dart';
+import '../../core/services/haptics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -11,6 +12,7 @@ import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
 import '../../router/app_router.dart';
 import '../../core/models/user_model.dart';
+import '../../core/utils/display_name.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_state_widget.dart';
 import '../../shared/widgets/firestore_permission_widget.dart';
@@ -100,8 +102,10 @@ class _ProfileBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final initials = user.email.isNotEmpty ? user.email[0].toUpperCase() : '?';
-    final username = user.email.split('@').first;
+    final account = ref.watch(accountProfileProvider);
+    final username = fullNameFor(displayName: account.displayName, email: user.email);
+    final initials = initialsFor(username);
+    final photoUrl = account.photoUrl;
 
     return CustomPaint(
       painter: DotPatternPainter(color: context.colors.dotPattern),
@@ -112,21 +116,12 @@ class _ProfileBody extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back_rounded, color: context.colors.textPrimary),
-                    onPressed: () => Navigator.pop(context),
-                    padding: EdgeInsets.zero,
-                  ),
-                  const Spacer(),
-                  Text('Profile',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
-                  const Spacer(),
-                  const SizedBox(width: 40),
-                ],
+              // Profile is a top-level tab, so no back button.
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text('Profile', style: Theme.of(context).textTheme.headlineMedium),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Avatar card
               Container(
@@ -150,9 +145,22 @@ class _ProfileBody extends ConsumerWidget {
                         shape: BoxShape.circle,
                         boxShadow: [BoxShadow(color: context.colors.brand.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
                       ),
-                      child: Center(
-                        child: Text(initials,
-                            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: context.colors.onBrand)),
+                      child: ClipOval(
+                        child: photoUrl == null
+                            ? Center(
+                                child: Text(initials,
+                                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: context.colors.onBrand)),
+                              )
+                            : Image.network(
+                                photoUrl,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => Center(
+                                  child: Text(initials,
+                                      style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: context.colors.onBrand)),
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -597,7 +605,10 @@ class _AppearanceCard extends ConsumerWidget {
                 ButtonSegment(value: ThemeMode.dark, label: Text('Dark'), icon: Icon(Icons.dark_mode_rounded, size: 18)),
               ],
               selected: {mode},
-              onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).setMode(s.first),
+              onSelectionChanged: (s) {
+                Haptics.selection();
+                ref.read(themeModeProvider.notifier).setMode(s.first);
+              },
               style: SegmentedButton.styleFrom(
                 foregroundColor: context.colors.textSecondary,
                 selectedForegroundColor: context.colors.brand,

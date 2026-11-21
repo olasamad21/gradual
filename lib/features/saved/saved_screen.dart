@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/services/haptics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/models/concept_model.dart';
@@ -451,6 +452,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                 ),
                 tooltip: 'Remove from saved',
                 onPressed: () {
+                  Haptics.light();
                   final previousMillis = ref
                       .read(savedControllerProvider.notifier)
                       .toggle(concept.id);

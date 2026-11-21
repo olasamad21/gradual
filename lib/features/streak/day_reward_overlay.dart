@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import '../../core/services/haptics.dart';
 
 import '../../core/services/streak_engine.dart';
 import '../../shared/widgets/streak_box.dart';
@@ -23,6 +24,7 @@ class DayRewardOverlay extends StatefulWidget {
     required DayReward reward,
     required int streakCount,
   }) {
+    Haptics.success();
     return showGeneralDialog(
       context: context,
       barrierDismissible: true,

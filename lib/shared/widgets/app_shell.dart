@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/services/haptics.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/daily_word/daily_word_screen.dart';
@@ -107,6 +108,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (index) {
+          if (index != currentIndex) Haptics.selection();
           ref.read(appShellTabProvider.notifier).state = index;
         },
         destinations: const [
