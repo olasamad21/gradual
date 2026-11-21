@@ -44,7 +44,7 @@ class UnsavedQuizCard extends StatelessWidget {
                   onPressed: isSaving ? null : onRetry,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(120, 48),
-                    backgroundColor: context.colors.danger,
+                    backgroundColor: context.colors.dangerStrong,
                     foregroundColor: context.colors.onBrand,
                     disabledBackgroundColor: context.colors.dangerBorder,
                     elevation: 0,

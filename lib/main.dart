@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/theme/theme_mode_controller.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -12,9 +13,12 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  final themeMode = await loadSavedThemeMode();
+
   runApp(
-    const ProviderScope(
-      child: GradualApp(),
+    ProviderScope(
+      overrides: [initialThemeModeProvider.overrideWithValue(themeMode)],
+      child: const GradualApp(),
     ),
   );
 }

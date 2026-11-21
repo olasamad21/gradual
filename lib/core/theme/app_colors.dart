@@ -156,7 +156,7 @@ class AppColors extends ThemeExtension<AppColors> {
     textSecondary: Color(0xFFB4BAC4),
     textTertiary: Color(0xFF9CA3AF),
     textMuted: Color(0xFF6B7280),
-    brand: Color(0xFF4CAF50),
+    brand: Color(0xFF43A047),
     brandStrong: Color(0xFF81C784),
     brandSoft: Color(0xFF1F3A22),
     onBrand: Color(0xFFFFFFFF),

@@ -181,7 +181,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: isCorrect ? context.colors.successBright : context.colors.danger,
+                  color: isCorrect ? context.colors.success : context.colors.dangerStrong,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -300,7 +300,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: context.colors.onBrand,
+                  color: isCorrect ? context.colors.successSoft : context.colors.dangerSoft,
                 ),
               ),
             ),

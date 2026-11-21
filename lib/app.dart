@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_mode_controller.dart';
 import 'router/app_router.dart';
 
-class GradualApp extends StatelessWidget {
+class GradualApp extends ConsumerWidget {
   const GradualApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'Gradual',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      // Dark tokens exist but screens are not yet reviewed in dark mode.
-      // Switch to ThemeMode.system once they are.
-      themeMode: ThemeMode.light,
+      themeMode: ref.watch(themeModeProvider),
       onGenerateRoute: AppRouter.onGenerateRoute,
       // FIXED: Always start at root so RootGatekeeper decides where to go.
       // Never read auth state here — it's always loading on cold start.
