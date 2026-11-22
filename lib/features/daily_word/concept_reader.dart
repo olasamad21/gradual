@@ -22,15 +22,18 @@ Future<int?> openConceptReader({
   required void Function(String conceptId) onMarkRead,
   bool showGotIt = true,
   bool isWeekendReview = false,
+  Rect? originRect,
+  double originRadius = 28,
 }) async {
   final disableAnimations = MediaQuery.disableAnimationsOf(context);
+  final growFromCard = originRect != null && !disableAnimations;
   final result = await Navigator.of(context).push<int>(
     PageRouteBuilder<int>(
       opaque: true,
       transitionDuration: disableAnimations
           ? const Duration(milliseconds: 150)
           : const Duration(milliseconds: 350),
-      reverseTransitionDuration: Duration.zero,
+      reverseTransitionDuration: growFromCard ? const Duration(milliseconds: 280) : Duration.zero,
       pageBuilder: (dialogContext, animation, secondaryAnimation) {
         return ConceptReader(
           concepts: concepts,
@@ -43,6 +46,9 @@ Future<int?> openConceptReader({
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         if (disableAnimations) {
           return FadeTransition(opacity: animation, child: child);
+        }
+        if (growFromCard) {
+          return _GrowFromRect(animation: animation, origin: originRect, radius: originRadius, child: child);
         }
         return SlideTransition(
           position: Tween<Offset>(
@@ -57,6 +63,66 @@ Future<int?> openConceptReader({
     ),
   );
   return result ?? initialIndex;
+}
+
+/// Grows the reader out of the tapped card: the page's bounds and corner
+/// radius animate from the card's rect to the full screen, and back on close.
+class _GrowFromRect extends StatelessWidget {
+  const _GrowFromRect({
+    required this.animation,
+    required this.origin,
+    required this.radius,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final Rect origin;
+  final double radius;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final full = Offset.zero & constraints.biggest;
+        return AnimatedBuilder(
+          animation: curved,
+          child: child,
+          builder: (context, child) {
+            final t = curved.value;
+            final rect = Rect.lerp(origin, full, t)!;
+            return Stack(
+              children: [
+                Positioned.fromRect(
+                  rect: rect,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(radius * (1 - t)),
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        width: full.width,
+                        height: full.height,
+                        child: ColoredBox(
+                          color: context.colors.surface,
+                          child: Opacity(opacity: (t * 2).clamp(0.0, 1.0), child: child),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 class ConceptReader extends ConsumerStatefulWidget {

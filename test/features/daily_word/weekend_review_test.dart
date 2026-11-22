@@ -7,10 +7,11 @@ import 'package:gradual/core/models/user_model.dart';
 import 'package:gradual/core/repositories/content_repository.dart';
 import 'package:gradual/core/theme/app_theme.dart';
 import 'package:gradual/core/services/streak_engine.dart';
-import 'package:gradual/features/daily_word/concept_flip_card.dart';
+import 'package:gradual/features/daily_word/day_complete_card.dart';
 import 'package:gradual/features/daily_word/concept_providers.dart';
 import 'package:gradual/features/daily_word/concept_section_style.dart';
 import 'package:gradual/features/daily_word/today_concepts_controller.dart';
+import 'package:gradual/features/daily_word/today_header.dart';
 import 'package:gradual/features/streak/streak_providers.dart';
 
 void main() {
@@ -64,101 +65,55 @@ void main() {
     });
   });
 
-  group('ConceptFlipCard weekend review tests', () {
-    testWidgets('renders WEEKEND REVIEW label on both faces when isWeekendReview is true', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
+  group('Today screen weekend review', () {
+    Widget host(Widget child) => MaterialApp(
           theme: AppTheme.light,
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 400,
-                height: 600,
-                child: ConceptFlipCard(
-                  concept: testConcept,
-                  index: 0,
-                  isRead: false,
-                  isLastWord: false,
-                  totalCount: 15,
-                  isWeekendReview: true,
-                  onMarkRead: () {},
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
+          home: Scaffold(body: SizedBox(width: 400, height: 640, child: child)),
+        );
+
+    testWidgets('header labels a weekend review and counts reviewed words', (tester) async {
+      await tester.pumpWidget(host(TodayHeader(
+        greeting: 'Good morning',
+        firstName: 'Ada',
+        streak: 4,
+        readCount: 2,
+        total: 15,
+        rawActivityLog: const {},
+        today: DateTime(2026, 11, 21),
+        isWeekendReview: true,
+      )));
       await tester.pump();
 
-      expect(find.text('WEEKEND REVIEW'), findsOneWidget);
+      expect(find.text('2 of 15 reviewed'), findsOneWidget);
+      expect(find.text('Weekend review · words from this week'), findsOneWidget);
     });
 
-    testWidgets('shows "All caught up for this week!" when last word is read in weekend review', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light,
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 400,
-                height: 600,
-                child: ConceptFlipCard(
-                  concept: testConcept,
-                  index: 14,
-                  isRead: true,
-                  isLastWord: true,
-                  totalCount: 15,
-                  isWeekendReview: true,
-                  onMarkRead: () {},
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      // Tap card to flip to back face where completion message is shown
-      await tester.tap(find.text('Polymorphism'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 800));
+    testWidgets('complete card says "All caught up for this week!" on a weekend', (tester) async {
+      await tester.pumpWidget(host(DayCompleteCard(
+        concepts: [testConcept],
+        streak: 3,
+        isWeekendReview: true,
+        onOpenWord: (_) {},
+      )));
+      await tester.pump(const Duration(milliseconds: 600));
 
       expect(find.text('All caught up for this week!'), findsOneWidget);
       expect(find.text('All done for today'), findsNothing);
+      expect(find.text('New words on Monday'), findsOneWidget);
     });
 
-    testWidgets('shows "All done for today" when last word is read in weekday mode', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light,
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 400,
-                height: 600,
-                child: ConceptFlipCard(
-                  concept: testConcept,
-                  index: 2,
-                  isRead: true,
-                  isLastWord: true,
-                  totalCount: 3,
-                  isWeekendReview: false,
-                  onMarkRead: () {},
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      // Tap card to flip to back face where completion message is shown
-      await tester.tap(find.text('Polymorphism'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 800));
+    testWidgets('complete card says "All done for today" on a weekday', (tester) async {
+      await tester.pumpWidget(host(DayCompleteCard(
+        concepts: [testConcept],
+        streak: 3,
+        isWeekendReview: false,
+        onOpenWord: (_) {},
+      )));
+      await tester.pump(const Duration(milliseconds: 600));
 
       expect(find.text('All done for today'), findsOneWidget);
       expect(find.text('All caught up for this week!'), findsNothing);
+      expect(find.text('New words tomorrow'), findsOneWidget);
     });
   });
 

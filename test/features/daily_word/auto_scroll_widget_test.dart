@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gradual/core/models/concept_model.dart';
-import 'package:gradual/core/services/read_aloud_text.dart';
 import 'package:gradual/core/theme/app_theme.dart';
 import 'package:gradual/features/daily_word/auto_scroll_logic.dart';
-import 'package:gradual/features/daily_word/concept_flip_card.dart';
 import 'package:gradual/features/daily_word/read_along_text.dart';
 
 class AutoScrollHarness extends StatefulWidget {
@@ -313,77 +310,4 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('ConceptFlipCard auto-scrolls definition when reading aloud', (tester) async {
-    final concept = Concept(
-      id: 'test_card',
-      term: 'Long Term',
-      category: 'General',
-      level: 'Beginner',
-      definition: longText,
-      analogy: 'Analogy',
-      realWorldExample: 'Example',
-      confusedWith: '',
-      related: [],
-      quiz: const ConceptQuiz(
-        question: 'Q',
-        options: ['A', 'B'],
-        answerIndex: 0,
-        explanation: 'E',
-      ),
-    );
-
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.light,
-      home: Scaffold(
-        body: SizedBox(
-          width: 400,
-          height: 500,
-          child: ConceptFlipCard(
-            concept: concept,
-            index: 0,
-            isRead: false,
-            isLastWord: false,
-            onMarkRead: () {},
-            isReadingAloud: true,
-            readingSection: ReadSectionKind.definition,
-            readingWordStart: getLineStart(0),
-            readingWordEnd: getLineEnd(0),
-          ),
-        ),
-      ),
-    ));
-    await tester.pump(const Duration(milliseconds: 400));
-
-    final scrollView = tester.widget<SingleChildScrollView>(
-      find.byType(SingleChildScrollView).first,
-    );
-    expect(scrollView.controller!.offset, 0.0);
-
-    // Update with word deeper in the definition
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.light,
-      home: Scaffold(
-        body: SizedBox(
-          width: 400,
-          height: 500,
-          child: ConceptFlipCard(
-            concept: concept,
-            index: 0,
-            isRead: false,
-            isLastWord: false,
-            onMarkRead: () {},
-            isReadingAloud: true,
-            readingSection: ReadSectionKind.definition,
-            readingWordStart: getLineStart(25),
-            readingWordEnd: getLineEnd(25),
-          ),
-        ),
-      ),
-    ));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
-    expect(scrollView.controller!.offset, greaterThan(0.0));
-    expect(tester.takeException(), isNull);
-  });
 }

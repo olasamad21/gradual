@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/firebase/firebase_providers.dart';
 import '../../core/models/concept_model.dart';
@@ -117,27 +116,4 @@ void retryLoadConcepts(dynamic ref) {
   ref.invalidate(statsResetProvider);
   ref.invalidate(todaysConceptsProvider);
   ref.invalidate(todayConceptsControllerProvider);
-}
-
-final cardHintSeenProvider = AsyncNotifierProvider<CardHintNotifier, bool>(CardHintNotifier.new);
-
-class CardHintNotifier extends AsyncNotifier<bool> {
-  @override
-  Future<bool> build() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool('seen_card_hint') ?? false;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<void> markSeen() async {
-    if (state.value == true) return;
-    state = const AsyncData(true);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('seen_card_hint', true);
-    } catch (_) {}
-  }
 }
