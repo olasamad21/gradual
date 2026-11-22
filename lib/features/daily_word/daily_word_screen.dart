@@ -64,7 +64,10 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen>
     with WidgetsBindingObserver {
   final PageController _pageController = PageController(viewportFraction: 0.9);
   final Map<int, GlobalKey> _cardKeys = {};
-  int _currentPage = 0;
+
+  /// Current carousel page. A notifier, not state, so swiping only
+  /// rebuilds the dots instead of the whole screen.
+  final ValueNotifier<int> _currentPage = ValueNotifier(0);
   bool _initialPageSet = false;
   bool _isRetrying = false;
   Timer? _retryTimer;
@@ -89,6 +92,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen>
     _readAloudNotifier?.stop();
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
+    _currentPage.dispose();
     super.dispose();
   }
 
@@ -380,7 +384,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen>
                 clipBehavior: Clip.none,
                 itemCount: pageCount,
                 onPageChanged: (page) {
-                  setState(() => _currentPage = page);
+                  _currentPage.value = page;
                   ref.read(readAloudControllerProvider.notifier).stop();
                 },
                 itemBuilder: (context, index) => _CarouselPage(
@@ -399,18 +403,21 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen>
               ),
             ),
             const SizedBox(height: 10),
-            _PageDots(
-              count: pageCount,
-              current: _currentPage.clamp(0, pageCount - 1),
-              readFlags: [
-                for (final c in state.concepts)
-                  state.readConceptIds.contains(c.id),
-              ],
-              hasCompletePage: allRead,
-              onTap: (i) => _pageController.animateToPage(
-                i,
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeOutCubic,
+            ValueListenableBuilder<int>(
+              valueListenable: _currentPage,
+              builder: (context, current, _) => _PageDots(
+                count: pageCount,
+                current: current.clamp(0, pageCount - 1),
+                readFlags: [
+                  for (final c in state.concepts)
+                    state.readConceptIds.contains(c.id),
+                ],
+                hasCompletePage: allRead,
+                onTap: (i) => _pageController.animateToPage(
+                  i,
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeOutCubic,
+                ),
               ),
             ),
             const SizedBox(height: 10),
@@ -429,7 +436,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_pageController.hasClients) return;
       _pageController.jumpToPage(target);
-      setState(() => _currentPage = target);
+      _currentPage.value = target;
     });
   }
 
@@ -510,7 +517,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen>
         targetIndex != null &&
         mounted &&
         _pageController.hasClients &&
-        targetIndex != _currentPage) {
+        targetIndex != _currentPage.value) {
       _pageController.jumpToPage(targetIndex);
     }
   }
@@ -592,10 +599,9 @@ class _CarouselPage extends StatelessWidget {
           page = controller.page ?? page;
         }
         final distance = (page - index).abs().clamp(0.0, 1.0);
-        return Transform.scale(
-          scale: 1 - distance * 0.06,
-          child: Opacity(opacity: 1 - distance * 0.35, child: child),
-        );
+        // Scale only: a transform reuses the card's cached picture, while
+        // fading with Opacity would redraw the card offscreen every frame.
+        return Transform.scale(scale: 1 - distance * 0.06, child: child);
       },
     );
   }
