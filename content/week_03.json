@@ -1,0 +1,472 @@
+{
+  "field": "software_engineering",
+  "concepts": [
+    {
+      "id": "sql-vs-nosql",
+      "term": "SQL vs NoSQL",
+      "category": "databases",
+      "level": "beginner",
+      "definition": "Two broad families of databases. SQL databases store data in tables with a fixed schema and let you query across them with the SQL language, while NoSQL databases use flexible shapes such as documents, key-value pairs or graphs. SQL suits data with clear relationships and strict rules, and NoSQL suits data that changes shape often or must spread across many machines.",
+      "summary": "SQL keeps data in strict related tables; NoSQL stores flexible documents, keys or graphs.",
+      "analogy": "SQL is a spreadsheet where every row must fill the same columns. NoSQL is a folder of index cards where each card can hold whatever fields it needs.",
+      "real_world_example": "A bank keeps accounts and transfers in PostgreSQL, a SQL database, while a chat app might store each conversation as a document in MongoDB, a NoSQL database.",
+      "confused_with": "NoSQL does not mean no SQL at all: many NoSQL systems offer SQL-like queries, and the name really means not only SQL.",
+      "related": [
+        "primary-key",
+        "normalization",
+        "cap-theorem"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Your app stores user profiles where every user can have different optional fields that change often. Which database style fits best?",
+        "options": [
+          "A SQL table, because every row must follow one fixed set of columns",
+          "A spreadsheet, because it can be shared easily with the whole team",
+          "A NoSQL document store, because each record can have its own shape",
+          "A message queue, because it holds records until someone reads them"
+        ],
+        "answer_index": 2,
+        "explanation": "Document stores let each record carry its own fields, which suits data whose shape varies and changes."
+      }
+    },
+    {
+      "id": "primary-key",
+      "term": "Primary Key",
+      "category": "databases",
+      "level": "beginner",
+      "definition": "A column, or set of columns, whose value uniquely identifies each row in a table. The database refuses two rows with the same primary key and never lets it be empty. Other tables point to a row by storing its primary key, which is how related data is linked.",
+      "summary": "A unique ID for every row in a table, so each record can be found.",
+      "analogy": "A student ID number. Two students can share a name, but never an ID, so the school always knows exactly which student a record means.",
+      "real_world_example": "An online store gives every order an order_id. Support staff type that ID to pull up exactly one order, even if a customer placed hundreds.",
+      "confused_with": "Foreign key: a primary key identifies a row in its own table, while a foreign key is a column in another table that stores that ID to point back to it.",
+      "related": [
+        "index",
+        "join",
+        "sql-vs-nosql"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Two customers named Ade Bello sign up. What lets the database tell their rows apart reliably?",
+        "options": [
+          "A primary key such as a unique customer_id on every row",
+          "Sorting the table by name so the two rows sit side by side",
+          "Storing both customers in a second table with the same name",
+          "Adding a note in the row saying which person signed up first"
+        ],
+        "answer_index": 0,
+        "explanation": "A primary key is unique and never empty, so each row has an identity even when other values match."
+      }
+    },
+    {
+      "id": "index",
+      "term": "Database Index",
+      "category": "databases",
+      "level": "intermediate",
+      "definition": "An extra data structure the database keeps so it can find rows by a column without scanning the whole table. It makes searches and sorts on that column much faster. The cost is extra storage and slightly slower writes, because every insert or update must also update the index.",
+      "summary": "A lookup structure that finds rows fast without scanning the whole table.",
+      "analogy": "The index at the back of a textbook. Instead of reading every page to find mutex, you look it up and jump straight to page 214.",
+      "real_world_example": "A login query that finds a user by email on a table of ten million users drops from seconds to milliseconds once the email column has an index.",
+      "confused_with": "Primary key: every primary key is indexed automatically, but you can add indexes on other columns, like email, that are not the primary key.",
+      "related": [
+        "primary-key",
+        "join",
+        "latency"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Searching orders by customer email has become slow as the table grew to millions of rows. What is the usual first fix?",
+        "options": [
+          "Delete old orders every night so the table stays small enough",
+          "Move the table into a bigger server with much more memory to spare",
+          "Store every email in uppercase so string comparisons run faster",
+          "Add an index on the email column so lookups skip the full scan"
+        ],
+        "answer_index": 3,
+        "explanation": "An index lets the database jump to matching rows instead of checking every row in the table."
+      }
+    },
+    {
+      "id": "join",
+      "term": "SQL Join",
+      "category": "databases",
+      "level": "beginner",
+      "definition": "A query operation that combines rows from two or more tables based on a related column, usually a key. It lets data stay split into tidy tables yet come back together when you need it. An inner join returns only matching rows, while a left join keeps every row from the first table even without a match.",
+      "summary": "Combining rows from related tables into one result using a shared key.",
+      "analogy": "Matching a class register with exam results by student ID, so each line shows a student's name next to their score.",
+      "real_world_example": "To show an order history page, a store joins the orders table with the products table on product_id, so each order line can show the product's name and photo.",
+      "confused_with": "Union: a union stacks the rows of two similar queries on top of each other, while a join places columns from related tables side by side.",
+      "related": [
+        "primary-key",
+        "normalization",
+        "n-plus-one-query"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You need every customer listed, including those with no orders yet, alongside their order totals. Which join fits?",
+        "options": [
+          "An inner join, which returns only customers that have placed orders",
+          "A left join from customers to orders, keeping unmatched customers",
+          "A union of the customers table with the orders table row by row",
+          "No join at all, by copying order totals into the customers table"
+        ],
+        "answer_index": 1,
+        "explanation": "A left join keeps every row from the left table and fills missing matches with empty values."
+      }
+    },
+    {
+      "id": "normalization",
+      "term": "Normalization",
+      "category": "databases",
+      "level": "intermediate",
+      "definition": "The practice of organising a relational database so each fact is stored in exactly one place. Repeated information is moved into its own table and linked with keys. This prevents copies from drifting out of sync, though highly normalized data needs more joins to read.",
+      "summary": "Storing each fact in exactly one place so copies never disagree.",
+      "analogy": "Keeping a friend's phone number only in your contacts app instead of in ten different notes. Change it once, and everywhere that shows it is up to date.",
+      "real_world_example": "Rather than typing a customer's address on every order, a store keeps addresses in a customers table and each order links to it, so a move updates one row.",
+      "confused_with": "Denormalization: deliberately copying some data into several places to make reads faster, accepting the extra work of keeping the copies in sync.",
+      "related": [
+        "join",
+        "primary-key",
+        "sql-vs-nosql"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A customer's address is stored on every one of their 300 orders, and some now show old addresses. What design idea fixes the root cause?",
+        "options": [
+          "Add an index on the address column so the database finds it faster",
+          "Normalize: keep the address once in a customers table and link to it",
+          "Run a nightly script that copies the newest address onto every order",
+          "Store each address in uppercase so the copies are easier to compare"
+        ],
+        "answer_index": 1,
+        "explanation": "When a fact lives in one place, there are no copies left to disagree with each other."
+      }
+    },
+    {
+      "id": "orm",
+      "term": "ORM",
+      "category": "databases",
+      "level": "intermediate",
+      "definition": "Short for object-relational mapping, an ORM is a library that lets you work with database rows as ordinary objects in your programming language. It writes the SQL for you when you load, save or update those objects. This speeds up development, but hides what queries actually run, which can cause slow surprises.",
+      "summary": "A library that lets code use database rows as objects and writes SQL for you.",
+      "analogy": "A translator at a meeting. You speak your own language and they speak the database's, which is convenient, but you can't always tell how long their translations are.",
+      "real_world_example": "In a Django app, calling Order.objects.filter(paid=True) fetches paid orders without writing any SQL, because the ORM generates the query.",
+      "confused_with": "Database driver: a driver only sends the SQL you write and returns raw results, while an ORM also generates the SQL and turns rows into objects.",
+      "related": [
+        "n-plus-one-query",
+        "database-migration",
+        "join"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A team uses an ORM and a page suddenly makes hundreds of database calls. What is the most useful first step?",
+        "options": [
+          "Replace the ORM with raw SQL everywhere across the whole project",
+          "Add more application servers so each one handles fewer requests",
+          "Increase the database timeout so slow pages stop showing errors",
+          "Log the SQL the ORM generates to see which queries actually run"
+        ],
+        "answer_index": 3,
+        "explanation": "ORMs hide the SQL they produce, so seeing the real queries is the fastest way to find the problem."
+      }
+    },
+    {
+      "id": "transaction",
+      "term": "Transaction",
+      "category": "databases",
+      "level": "intermediate",
+      "definition": "A group of database operations treated as a single unit of work. Either every operation in the group is saved, called a commit, or none of them are, called a rollback. This keeps data consistent when a multi-step change fails halfway.",
+      "summary": "A group of database changes that all succeed together or all get undone.",
+      "analogy": "Paying at a shop counter. Either you hand over the money and get the item, or the sale is cancelled and nothing changes hands. Nobody walks away with only half the deal.",
+      "real_world_example": "A bank transfer takes money from one account and adds it to another inside a transaction, so a crash in between can never make money vanish.",
+      "confused_with": "Atomic operation: an atomic operation is one indivisible step, while a transaction bundles many steps and makes the whole bundle behave atomically.",
+      "related": [
+        "acid",
+        "atomic-operation",
+        "deadlock"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "An order must reduce stock and create a payment record. The server crashes after the stock update. With a transaction, what happens?",
+        "options": [
+          "Both changes are rolled back, so stock and payments stay consistent",
+          "Only the stock update is kept, and the payment is retried later on",
+          "Both changes are saved, and a support agent fixes the payment later",
+          "The database locks the table forever until an admin restarts it"
+        ],
+        "answer_index": 0,
+        "explanation": "A transaction commits all of its changes or none, so a crash midway leaves the data as it was."
+      }
+    },
+    {
+      "id": "acid",
+      "term": "ACID",
+      "category": "databases",
+      "level": "intermediate",
+      "definition": "Four guarantees a database makes about transactions: atomicity, consistency, isolation and durability. Atomicity means all or nothing, consistency means rules are never broken, isolation means concurrent transactions don't see each other's half-done work, and durability means committed data survives a crash. Together they make data safe to trust.",
+      "summary": "Four promises that keep transactions safe: all-or-nothing, valid, isolated and lasting.",
+      "analogy": "A sealed, signed contract. It is complete or void, follows the law, isn't affected by other deals being drafted, and stays valid even if the office burns down.",
+      "real_world_example": "Payment systems rely on ACID databases like PostgreSQL, so a power cut seconds after a confirmed payment never loses the record.",
+      "confused_with": "BASE: many distributed NoSQL systems trade strict ACID for basically available, soft state and eventual consistency to stay fast and online.",
+      "related": [
+        "transaction",
+        "eventual-consistency",
+        "cap-theorem"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A payment is confirmed to the user, then the database server loses power. Which ACID property ensures the payment is still there?",
+        "options": [
+          "Isolation, because other transactions cannot see the payment yet",
+          "Atomicity, because the payment is split into many smaller steps",
+          "Durability, because committed data is written to lasting storage",
+          "Consistency, because the server checks the user's balance first"
+        ],
+        "answer_index": 2,
+        "explanation": "Durability means once a transaction commits, it survives crashes and power loss."
+      }
+    },
+    {
+      "id": "connection-pool",
+      "term": "Connection Pool",
+      "category": "databases",
+      "level": "intermediate",
+      "definition": "A set of open database connections that an application keeps ready and reuses. Opening a new connection for every request is slow, so the app borrows one from the pool and returns it when done. The pool also caps the number of connections so the database is not overwhelmed.",
+      "summary": "A set of ready database connections the app reuses instead of opening new ones.",
+      "analogy": "A taxi rank outside a station. Cars wait ready, riders take the next one and it returns afterwards, which is far faster than calling a new car for every trip.",
+      "real_world_example": "A web server might keep 20 pooled connections to PostgreSQL and share them across thousands of requests per minute.",
+      "confused_with": "Thread pool: a thread pool reuses workers that run your code, while a connection pool reuses links to an external service like a database.",
+      "related": [
+        "thread-pool",
+        "latency",
+        "transaction"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Each request to your API opens a brand-new database connection and the database starts refusing connections at peak times. What helps most?",
+        "options": [
+          "Open two connections per request so one is always kept in reserve",
+          "Close the database for a few seconds whenever traffic starts to spike",
+          "Cache every API response forever so the database is never queried",
+          "Use a connection pool that reuses a capped set of open connections"
+        ],
+        "answer_index": 3,
+        "explanation": "A pool avoids the cost of new connections and limits how many the database must handle at once."
+      }
+    },
+    {
+      "id": "n-plus-one-query",
+      "term": "N+1 Query Problem",
+      "category": "databases",
+      "level": "intermediate",
+      "definition": "A performance bug where code runs one query to fetch a list, then one more query for each item in that list. With 100 items that is 101 round trips to the database instead of one or two. It often hides inside ORM code that loads related data lazily.",
+      "summary": "One query for a list, then one more per item: slow and easy to miss.",
+      "analogy": "Asking a librarian for a list of 50 books, then walking back to the desk 50 times to ask for each author, instead of asking for the authors along with the list.",
+      "real_world_example": "A blog homepage loads 30 posts, then fetches each post's author separately, making 31 queries where one query with a join would do.",
+      "confused_with": "Slow query: a slow query is one expensive query, while N+1 is many small fast queries whose total cost adds up.",
+      "related": [
+        "orm",
+        "join",
+        "latency"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A page lists 200 products and the logs show 201 database queries. What is the likely cause?",
+        "options": [
+          "A missing primary key, so the database repeats every single query",
+          "The N+1 problem: one query for the list, then one per product",
+          "Too many indexes, so each insert makes the database run a new query",
+          "A deadlock, so each query is retried until another thread finishes"
+        ],
+        "answer_index": 1,
+        "explanation": "One list query plus one per item is the N+1 pattern, usually fixed with a join or eager loading."
+      }
+    },
+    {
+      "id": "database-migration",
+      "term": "Database Migration",
+      "category": "databases",
+      "level": "intermediate",
+      "definition": "A versioned script that changes a database's structure, such as adding a table or renaming a column. Migrations are kept in the code repository and run in order, so every environment ends up with the same schema. Good migrations can be rolled back and are careful not to lock busy tables for long.",
+      "summary": "A versioned script that changes the database structure step by step.",
+      "analogy": "Renovation plans numbered in order. Every builder follows plan 1, then 2, then 3, so every copy of the house ends up with the same rooms.",
+      "real_world_example": "When a team adds a phone_number column, they commit a migration file, and deployment runs it on staging and production so both match the code.",
+      "confused_with": "Data migration: moving or transforming the data itself, such as copying records to a new system, rather than changing the table structure.",
+      "related": [
+        "orm",
+        "sql-vs-nosql",
+        "transaction"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A developer adds a column by typing SQL directly into production, and now staging and production don't match. What practice prevents this?",
+        "options": [
+          "Copy the whole production database over staging every single morning",
+          "Ask every developer to email the team whenever they change a table",
+          "Write the change as a versioned migration that runs everywhere in order",
+          "Avoid adding columns and store new values inside existing text fields"
+        ],
+        "answer_index": 2,
+        "explanation": "Migrations live with the code and run in the same order on every environment, keeping schemas in sync."
+      }
+    },
+    {
+      "id": "replication",
+      "term": "Replication",
+      "category": "databases",
+      "level": "intermediate",
+      "definition": "Keeping copies of the same database on several servers. Usually one primary accepts writes and replicas copy its changes, serving reads and taking over if the primary fails. Replicas can lag slightly behind, so a read just after a write may return old data.",
+      "summary": "Keeping copies of a database on several servers for speed and safety.",
+      "analogy": "A head chef writes the recipe book and assistants keep copies at their stations. Anyone can read a copy, but only the head chef changes the recipes.",
+      "real_world_example": "A news site sends all reads to three read replicas and writes to one primary, so traffic spikes from breaking news don't overload a single server.",
+      "confused_with": "Sharding: replication copies the same data to many servers, while sharding splits different data across servers.",
+      "related": [
+        "sharding",
+        "eventual-consistency",
+        "load-balancer"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A user updates their bio, refreshes, and briefly sees the old bio. The site reads from replicas. Why?",
+        "options": [
+          "Replication lag: the replica had not yet copied the latest write",
+          "Sharding: the bio was stored on a server the user cannot reach",
+          "A deadlock: two threads were editing the same bio at the same time",
+          "A missing index: the database could not find the newest bio row"
+        ],
+        "answer_index": 0,
+        "explanation": "Replicas copy changes from the primary after a short delay, so reads can briefly return older data."
+      }
+    },
+    {
+      "id": "sharding",
+      "term": "Sharding",
+      "category": "databases",
+      "level": "advanced",
+      "definition": "Splitting one large dataset across several database servers, with each server holding only part of the rows. A shard key, such as user ID, decides which server stores each row. It lets a system grow beyond one machine, but queries that span shards become harder and slower.",
+      "summary": "Splitting a big database across servers so each holds only part of the data.",
+      "analogy": "A library so big it is split across buildings by surname: A to H in one, I to P in another, Q to Z in a third. Each building handles fewer visitors.",
+      "real_world_example": "A messaging app with a billion users stores each user's messages on a shard chosen by user ID, so no single server holds everything.",
+      "confused_with": "Replication: sharding gives each server different data, while replication gives each server a full copy of the same data.",
+      "related": [
+        "replication",
+        "cap-theorem",
+        "load-balancer"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A table has grown too large for any single database server to store or handle. Which technique addresses this directly?",
+        "options": [
+          "Sharding, splitting the rows across servers by a shard key",
+          "Replication, copying the full table onto several more servers",
+          "Indexing, adding a lookup structure on the most queried column",
+          "Normalization, moving repeated values into their own new table"
+        ],
+        "answer_index": 0,
+        "explanation": "Sharding divides the data itself, so each server stores and serves only a slice of it."
+      }
+    },
+    {
+      "id": "cap-theorem",
+      "term": "CAP Theorem",
+      "category": "databases",
+      "level": "advanced",
+      "definition": "A rule about distributed databases: when the network between servers fails, a system must choose between consistency and availability. Consistency means every read sees the latest write, and availability means every request still gets an answer. Since network partitions will happen, designers decide which of the two to give up during one.",
+      "summary": "When servers lose contact, a database must choose: always correct or always answering.",
+      "analogy": "Two branch offices lose their phone line. They can stop serving customers until it's back, staying correct, or keep serving and risk giving different answers.",
+      "real_world_example": "A banking ledger refuses writes during a partition to stay consistent, while a social feed keeps accepting likes and sorts out the counts afterwards.",
+      "confused_with": "ACID consistency: in ACID, consistency means data follows the database's rules, while in CAP it means every server returns the latest write.",
+      "related": [
+        "eventual-consistency",
+        "replication",
+        "acid"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "During a network split, a database keeps accepting writes on both sides so users never see errors. What has it given up?",
+        "options": [
+          "Availability, since some users will be refused while it heals",
+          "Durability, since every write is thrown away after the split",
+          "Consistency, since the two sides may now hold different data",
+          "Partition tolerance, since the network is now working normally"
+        ],
+        "answer_index": 2,
+        "explanation": "Choosing to stay available during a partition means the two sides can disagree until they sync."
+      }
+    },
+    {
+      "id": "eventual-consistency",
+      "term": "Eventual Consistency",
+      "category": "databases",
+      "level": "advanced",
+      "definition": "A guarantee that if no new updates are made, all copies of the data will become the same over time. Right after a write, different servers may briefly return different values. Systems accept this to stay fast and available across many machines and regions.",
+      "summary": "Copies may briefly disagree, but all of them catch up to the same value.",
+      "analogy": "News spreading through a village. Right after an announcement some people know and others don't, but give it a little while and everyone has heard the same thing.",
+      "real_world_example": "After you post on a social network, a friend in another country may see your post a second or two later than a friend next to you.",
+      "confused_with": "Strong consistency: every read returns the latest write immediately, at the cost of more coordination and sometimes slower or refused requests.",
+      "related": [
+        "cap-theorem",
+        "replication",
+        "caching"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A like counter shows 104 on one phone and 106 on another for a few seconds, then both show 106. Which model does this describe?",
+        "options": [
+          "Strong consistency, where every read returns the newest value",
+          "Eventual consistency, where copies converge after a short delay",
+          "A race condition, where the final count is permanently wrong",
+          "A deadlock, where both phones wait for each other to update"
+        ],
+        "answer_index": 1,
+        "explanation": "The copies briefly differ but settle on the same value, which is exactly eventual consistency."
+      }
+    }
+  ],
+  "daily_sets": [
+    {
+      "date": "2026-11-23",
+      "theme": "Databases",
+      "concept_ids": [
+        "sql-vs-nosql",
+        "primary-key",
+        "index"
+      ]
+    },
+    {
+      "date": "2026-11-24",
+      "theme": "Databases",
+      "concept_ids": [
+        "join",
+        "normalization",
+        "orm"
+      ]
+    },
+    {
+      "date": "2026-11-25",
+      "theme": "Databases",
+      "concept_ids": [
+        "transaction",
+        "acid",
+        "connection-pool"
+      ]
+    },
+    {
+      "date": "2026-11-26",
+      "theme": "Databases",
+      "concept_ids": [
+        "n-plus-one-query",
+        "database-migration",
+        "replication"
+      ]
+    },
+    {
+      "date": "2026-11-27",
+      "theme": "Databases",
+      "concept_ids": [
+        "sharding",
+        "cap-theorem",
+        "eventual-consistency"
+      ]
+    }
+  ]
+}

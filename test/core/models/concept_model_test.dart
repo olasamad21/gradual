@@ -78,4 +78,20 @@ void main() {
       expect(ds.conceptIds.length, 3);
     });
   });
+
+  test('reads an optional summary and treats blank as missing', () {
+    final base = {
+      'term': 'T',
+      'category': 'c',
+      'level': 'beginner',
+      'definition': 'D.',
+      'real_world_example': 'E',
+      'related': <String>[],
+      'quiz': {'question': 'Q', 'options': ['A'], 'answer_index': 0, 'explanation': ''},
+    };
+    expect(Concept.fromJson({...base, 'summary': '  One line.  '}, 'id').summary, 'One line.');
+    expect(Concept.fromJson({...base, 'summary': '   '}, 'id').summary, isNull);
+    expect(Concept.fromJson(base, 'id').summary, isNull);
+    expect(Concept.fromJson({...base, 'summary': 'One line.'}, 'id').toJson()['summary'], 'One line.');
+  });
 }

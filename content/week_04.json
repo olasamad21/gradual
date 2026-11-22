@@ -1,0 +1,472 @@
+{
+  "field": "software_engineering",
+  "concepts": [
+    {
+      "id": "git-commit",
+      "term": "Git Commit",
+      "category": "version-control",
+      "level": "beginner",
+      "definition": "A saved snapshot of a project's files at a moment in time, recorded in Git's history. Each one has a unique ID, an author and a message explaining the change. Small, focused snapshots with clear messages make it easy to understand, review and undo work later.",
+      "summary": "A saved snapshot of your project with a message explaining what changed.",
+      "analogy": "A save point in a video game. You can always return to it, and a good label tells you exactly what you had just done before saving.",
+      "real_world_example": "A developer fixes a login bug and records it with the message Fix crash when password field is empty, so teammates can find that change months later.",
+      "confused_with": "Push: committing saves the snapshot only on your own machine, while pushing sends your commits to a shared remote repository such as GitHub.",
+      "related": [
+        "git-branch",
+        "pull-request",
+        "merge-conflict"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You committed a fix but your teammate cannot see it on GitHub. What step is most likely missing?",
+        "options": [
+          "Writing a longer and more detailed commit message",
+          "Creating a new branch after making the commit",
+          "Pushing the commit to the shared remote repository",
+          "Deleting the local copy so Git syncs the change"
+        ],
+        "answer_index": 2,
+        "explanation": "Commits live on your machine until you push them to the remote that others pull from."
+      }
+    },
+    {
+      "id": "git-branch",
+      "term": "Git Branch",
+      "category": "version-control",
+      "level": "beginner",
+      "definition": "An independent line of development in a Git repository. You create one to work on a feature or fix without touching the main code, then merge it back when it's ready. Branches are cheap to create, so teams use a new one for almost every change.",
+      "summary": "A separate line of work where you change code without touching main.",
+      "analogy": "Writing a draft chapter in a copy of a shared document. You experiment freely, and only when it's good do you paste it into the real book.",
+      "real_world_example": "A developer creates a branch called add-dark-mode, builds the feature over three days, and merges it into main after review, while others keep shipping fixes.",
+      "confused_with": "Fork: a fork is a full copy of someone else's repository under your account, while a branch lives inside the same repository.",
+      "related": [
+        "git-commit",
+        "merge-vs-rebase",
+        "pull-request"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You want to try a risky redesign without breaking the working app your team ships daily. What should you do first?",
+        "options": [
+          "Create a new branch and make the redesign changes there",
+          "Edit main directly and revert later if anything breaks",
+          "Copy the whole project folder and email it to yourself",
+          "Pause all team commits until the redesign is finished"
+        ],
+        "answer_index": 0,
+        "explanation": "A branch isolates your changes until they are ready, so main keeps working."
+      }
+    },
+    {
+      "id": "merge-vs-rebase",
+      "term": "Merge vs Rebase",
+      "category": "version-control",
+      "level": "intermediate",
+      "definition": "Two ways to bring changes from one branch into another. A merge joins the histories with a new merge commit and keeps everything exactly as it happened. A rebase replays your commits on top of the other branch, producing a straight, tidier history but rewriting your commits' IDs.",
+      "summary": "Merge joins histories as they happened; rebase replays your commits for a straight line.",
+      "analogy": "Merging is stapling two notebooks together with a note saying where they met. Rebasing is recopying your pages so they look like they were always written after the other notebook.",
+      "real_world_example": "Before opening a pull request, a developer rebases their feature branch onto the latest main so the history reads as one clean sequence of commits.",
+      "confused_with": "Squash: squashing combines several commits into one, and can be done during either a merge or a rebase.",
+      "related": [
+        "git-branch",
+        "merge-conflict",
+        "pull-request"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Your teammates have already pulled your shared branch. Why should you avoid rebasing it now?",
+        "options": [
+          "Rebasing deletes every commit that was made by other developers",
+          "Rebasing only works on branches that have never been pushed at all",
+          "Rebasing turns the branch into a fork that nobody else can access",
+          "Rebasing rewrites commit IDs, breaking the history they already have"
+        ],
+        "answer_index": 3,
+        "explanation": "Rewritten commits no longer match the copies others have, causing confusing duplicates and conflicts."
+      }
+    },
+    {
+      "id": "merge-conflict",
+      "term": "Merge Conflict",
+      "category": "version-control",
+      "level": "beginner",
+      "definition": "A stop that happens when Git can't combine two changes automatically, usually because both edited the same lines of a file. Git marks the clashing sections and waits for a person to choose what the final code should be. Conflicts are normal in team work and are resolved by editing, testing and committing the result.",
+      "summary": "When two changes edit the same lines and Git needs you to decide.",
+      "analogy": "Two people editing the same sentence in a shared document at once. The editor can't guess which version you meant, so it shows both and asks.",
+      "real_world_example": "Two developers both change the price format in checkout.dart. The second to merge sees conflict markers and combines the two edits by hand.",
+      "confused_with": "Failed build: a conflict stops Git from combining files, while a failed build means the files combined fine but the code doesn't compile or pass tests.",
+      "related": [
+        "merge-vs-rebase",
+        "git-branch",
+        "code-review"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Git reports a conflict in settings.dart while merging. What is the right next step?",
+        "options": [
+          "Delete settings.dart so that Git can finish the merge by itself",
+          "Edit the marked sections to the correct final code, then commit",
+          "Force push your branch so that your version overwrites the other",
+          "Restart your computer so that Git can retry the merge cleanly"
+        ],
+        "answer_index": 1,
+        "explanation": "Git needs a person to decide the final content, then a commit records that decision."
+      }
+    },
+    {
+      "id": "pull-request",
+      "term": "Pull Request",
+      "category": "collaboration",
+      "level": "beginner",
+      "definition": "A request to merge one branch into another, opened on a platform like GitHub. It shows the code changes, runs automated checks and gives teammates a place to comment before anything reaches the main branch. It is the main way teams review and discuss changes.",
+      "summary": "A proposal to merge your branch, where teammates review and comment first.",
+      "analogy": "Submitting an essay draft to an editor. They read it, leave notes in the margins, and only approved work goes into the published book.",
+      "real_world_example": "A developer opens a pull request for add-dark-mode. CI runs the tests, two teammates leave comments, and after fixes it is approved and merged.",
+      "confused_with": "Merge: a pull request is the proposal and conversation, while the merge is the action that finally combines the code.",
+      "related": [
+        "code-review",
+        "ci-cd",
+        "git-branch"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "What is the main purpose of opening a pull request instead of pushing straight to main?",
+        "options": [
+          "To make the code run faster once it is finally deployed to users",
+          "To get review and automated checks before the code reaches main",
+          "To create a backup copy of the repository on a different server",
+          "To rename the branch so that it matches the name of the feature"
+        ],
+        "answer_index": 1,
+        "explanation": "Pull requests add a checkpoint where people and tests can catch problems before merging."
+      }
+    },
+    {
+      "id": "code-review",
+      "term": "Code Review",
+      "category": "collaboration",
+      "level": "beginner",
+      "definition": "The practice of having teammates read and comment on code before it is merged. Reviewers look for bugs, unclear naming, missing tests and security problems, and share knowledge along the way. Small changes get faster, better reviews than huge ones.",
+      "summary": "Teammates reading your code before it merges to catch bugs and share knowledge.",
+      "analogy": "A second pair of eyes proofreading your essay. They spot mistakes you've read past ten times and suggest clearer ways to say things.",
+      "real_world_example": "A reviewer notices a new endpoint doesn't check whether the user is logged in, and the bug is fixed before it ever reaches users.",
+      "confused_with": "Testing: tests check that code behaves as expected automatically, while review is people judging correctness, design and readability.",
+      "related": [
+        "pull-request",
+        "unit-test",
+        "refactoring"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Which change is likely to get the most useful code review?",
+        "options": [
+          "A 4,000-line change mixing a feature, a refactor and some style fixes",
+          "A change with no description, so the reviewer judges it unbiased",
+          "A change already merged, so the reviewer only checks the final result",
+          "A focused 150-line change with a clear description of its purpose"
+        ],
+        "answer_index": 3,
+        "explanation": "Small, well-described changes let reviewers understand them fully and spot real problems."
+      }
+    },
+    {
+      "id": "unit-test",
+      "term": "Unit Test",
+      "category": "testing",
+      "level": "beginner",
+      "definition": "An automated check that runs one small piece of code, such as a single function, and compares its result with what is expected. These run in milliseconds and pinpoint exactly which piece broke. A good suite lets you change code with confidence that you haven't broken old behaviour.",
+      "summary": "An automated check that one small piece of code returns what you expect.",
+      "analogy": "Testing each brick before building a wall. If a brick cracks, you know exactly which one is faulty before the wall goes up.",
+      "real_world_example": "A test calls calculateDiscount(100, 20%) and checks it returns 80. If someone later breaks the maths, the test fails within seconds.",
+      "confused_with": "Integration test: a unit test checks one piece alone, while an integration test checks several pieces working together.",
+      "related": [
+        "integration-test",
+        "mocking",
+        "tdd"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A unit test for a price calculator suddenly fails after a teammate's change. What does this most directly tell you?",
+        "options": [
+          "The calculator no longer returns the result it is expected to give",
+          "The database server is offline and refusing every connection now",
+          "The whole app crashes on startup for every user on every device",
+          "The teammate forgot to push their latest commits to the remote"
+        ],
+        "answer_index": 0,
+        "explanation": "A unit test checks one piece in isolation, so its failure points straight at that piece's behaviour."
+      }
+    },
+    {
+      "id": "integration-test",
+      "term": "Integration Test",
+      "category": "testing",
+      "level": "intermediate",
+      "definition": "An automated test that checks several parts of a system working together, such as an API, its database and its validation. It catches problems in the connections between pieces that unit tests miss. These tests are slower and harder to set up, so teams write fewer of them.",
+      "summary": "A test that checks several parts work correctly together, like an API and its database.",
+      "analogy": "After checking each car part on its own, you assemble the engine and run it, because parts that pass alone can still clash once connected.",
+      "real_world_example": "A test sends a real sign-up request to the API, then checks that a user row appears in a test database with the right fields.",
+      "confused_with": "End-to-end test: an end-to-end test drives the whole app like a real user, often through the UI, while an integration test can focus on a few connected parts.",
+      "related": [
+        "unit-test",
+        "mocking",
+        "ci-cd"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Every unit test passes, but saving a form fails because the API sends dates in a format the database rejects. Which test would catch this?",
+        "options": [
+          "Another unit test that checks the date formatter on its own again",
+          "A code review that only looks at variable names and code comments",
+          "An integration test that runs the API against a real test database",
+          "A load test that sends thousands of requests to the server at once"
+        ],
+        "answer_index": 2,
+        "explanation": "The bug lives between two parts, which only a test of them together can see."
+      }
+    },
+    {
+      "id": "mocking",
+      "term": "Mocking",
+      "category": "testing",
+      "level": "intermediate",
+      "definition": "Replacing a real dependency, such as a payment service or database, with a fake version during a test. The fake returns controlled answers, so the test is fast, repeatable and doesn't touch real systems. Over-mocking can make tests pass while the real integration is broken.",
+      "summary": "Swapping a real dependency for a controllable fake so tests run fast and safely.",
+      "analogy": "A flight simulator. Pilots practise engine failures safely because the simulator produces exactly the situation they want, without risking a real plane.",
+      "real_world_example": "A checkout test uses a mock payment gateway that always says declined, so developers can test the error message without charging a real card.",
+      "confused_with": "Stub: a stub only returns fixed answers, while a mock can also check how it was called, such as whether charge ran exactly once.",
+      "related": [
+        "unit-test",
+        "integration-test",
+        "tdd"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Your unit tests call a real payment API, so they are slow and sometimes charge test cards. What is the usual fix?",
+        "options": [
+          "Run the tests only at night when the payment API is less busy",
+          "Delete the tests for checkout because they are too hard to run",
+          "Ask the payment company to add a special button for your tests",
+          "Mock the payment service so tests get fast, controlled responses"
+        ],
+        "answer_index": 3,
+        "explanation": "A mock stands in for the real service, making tests fast, repeatable and free of side effects."
+      }
+    },
+    {
+      "id": "tdd",
+      "term": "Test-Driven Development",
+      "category": "testing",
+      "level": "intermediate",
+      "definition": "A way of working where you write a failing test before writing the code that makes it pass. The cycle is red, green, refactor: watch the test fail, write just enough code to pass, then tidy up. It keeps code testable and makes you define the expected behaviour first.",
+      "summary": "Write a failing test first, make it pass, then clean up: red, green, refactor.",
+      "analogy": "Writing the exam questions before studying. You know exactly what success looks like, and you stop once you can answer every question.",
+      "real_world_example": "Before adding a password-strength checker, a developer writes tests saying abc fails and Str0ng!Pass passes, then writes the checker until both pass.",
+      "confused_with": "Writing tests afterwards: adding tests after the code still adds safety, but TDD uses the tests to shape the design from the start.",
+      "related": [
+        "unit-test",
+        "refactoring",
+        "mocking"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "In test-driven development, what should you see right after writing a new test and before writing any code?",
+        "options": [
+          "The test passes, proving that the feature was already built earlier",
+          "The test fails, proving it checks behaviour that doesn't exist yet",
+          "The test is skipped, so that the build stays green while you work",
+          "The test crashes the build, so the whole team knows to stop work"
+        ],
+        "answer_index": 1,
+        "explanation": "Seeing it fail first, the red step, proves the test actually checks the new behaviour."
+      }
+    },
+    {
+      "id": "ci-cd",
+      "term": "CI/CD",
+      "category": "devops",
+      "level": "intermediate",
+      "definition": "Continuous integration means every change is automatically built and tested as soon as it is pushed. Continuous delivery or deployment goes further and automatically prepares or ships passing changes to users. Together they catch problems early and make releasing small, frequent and routine.",
+      "summary": "Automatically test every change, then ship the ones that pass.",
+      "analogy": "A factory line with inspection stations. Every part is checked the moment it's made, and only parts that pass move on to be packed and shipped.",
+      "real_world_example": "When a pull request is opened, GitHub Actions runs the tests in minutes, and after merging, the app deploys to the store's testing track automatically.",
+      "confused_with": "DevOps: DevOps is the broader culture of developers and operations working together, while CI/CD is one set of practices and tools within it.",
+      "related": [
+        "pull-request",
+        "unit-test",
+        "semantic-versioning"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A team finds bugs only on release day, weeks after the code was written. Which practice most directly catches them sooner?",
+        "options": [
+          "Writing longer commit messages so the bugs are easier to explain",
+          "Releasing less often so there is more time to test before each one",
+          "Continuous integration, running the tests on every pushed change",
+          "Asking users to report bugs through a feedback form after launch"
+        ],
+        "answer_index": 2,
+        "explanation": "CI tests each change as it is pushed, so problems surface within minutes rather than weeks."
+      }
+    },
+    {
+      "id": "semantic-versioning",
+      "term": "Semantic Versioning",
+      "category": "devops",
+      "level": "beginner",
+      "definition": "A version numbering scheme written as MAJOR.MINOR.PATCH, such as 2.4.1. You bump PATCH for bug fixes, MINOR for new features that don't break anything, and MAJOR for changes that break existing users. The number tells people how risky an upgrade is.",
+      "summary": "Version numbers as MAJOR.MINOR.PATCH that signal how risky an upgrade is.",
+      "analogy": "A traffic light on an update. A patch is green and safe, a minor change is amber with something new to notice, and a major change is red, so stop and read first.",
+      "real_world_example": "A library moving from 3.2.0 to 4.0.0 warns every app using it that something was removed or renamed and their code may need changes.",
+      "confused_with": "Build number: an internal counter that increases with every build, like the +12 in 1.0.0+12, and says nothing about compatibility.",
+      "related": [
+        "dependency-management",
+        "ci-cd",
+        "git-commit"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You fixed a bug in your library without changing how anyone calls it. The current version is 1.4.2. What should it become?",
+        "options": [
+          "1.4.3, a patch release for a backwards-compatible fix",
+          "1.5.0, a minor release that adds a brand new feature",
+          "2.0.0, a major release that breaks existing callers",
+          "1.4.2 again, since bug fixes never change the version"
+        ],
+        "answer_index": 0,
+        "explanation": "Fixes that don't change the public behaviour callers rely on bump only the PATCH number."
+      }
+    },
+    {
+      "id": "dependency-management",
+      "term": "Dependency Management",
+      "category": "devops",
+      "level": "intermediate",
+      "definition": "Keeping track of the external packages a project relies on, including which versions are allowed. A manifest such as pubspec.yaml lists them, and a lock file records the exact versions installed so every machine builds the same thing. Updating them regularly brings fixes, but each update can also break things.",
+      "summary": "Tracking the packages your project uses and pinning their versions so builds match.",
+      "analogy": "A recipe that names exact brands and sizes of ingredients. Anyone cooking it gets the same dish, instead of whatever happened to be in their cupboard.",
+      "real_world_example": "A Flutter app's pubspec.lock pins every package version, so a new teammate's build uses exactly the same code as the release build.",
+      "confused_with": "Vendoring: copying a dependency's source code directly into your repository instead of downloading it from a package registry.",
+      "related": [
+        "semantic-versioning",
+        "technical-debt",
+        "ci-cd"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "The app builds on your laptop but fails on a teammate's because they got a newer package version. What prevents this?",
+        "options": [
+          "Commit the lock file so every machine installs identical versions",
+          "Delete the package and copy only the functions you actually need",
+          "Ask the teammate to reinstall their operating system from scratch",
+          "Always use the newest version of every package on every machine"
+        ],
+        "answer_index": 0,
+        "explanation": "A lock file records exact versions, so everyone builds against the same dependencies."
+      }
+    },
+    {
+      "id": "refactoring",
+      "term": "Refactoring",
+      "category": "code-quality",
+      "level": "intermediate",
+      "definition": "Changing the structure of code without changing what it does. Examples include renaming unclear variables, splitting a long function or removing duplication. Done in small steps with tests running, it makes code easier to understand and change.",
+      "summary": "Improving how code is structured without changing what it does.",
+      "analogy": "Reorganising a messy kitchen. Every tool is still there and you can cook the same meals, but now you find things quickly.",
+      "real_world_example": "A developer splits a 400-line checkout function into five small named functions. The tests still pass, and the next bug fix takes minutes instead of hours.",
+      "confused_with": "Rewriting: a rewrite replaces code wholesale and often changes behaviour, while refactoring keeps behaviour identical in small, safe steps.",
+      "related": [
+        "technical-debt",
+        "tdd",
+        "code-review"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "What makes refactoring safe to do on code that real users depend on?",
+        "options": [
+          "Doing it all in one large change so nothing is left half done",
+          "Doing it only on Fridays so users have the weekend to report bugs",
+          "Small steps with tests confirming the behaviour hasn't changed",
+          "Turning off the tests while refactoring so they don't slow you down"
+        ],
+        "answer_index": 2,
+        "explanation": "Tests prove behaviour is unchanged after each small step, which is the whole point of refactoring."
+      }
+    },
+    {
+      "id": "technical-debt",
+      "term": "Technical Debt",
+      "category": "code-quality",
+      "level": "intermediate",
+      "definition": "The future cost of choosing a quick or messy solution now instead of a cleaner one. Like money debt, it builds interest: every later change in that area takes longer and is riskier. Some debt is a sensible trade-off to ship sooner, as long as the team plans to pay it back.",
+      "summary": "The future cost of quick shortcuts that make later changes slower.",
+      "analogy": "Paying for things with a credit card. You get what you need now, but if you never pay it off, the interest keeps growing until it limits everything you do.",
+      "real_world_example": "A startup hardcodes prices to launch on time. A year later, adding a sale feature takes a month because prices are scattered across forty files.",
+      "confused_with": "Bug: a bug is code doing the wrong thing, while technical debt is code that works but is costly to change.",
+      "related": [
+        "refactoring",
+        "code-review",
+        "dependency-management"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A team notices that every small feature in the payments area now takes weeks. What is the most likely underlying cause?",
+        "options": [
+          "A slow internet connection in the office during working hours",
+          "Built-up technical debt from shortcuts that were never cleaned up",
+          "Too many unit tests covering the payments area of the codebase",
+          "Using Git branches instead of committing straight to main daily"
+        ],
+        "answer_index": 1,
+        "explanation": "Accumulated shortcuts make each change slower and riskier, which is the interest on technical debt."
+      }
+    }
+  ],
+  "daily_sets": [
+    {
+      "date": "2026-11-30",
+      "theme": "Git & Testing",
+      "concept_ids": [
+        "git-commit",
+        "git-branch",
+        "merge-vs-rebase"
+      ]
+    },
+    {
+      "date": "2026-12-01",
+      "theme": "Git & Testing",
+      "concept_ids": [
+        "merge-conflict",
+        "pull-request",
+        "code-review"
+      ]
+    },
+    {
+      "date": "2026-12-02",
+      "theme": "Git & Testing",
+      "concept_ids": [
+        "unit-test",
+        "integration-test",
+        "mocking"
+      ]
+    },
+    {
+      "date": "2026-12-03",
+      "theme": "Git & Testing",
+      "concept_ids": [
+        "tdd",
+        "ci-cd",
+        "semantic-versioning"
+      ]
+    },
+    {
+      "date": "2026-12-04",
+      "theme": "Git & Testing",
+      "concept_ids": [
+        "dependency-management",
+        "refactoring",
+        "technical-debt"
+      ]
+    }
+  ]
+}

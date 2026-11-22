@@ -5,6 +5,10 @@ import argparse
 import re
 from datetime import datetime
 
+# Limits for the card summary, which must fit the Today card without cutting off.
+SUMMARY_MAX_WORDS = 15
+SUMMARY_MAX_CHARS = 110
+
 def validate_payload(data, allow_review=False, commit=False, db=None):
     errors = []
     warnings = []
@@ -62,6 +66,18 @@ def validate_payload(data, allow_review=False, commit=False, db=None):
             term = c.get("term", "")
             if term and definition.split()[0].lower().strip('.,!?') == term.split()[0].lower():
                 warnings.append(f"Concept '{cid}' definition starts with the term")
+
+        # One-line summary shown on the Today card. It must read on its own.
+        summary = c.get("summary")
+        if not isinstance(summary, str) or not summary.strip():
+            errors.append(f"Concept '{cid}' missing 'summary'")
+        else:
+            if '`' in summary:
+                errors.append(f"Concept '{cid}' summary contains backticks or code fences")
+            if len(summary.split()) > SUMMARY_MAX_WORDS:
+                errors.append(f"Concept '{cid}' summary is over {SUMMARY_MAX_WORDS} words")
+            if len(summary) > SUMMARY_MAX_CHARS:
+                errors.append(f"Concept '{cid}' summary is over {SUMMARY_MAX_CHARS} characters")
 
         analogy = c.get("analogy")
         if analogy is not None:
@@ -198,7 +214,9 @@ def validate_payload(data, allow_review=False, commit=False, db=None):
                     errors.append(f"Daily set '{date_str}' references undefined concept '{cid}'")
                 used_concept_ids.add(cid)
 
-    unused = defined_slugs - used_concept_ids
+    # Only this file's concepts need a daily set; other files schedule their own.
+    file_slugs = {c.get("id") for c in concepts if isinstance(c, dict)}
+    unused = file_slugs - used_concept_ids
     for u in unused:
         warnings.append(f"Concept '{u}' is not used in any daily set")
 

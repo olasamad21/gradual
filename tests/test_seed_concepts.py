@@ -11,6 +11,7 @@ def get_valid_payload():
                 "category": "cat",
                 "level": "beginner",
                 "definition": "This is a valid definition. It has exactly two sentences.",
+                "summary": "A short line about concept A.",
                 "analogy": "A short analogy.",
                 "real_world_example": "A real world example.",
                 "confused_with": None,
@@ -29,6 +30,7 @@ def get_valid_payload():
                 "category": "cat",
                 "level": "intermediate",
                 "definition": "Another valid definition. Also two sentences.",
+                "summary": "A short line about concept B.",
                 "analogy": None,
                 "real_world_example": "Another example.",
                 "confused_with": "concept-a",
@@ -47,6 +49,7 @@ def get_valid_payload():
                 "category": "cat",
                 "level": "advanced",
                 "definition": "Third definition. Two sentences again.",
+                "summary": "A short line about concept C.",
                 "analogy": "Another short analogy.",
                 "real_world_example": "Example 3.",
                 "confused_with": None,
@@ -201,6 +204,7 @@ def test_warning_unused_concept():
         "category": "cat",
         "level": "beginner",
         "definition": "Valid definition here. Just two sentences.",
+        "summary": "A short line about the extra concept.",
         "analogy": None,
         "real_world_example": "Example",
         "confused_with": None,
@@ -223,3 +227,22 @@ def test_warning_options_length():
     errors, warnings = validate_payload(payload)
     assert not errors
     assert any("very different lengths" in w for w in warnings)
+
+
+def test_missing_summary():
+    payload = get_valid_payload()
+    del payload["concepts"][0]["summary"]
+    errors, _ = validate_payload(payload)
+    assert any("missing 'summary'" in e for e in errors)
+
+def test_summary_too_long():
+    payload = get_valid_payload()
+    payload["concepts"][0]["summary"] = " ".join(["word"] * 16)
+    errors, _ = validate_payload(payload)
+    assert any("summary is over 15 words" in e for e in errors)
+
+def test_summary_too_many_characters():
+    payload = get_valid_payload()
+    payload["concepts"][0]["summary"] = "Extraordinarily " * 7 + "long."
+    errors, _ = validate_payload(payload)
+    assert any("summary is over 110 characters" in e for e in errors)

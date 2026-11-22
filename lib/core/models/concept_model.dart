@@ -39,6 +39,7 @@ class Concept {
     required this.category,
     required this.level,
     required this.definition,
+    this.summary,
     this.analogy,
     required this.realWorldExample,
     this.confusedWith,
@@ -51,6 +52,9 @@ class Concept {
   final String category;
   final String level;
   final String definition;
+
+  /// One-line hook for the Today card. Older content may not have one.
+  final String? summary;
   final String? analogy;
   final String realWorldExample;
   final String? confusedWith;
@@ -64,6 +68,7 @@ class Concept {
       category: json['category'] as String? ?? '',
       level: json['level'] as String? ?? '',
       definition: json['definition'] as String? ?? '',
+      summary: (json['summary'] as String?)?.trim().isEmpty ?? true ? null : (json['summary'] as String).trim(),
       analogy: json['analogy'] as String?,
       realWorldExample: json['real_world_example'] as String? ?? '',
       confusedWith: json['confused_with'] as String?,
@@ -84,6 +89,7 @@ class Concept {
       'category': category,
       'level': level,
       'definition': definition,
+      if (summary != null) 'summary': summary,
       if (analogy != null) 'analogy': analogy,
       'real_world_example': realWorldExample,
       if (confusedWith != null) 'confused_with': confusedWith,
