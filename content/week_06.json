@@ -1,0 +1,472 @@
+{
+  "field": "software_engineering",
+  "concepts": [
+    {
+      "id": "class-and-object",
+      "term": "Class and Object",
+      "category": "oop",
+      "level": "beginner",
+      "definition": "A class is a blueprint that describes what data something holds and what it can do. An object is one concrete thing built from that blueprint, with its own values. One class can produce many objects, each with different data but the same behaviour.",
+      "summary": "A class is the blueprint; an object is one real thing built from it.",
+      "analogy": "A cookie cutter and the cookies. The cutter defines the shape once, and every cookie pressed from it is a separate cookie you can decorate differently.",
+      "real_world_example": "In a shopping app, a Product class defines a name, price and addToCart method, and each item on screen is a separate Product object.",
+      "confused_with": "Instance: instance is simply another word for object, meaning one specific thing created from a class.",
+      "related": [
+        "encapsulation",
+        "inheritance",
+        "interface"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "An app creates a User class, then makes users for Ada and Tunde. How many classes and objects are there?",
+        "options": [
+          "Two classes and one object",
+          "One class and two objects",
+          "Two classes and two objects",
+          "One class and no objects yet"
+        ],
+        "answer_index": 1,
+        "explanation": "The class is the single blueprint, and each user built from it is a separate object."
+      }
+    },
+    {
+      "id": "encapsulation",
+      "term": "Encapsulation",
+      "category": "oop",
+      "level": "beginner",
+      "definition": "Keeping an object's data private and letting other code change it only through the object's own methods. The object can then check every change and keep its data valid. It also lets you change the inside later without breaking code that uses it.",
+      "summary": "Hiding an object's data so it can only change through its own methods.",
+      "analogy": "A cash machine. You can withdraw through the screen and keypad, but you can't reach into the vault, so the bank always controls how money leaves.",
+      "real_world_example": "A BankAccount class keeps balance private and offers a withdraw method that refuses to let the balance go below zero.",
+      "confused_with": "Abstraction: encapsulation hides data to protect it, while abstraction hides complexity so you can use something without knowing how it works.",
+      "related": [
+        "class-and-object",
+        "abstraction",
+        "single-responsibility-principle"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Other code keeps setting an account's balance to negative numbers directly. Which principle fixes this?",
+        "options": [
+          "Inheritance: create a SavingsAccount subclass with its own balance field",
+          "Polymorphism: give each account type its own way to show its balance",
+          "Recursion: recalculate the balance from every past transaction instead",
+          "Encapsulation: make balance private and change it through checked methods"
+        ],
+        "answer_index": 3,
+        "explanation": "Hiding the field behind methods means every change can be validated before it happens."
+      }
+    },
+    {
+      "id": "inheritance",
+      "term": "Inheritance",
+      "category": "oop",
+      "level": "beginner",
+      "definition": "A way for one class to build on another, reusing its data and behaviour and adding or changing parts. The new class is a subclass and the original is its parent. It suits true is-a relationships, but deep chains of subclasses become hard to change.",
+      "summary": "A class reusing and extending another class's data and behaviour.",
+      "analogy": "A child inheriting family traits. They get their parents' surname and eye colour automatically, then develop their own skills on top.",
+      "real_world_example": "In Flutter, your screens extend StatelessWidget or StatefulWidget, inheriting everything a widget needs and adding their own build method.",
+      "confused_with": "Composition: composition builds a class by holding other objects as parts, a has-a relationship, instead of being a kind of another class.",
+      "related": [
+        "polymorphism",
+        "composition-over-inheritance",
+        "liskov-substitution-principle"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Which pair is a sensible use of inheritance?",
+        "options": [
+          "Dog extends Animal, since a dog is an animal",
+          "Car extends Engine, since a car has an engine",
+          "Order extends Customer, since orders have owners",
+          "Button extends Color, since buttons have a color"
+        ],
+        "answer_index": 0,
+        "explanation": "Inheritance fits is-a relationships; has-a relationships are better modelled with composition."
+      }
+    },
+    {
+      "id": "polymorphism",
+      "term": "Polymorphism",
+      "category": "oop",
+      "level": "intermediate",
+      "definition": "The ability for different types of objects to respond to the same method call in their own way. Code can work with the general type and let each object supply the right behaviour. This removes long if-else chains that check what kind of object something is.",
+      "summary": "Different objects responding to the same call in their own way.",
+      "analogy": "Pressing play on any device. A phone, a TV and a speaker all understand play, but each does it in its own way.",
+      "real_world_example": "A payment screen calls pay() on whichever method the user picked, and the card, bank transfer and wallet classes each handle it differently.",
+      "confused_with": "Overloading: overloading means several methods share a name but take different arguments in the same class, which is a narrower idea.",
+      "related": [
+        "inheritance",
+        "interface",
+        "open-closed-principle"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Code has a long if-else checking whether a shape is a circle, square or triangle to compute its area. What is the polymorphic fix?",
+        "options": [
+          "Add a new if-else branch whenever a new kind of shape is introduced",
+          "Store every shape's area in a database table and look it up by name",
+          "Give each shape class its own area method and just call shape.area()",
+          "Move the if-else chain into a helper function in a separate file"
+        ],
+        "answer_index": 2,
+        "explanation": "Each class supplies its own behaviour, so callers no longer need to check the type."
+      }
+    },
+    {
+      "id": "abstraction",
+      "term": "Abstraction",
+      "category": "oop",
+      "level": "beginner",
+      "definition": "Showing only what someone needs to use a thing and hiding the details of how it works. A good abstraction gives a simple set of operations that stay the same even if the inside changes. It lets people build on code without understanding all of it.",
+      "summary": "Exposing what something does while hiding how it does it.",
+      "analogy": "Driving a car. You use a wheel, pedals and gears, and you don't need to understand fuel injection to get to work.",
+      "real_world_example": "Calling http.get(url) fetches a web page without you handling sockets, DNS lookups or TLS handshakes yourself.",
+      "confused_with": "Encapsulation: abstraction is about a simple outside view, while encapsulation is about protecting the inside data from direct changes.",
+      "related": [
+        "encapsulation",
+        "interface",
+        "api"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Which is the clearest example of abstraction?",
+        "options": [
+          "A private field that stops other classes changing it",
+          "A subclass that copies all of its parent's methods",
+          "A save() method that hides how data is written to disk",
+          "A long method that handles every case in one place"
+        ],
+        "answer_index": 2,
+        "explanation": "Callers use save() without knowing the storage details, which is abstraction."
+      }
+    },
+    {
+      "id": "composition-over-inheritance",
+      "term": "Composition over Inheritance",
+      "category": "oop",
+      "level": "intermediate",
+      "definition": "A design guideline to build behaviour by combining small objects rather than extending a chain of parent classes. A class holds other objects and delegates work to them, a has-a relationship. This keeps parts swappable and avoids rigid, deep class hierarchies.",
+      "summary": "Build classes from smaller parts instead of long chains of parent classes.",
+      "analogy": "Building with LEGO instead of carving from one block. You snap together the pieces you need and swap a piece without remaking the whole model.",
+      "real_world_example": "Flutter favours composition: a Card is built by nesting Padding, Column and Text widgets instead of subclassing a giant base widget.",
+      "confused_with": "Never using inheritance: the guideline is a preference, and inheritance still fits genuine is-a relationships.",
+      "related": [
+        "inheritance",
+        "dependency-injection",
+        "coupling-and-cohesion"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A game has FlyingEnemy, SwimmingEnemy and now needs FlyingSwimmingEnemy. Subclassing is getting messy. What helps?",
+        "options": [
+          "Give Enemy separate movement parts it can combine, such as Fly and Swim",
+          "Add a fourth subclass that copies code from both existing subclasses",
+          "Put flying and swimming code in the base class for every enemy type",
+          "Create a deeper hierarchy so each new mix gets its own parent class"
+        ],
+        "answer_index": 0,
+        "explanation": "Composing behaviours from parts lets you mix them freely without an explosion of subclasses."
+      }
+    },
+    {
+      "id": "interface",
+      "term": "Interface",
+      "category": "oop",
+      "level": "intermediate",
+      "definition": "A contract listing the methods a class promises to provide, without saying how they work. Any class that implements it can be used wherever that contract is expected. Code that depends on an interface can swap one implementation for another easily.",
+      "summary": "A contract of methods a class promises to provide, without the how.",
+      "analogy": "A wall socket. Any plug with the right shape works, whether it's a lamp or a phone charger, because both follow the same standard.",
+      "real_world_example": "A ContentRepository interface lets the real app read from Firestore while tests plug in a fake repository with the same methods.",
+      "confused_with": "Abstract class: an abstract class can include shared code and state, while an interface traditionally only describes methods.",
+      "related": [
+        "polymorphism",
+        "dependency-inversion-principle",
+        "mocking"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Why would a repository class implement an interface instead of being used directly everywhere?",
+        "options": [
+          "So the class can run faster because interfaces skip compilation",
+          "So the class is automatically saved to the database when it changes",
+          "So the class no longer needs any methods of its own to be written",
+          "So callers can swap in another implementation, such as a test fake"
+        ],
+        "answer_index": 3,
+        "explanation": "Depending on the contract instead of a concrete class makes the implementation replaceable."
+      }
+    },
+    {
+      "id": "single-responsibility-principle",
+      "term": "Single Responsibility Principle",
+      "category": "solid",
+      "level": "intermediate",
+      "definition": "The S in SOLID: a class or module should have one job, and so only one reason to change. When one class handles saving, formatting and emailing, a change to any of them risks breaking the others. Splitting responsibilities keeps each piece small, focused and easy to test.",
+      "summary": "Each class should have one job, so it has only one reason to change.",
+      "analogy": "A restaurant kitchen. The chef cooks, the waiter serves and the cashier takes payment, so changing the menu doesn't change how bills are paid.",
+      "real_world_example": "An Invoice class that also writes PDFs and sends emails is split into Invoice, InvoicePdfRenderer and InvoiceMailer.",
+      "confused_with": "Doing one thing per method: the principle is about reasons to change at the class or module level, not about making every method tiny.",
+      "related": [
+        "open-closed-principle",
+        "coupling-and-cohesion",
+        "refactoring"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A UserService validates input, saves to the database and sends welcome emails. Which principle does it break most clearly?",
+        "options": [
+          "Liskov substitution, since it cannot be replaced by a parent class",
+          "Single responsibility, since it has several unrelated reasons to change",
+          "Interface segregation, since it implements too few interface methods",
+          "Open-closed, since it is closed to every kind of modification"
+        ],
+        "answer_index": 1,
+        "explanation": "Validation, storage and email each change for different reasons, so they belong in separate classes."
+      }
+    },
+    {
+      "id": "open-closed-principle",
+      "term": "Open-Closed Principle",
+      "category": "solid",
+      "level": "intermediate",
+      "definition": "The O in SOLID: code should be open for extension but closed for modification. You add new behaviour by writing new code, such as a new class, instead of editing working code. This protects tested code from new bugs every time a feature is added.",
+      "summary": "Add new behaviour with new code instead of editing code that already works.",
+      "analogy": "A power strip. You plug in another device without rewiring the strip, so what already works keeps working.",
+      "real_world_example": "To add a new discount type, you create a new BlackFridayDiscount class instead of adding another branch inside a big calculateDiscount function.",
+      "confused_with": "Never editing code: bugs still get fixed in place; the principle is about adding features without reopening stable code.",
+      "related": [
+        "polymorphism",
+        "single-responsibility-principle",
+        "interface"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Every new payment method means editing a long switch statement in PaymentProcessor. How would the open-closed principle change this?",
+        "options": [
+          "Add each payment method as a new class behind a shared interface",
+          "Add a comment above the switch explaining how to add new cases",
+          "Copy PaymentProcessor and edit the copy for each payment method",
+          "Move the switch into a database so new cases need no new code"
+        ],
+        "answer_index": 0,
+        "explanation": "New classes extend the system while the existing processor stays untouched."
+      }
+    },
+    {
+      "id": "liskov-substitution-principle",
+      "term": "Liskov Substitution Principle",
+      "category": "solid",
+      "level": "advanced",
+      "definition": "The L in SOLID: a subclass must work anywhere its parent class is expected, without surprising the code using it. It may add behaviour but must not break the promises the parent makes. When a subclass throws errors or ignores calls its parent supports, it violates the principle.",
+      "summary": "A subclass must work anywhere its parent is expected, without surprises.",
+      "analogy": "A substitute teacher. They may teach differently, but they still take the register and run the lesson, or the school's routine falls apart.",
+      "real_world_example": "If ReadOnlyList extends List but throws an error on add, code expecting a normal List crashes, so it should not be a subclass of List.",
+      "confused_with": "Inheritance in general: inheritance lets you make a subclass, while this principle says when that subclass is actually safe to use.",
+      "related": [
+        "inheritance",
+        "polymorphism",
+        "interface-segregation-principle"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Square extends Rectangle, but setting a square's width also changes its height, breaking code that resizes rectangles. Which principle is violated?",
+        "options": [
+          "Single responsibility, since Square has too many separate jobs to do",
+          "Dependency inversion, since Square depends on a concrete parent class",
+          "Liskov substitution, since Square cannot stand in for Rectangle safely",
+          "Open-closed, since Square was added without editing Rectangle at all"
+        ],
+        "answer_index": 2,
+        "explanation": "Code written for Rectangle breaks when given a Square, so the subclass is not a safe substitute."
+      }
+    },
+    {
+      "id": "interface-segregation-principle",
+      "term": "Interface Segregation Principle",
+      "category": "solid",
+      "level": "advanced",
+      "definition": "The I in SOLID: no class should be forced to depend on methods it does not use. Instead of one large interface, define several small ones focused on specific needs. Classes then implement only what makes sense for them.",
+      "summary": "Prefer several small interfaces over one large one nobody fully needs.",
+      "analogy": "Separate remotes for the TV and the air conditioner. One giant remote with every button forces each device to deal with buttons it can't use.",
+      "real_world_example": "Instead of one Worker interface with work and eat, a robot implements Workable only, so it isn't forced to fake an eat method.",
+      "confused_with": "Single responsibility: that principle splits classes by reason to change, while interface segregation splits interfaces by what callers need.",
+      "related": [
+        "interface",
+        "single-responsibility-principle",
+        "liskov-substitution-principle"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A Printer interface requires print, scan and fax, so a basic printer must leave scan and fax throwing errors. What is the fix?",
+        "options": [
+          "Make scan and fax quietly do nothing on the basic printer class",
+          "Split it into smaller interfaces such as Printable and Scannable",
+          "Add a capabilities flag that callers must check before each call",
+          "Remove the basic printer and support only all-in-one devices"
+        ],
+        "answer_index": 1,
+        "explanation": "Small interfaces let each class implement only the abilities it really has."
+      }
+    },
+    {
+      "id": "dependency-inversion-principle",
+      "term": "Dependency Inversion Principle",
+      "category": "solid",
+      "level": "advanced",
+      "definition": "The D in SOLID: high-level code should depend on abstractions, not on concrete low-level details. Your business logic talks to an interface, such as a repository, and the database code implements that interface. Swapping the database or faking it in tests then needs no change to the logic.",
+      "summary": "Business logic should depend on interfaces, not on concrete details like databases.",
+      "analogy": "A lamp with a standard plug. The lamp depends on the plug standard, not on one particular power station, so the electricity supplier can change without rewiring the lamp.",
+      "real_world_example": "A QuizController depends on a UserRepository interface, so the app passes the Firestore version and tests pass an in-memory fake.",
+      "confused_with": "Dependency injection: dependency injection is a technique for passing dependencies in, while dependency inversion is the design rule about depending on abstractions.",
+      "related": [
+        "interface",
+        "dependency-injection",
+        "mocking"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A checkout class creates a FirestoreClient itself, so it can't be tested without the real database. What does dependency inversion suggest?",
+        "options": [
+          "Add a test mode flag inside the checkout class that skips the database",
+          "Copy the checkout class into the test folder and delete its database calls",
+          "Run the tests against the production database during quiet night hours",
+          "Depend on an OrderStore interface and let the database class implement it"
+        ],
+        "answer_index": 3,
+        "explanation": "Depending on an abstraction lets tests supply a fake store without touching real infrastructure."
+      }
+    },
+    {
+      "id": "dependency-injection",
+      "term": "Dependency Injection",
+      "category": "design-patterns",
+      "level": "intermediate",
+      "definition": "Giving an object the things it needs from outside, usually through its constructor, instead of having it create them itself. The caller decides which implementation to pass in. This makes code easier to test, configure and change.",
+      "summary": "Passing an object what it needs instead of letting it build them itself.",
+      "analogy": "A chef handed ingredients by the kitchen, rather than driving to the farm for each one. Change the supplier, and the chef cooks exactly the same way.",
+      "real_world_example": "Riverpod providers inject repositories into controllers, and tests override those providers with fakes without changing the controllers.",
+      "confused_with": "Service locator: with a service locator an object fetches its dependencies from a global registry, while with injection they are handed in from outside.",
+      "related": [
+        "dependency-inversion-principle",
+        "mocking",
+        "composition-over-inheritance"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "What is the main benefit of passing a repository into a class's constructor instead of creating it inside the class?",
+        "options": [
+          "The class uses less memory because it holds fewer fields inside",
+          "The repository is automatically shared between every app user",
+          "The class no longer needs any tests because it has no logic left",
+          "Tests and other callers can pass in a different implementation"
+        ],
+        "answer_index": 3,
+        "explanation": "When dependencies come from outside, callers control them, which makes swapping and testing easy."
+      }
+    },
+    {
+      "id": "design-patterns",
+      "term": "Design Patterns",
+      "category": "design-patterns",
+      "level": "intermediate",
+      "definition": "Named, reusable solutions to problems that come up again and again in software design, such as Singleton, Observer, Factory and Adapter. They are templates for structuring code, not ready-made code to paste. Knowing them gives teams a shared vocabulary and proven starting points.",
+      "summary": "Named, proven solutions to design problems that keep coming up.",
+      "analogy": "Common recipes like a stir-fry. You don't copy one exactly; you know the method and adapt it to whatever ingredients you have.",
+      "real_world_example": "Flutter's ChangeNotifier follows the Observer pattern: widgets subscribe, and when the data changes, every subscriber is told to rebuild.",
+      "confused_with": "Algorithms: an algorithm is step-by-step logic for a computation, while a design pattern is a way to arrange classes and their relationships.",
+      "related": [
+        "dependency-injection",
+        "producer-consumer",
+        "composition-over-inheritance"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Several screens must update whenever the user's settings change. Which pattern describes this?",
+        "options": [
+          "Singleton, where only one screen can exist in the whole app",
+          "Observer, where screens subscribe and get notified of changes",
+          "Factory, where a single class creates every screen on demand",
+          "Adapter, where one screen converts data for another screen"
+        ],
+        "answer_index": 1,
+        "explanation": "Observer lets many listeners react automatically when the thing they watch changes."
+      }
+    },
+    {
+      "id": "coupling-and-cohesion",
+      "term": "Coupling and Cohesion",
+      "category": "design-patterns",
+      "level": "intermediate",
+      "definition": "Two measures of code design. Coupling is how much one module depends on others, and cohesion is how closely the things inside one module belong together. Good design aims for low coupling and high cohesion, so modules can change independently and each has a clear purpose.",
+      "summary": "Aim for parts that depend little on each other and are focused inside.",
+      "analogy": "A good team. Each department handles one clear area, which is high cohesion, and doesn't need constant sign-off from others to get work done, which is low coupling.",
+      "real_world_example": "If changing the database layer forces edits in twenty screens, the code is tightly coupled; putting a repository in between loosens it.",
+      "confused_with": "Code size: small files can still be tightly coupled, and a larger module can be highly cohesive if everything in it serves one purpose.",
+      "related": [
+        "single-responsibility-principle",
+        "dependency-inversion-principle",
+        "technical-debt"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Renaming one field in the user model forces changes in thirty unrelated files. What does this signal?",
+        "options": [
+          "High cohesion, since the files all focus on the same user model",
+          "Low coupling, since the change was possible without a rewrite",
+          "High coupling, since many modules depend on that detail directly",
+          "Good abstraction, since the field name is shared by every file"
+        ],
+        "answer_index": 2,
+        "explanation": "When one small change ripples everywhere, modules are depending on each other's details: high coupling."
+      }
+    }
+  ],
+  "daily_sets": [
+    {
+      "date": "2026-12-14",
+      "theme": "OOP & SOLID",
+      "concept_ids": [
+        "class-and-object",
+        "encapsulation",
+        "inheritance"
+      ]
+    },
+    {
+      "date": "2026-12-15",
+      "theme": "OOP & SOLID",
+      "concept_ids": [
+        "polymorphism",
+        "abstraction",
+        "composition-over-inheritance"
+      ]
+    },
+    {
+      "date": "2026-12-16",
+      "theme": "OOP & SOLID",
+      "concept_ids": [
+        "interface",
+        "single-responsibility-principle",
+        "open-closed-principle"
+      ]
+    },
+    {
+      "date": "2026-12-17",
+      "theme": "OOP & SOLID",
+      "concept_ids": [
+        "liskov-substitution-principle",
+        "interface-segregation-principle",
+        "dependency-inversion-principle"
+      ]
+    },
+    {
+      "date": "2026-12-18",
+      "theme": "OOP & SOLID",
+      "concept_ids": [
+        "dependency-injection",
+        "design-patterns",
+        "coupling-and-cohesion"
+      ]
+    }
+  ]
+}

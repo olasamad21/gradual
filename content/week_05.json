@@ -1,0 +1,472 @@
+{
+  "field": "software_engineering",
+  "concepts": [
+    {
+      "id": "big-o-notation",
+      "term": "Big O Notation",
+      "category": "algorithms",
+      "level": "beginner",
+      "definition": "A way to describe how an algorithm's running time or memory grows as its input gets larger. It ignores constants and small details and keeps only the fastest-growing part, such as O(n) or O(n squared). It lets you compare approaches before writing them and predict how code behaves at scale.",
+      "summary": "How an algorithm's time or memory grows as the input gets bigger.",
+      "analogy": "Comparing journeys by how they scale, not by today's traffic. Walking takes twice as long for twice the distance, while a flight costs roughly the same however far the city is.",
+      "real_world_example": "Checking a list of 10 users one by one is instant, but on 10 million users that O(n) scan is slow, which is why login uses an O(1) lookup instead.",
+      "confused_with": "Exact speed: Big O does not say how many milliseconds code takes, only how that time grows as the input grows.",
+      "related": [
+        "hash-table",
+        "binary-search",
+        "sorting-algorithms"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "One function doubles its running time when the input doubles. Another's time stays the same. How are they usually described?",
+        "options": [
+          "O(1) for the first and O(n) for the second",
+          "O(n) for the first and O(1) for the second",
+          "O(n squared) for both, since both read the input",
+          "O(log n) for both, since both finish eventually"
+        ],
+        "answer_index": 1,
+        "explanation": "Time that grows in step with the input is O(n); time that never changes with input size is O(1)."
+      }
+    },
+    {
+      "id": "array",
+      "term": "Array",
+      "category": "data-structures",
+      "level": "beginner",
+      "definition": "An ordered collection of items stored next to each other in memory and reached by position, starting at index 0. Reading any position is instant because the computer can calculate exactly where it lives. Inserting or removing in the middle is slow, because every later item must shift over.",
+      "summary": "Items stored side by side and reached instantly by their position number.",
+      "analogy": "A row of numbered lockers. You can walk straight to locker 37, but adding a new locker in the middle means renumbering every locker after it.",
+      "real_world_example": "A music app keeps your playlist in an array, so jumping to song 12 is instant, while inserting a song at the top shifts every song down one place.",
+      "confused_with": "Linked list: a linked list scatters items in memory and links each to the next, making inserts cheap but jumping to a position slow.",
+      "related": [
+        "linked-list",
+        "big-o-notation",
+        "hash-table"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Which operation is fastest on an array holding a million items?",
+        "options": [
+          "Inserting a new item at the very front",
+          "Removing the item in the exact middle",
+          "Finding an item when you only know its value",
+          "Reading the item at position 500,000"
+        ],
+        "answer_index": 3,
+        "explanation": "Arrays compute where any index lives, so reading by position takes the same tiny time at any size."
+      }
+    },
+    {
+      "id": "linked-list",
+      "term": "Linked List",
+      "category": "data-structures",
+      "level": "beginner",
+      "definition": "A sequence of nodes where each node holds a value and a pointer to the next node. Adding or removing a node only means updating a couple of pointers, so it is fast once you are at the right spot. Reaching the hundredth item, though, means walking through the ninety-nine before it.",
+      "summary": "A chain of items where each one points to the next.",
+      "analogy": "A treasure hunt. Each clue tells you where the next clue is hidden, so adding a stop is easy, but you can't skip straight to clue ten.",
+      "real_world_example": "A browser's back and forward history can be kept as a linked list, where each page points to the one before and after it.",
+      "confused_with": "Array: arrays give instant access by position but slow middle inserts, the opposite trade-off to a linked list.",
+      "related": [
+        "array",
+        "stack",
+        "queue"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You must often insert items in the middle of a long sequence but rarely jump to a numbered position. Which structure suits this?",
+        "options": [
+          "A linked list, since inserts only update pointers",
+          "An array, since every item sits next to the others",
+          "A hash table, since it keeps items in a fixed order",
+          "A stack, since it lets you insert at any position"
+        ],
+        "answer_index": 0,
+        "explanation": "Linked lists make inserts cheap by relinking nodes instead of shifting everything after them."
+      }
+    },
+    {
+      "id": "stack",
+      "term": "Stack",
+      "category": "data-structures",
+      "level": "beginner",
+      "definition": "A collection where the last item added is the first one taken out, known as last in, first out. You push items on top and pop them off the top, and you can only reach the top item. Programs use one to keep track of function calls and to undo actions.",
+      "summary": "Last in, first out: you only add to and take from the top.",
+      "analogy": "A stack of plates in a canteen. You put clean plates on top and take from the top, so the last plate added is the first one used.",
+      "real_world_example": "The undo button in a text editor pops your most recent change off a stack, then the one before it, in reverse order.",
+      "confused_with": "Queue: a queue is first in, first out, so the oldest item leaves first instead of the newest.",
+      "related": [
+        "queue",
+        "recursion",
+        "linked-list"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You type A, then B, then C, and press undo twice. Which changes are undone, in order?",
+        "options": [
+          "A first, then B",
+          "B first, then C",
+          "C first, then B",
+          "A first, then C"
+        ],
+        "answer_index": 2,
+        "explanation": "Undo history is a stack, so the most recent change comes off first."
+      }
+    },
+    {
+      "id": "queue",
+      "term": "Queue",
+      "category": "data-structures",
+      "level": "beginner",
+      "definition": "A collection where the first item added is the first one taken out, known as first in, first out. Items join at the back and leave from the front. It is used whenever work must be handled in the order it arrived.",
+      "summary": "First in, first out: items join at the back and leave from the front.",
+      "analogy": "A line at a bank. The first person to arrive is served first, and newcomers join at the back.",
+      "real_world_example": "A printer queues documents and prints them in the order they were sent, so the first job submitted comes out first.",
+      "confused_with": "Message queue: a message queue is a service between programs, while a queue here is the basic data structure inside one program.",
+      "related": [
+        "stack",
+        "message-queue",
+        "linked-list"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Support tickets must be handled strictly in the order customers sent them. Which structure fits?",
+        "options": [
+          "A stack, since the newest ticket leaves first",
+          "A hash table, since tickets are found by key",
+          "A queue, since the oldest ticket leaves first",
+          "A tree, since tickets are sorted by priority"
+        ],
+        "answer_index": 2,
+        "explanation": "A queue is first in, first out, which matches handling work in arrival order."
+      }
+    },
+    {
+      "id": "hash-table",
+      "term": "Hash Table",
+      "category": "data-structures",
+      "level": "intermediate",
+      "definition": "A structure that stores key-value pairs and finds a value by its key almost instantly. A hash function turns each key into a slot number, so lookups don't search through every item. When two keys land in the same slot, called a collision, the table handles it with a small extra step.",
+      "summary": "Stores values by key and finds any of them almost instantly.",
+      "analogy": "A coat check. You hand over your coat and get ticket 42, and later the attendant goes straight to hook 42 instead of searching every coat.",
+      "real_world_example": "A dictionary in Python or a Map in Dart is a hash table, which is why looking up a user by their ID stays fast with millions of users.",
+      "confused_with": "Array: an array finds items by numbered position, while a hash table finds them by any key, such as an email address.",
+      "related": [
+        "array",
+        "big-o-notation",
+        "caching"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "You need to check, many times a second, whether a username is already taken among ten million users. What fits best?",
+        "options": [
+          "A hash set of usernames, for near-instant lookups",
+          "An unsorted list, checking each name one by one",
+          "A stack of usernames, popping until you find it",
+          "A queue of usernames, reading from the front"
+        ],
+        "answer_index": 0,
+        "explanation": "Hashing jumps straight to where a key would be, so lookups stay fast however many items there are."
+      }
+    },
+    {
+      "id": "tree",
+      "term": "Tree",
+      "category": "data-structures",
+      "level": "beginner",
+      "definition": "A hierarchy of nodes where each node can have children, starting from a single root at the top. Every node except the root has exactly one parent, and there are no loops. Trees model anything nested, such as folders, menus or an HTML page.",
+      "summary": "A hierarchy that starts at one root and branches into children.",
+      "analogy": "A family tree drawn upside down. One ancestor sits at the top, each person below has one parent line, and branches spread outward.",
+      "real_world_example": "Your computer's file system is a tree: the drive is the root, folders are branches, and files are the leaves at the ends.",
+      "confused_with": "Graph: a graph allows any node to connect to any other, including loops, while a tree is a graph with one root and no cycles.",
+      "related": [
+        "binary-search-tree",
+        "graph",
+        "recursion"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Which of these is naturally shaped like a tree?",
+        "options": [
+          "Roads connecting cities in both directions",
+          "A list of songs played one after another",
+          "Friends who all follow each other online",
+          "Folders inside folders on a computer drive"
+        ],
+        "answer_index": 3,
+        "explanation": "Folders nest under one root with a single parent each and no loops, which is exactly a tree."
+      }
+    },
+    {
+      "id": "binary-search-tree",
+      "term": "Binary Search Tree",
+      "category": "data-structures",
+      "level": "intermediate",
+      "definition": "A tree where each node has at most two children, with smaller values on the left and larger values on the right. To find a value you compare and go left or right, discarding half the remaining tree each time. If it becomes lopsided it slows down, so balanced versions rearrange themselves as items are added.",
+      "summary": "A tree that keeps smaller values left and larger right, so searches halve each step.",
+      "analogy": "A guessing game where every answer is higher or lower. Each answer rules out half the possibilities, so you find the number quickly.",
+      "real_world_example": "Databases use balanced tree variants to keep indexes sorted, so they can find a row or a range of rows without scanning the table.",
+      "confused_with": "Binary search: binary search works on a sorted array, while a binary search tree is a data structure built to make the same halving search possible as items change.",
+      "related": [
+        "tree",
+        "binary-search",
+        "index"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "In a binary search tree, you look for 40 and the root holds 50. Where do you go next?",
+        "options": [
+          "To the right child, where larger values are kept",
+          "To the left child, where smaller values are kept",
+          "Back to the start, since 40 cannot be in this tree",
+          "Through every node in order until 40 is found"
+        ],
+        "answer_index": 1,
+        "explanation": "Smaller values live in the left subtree, so 40 can only be there."
+      }
+    },
+    {
+      "id": "graph",
+      "term": "Graph",
+      "category": "data-structures",
+      "level": "intermediate",
+      "definition": "A set of nodes connected by edges, where any node may link to any other. Edges can have a direction, such as one-way follows, and a weight, such as distance. Graphs model networks of relationships, and many classic algorithms find paths through them.",
+      "summary": "Points joined by connections, used to model networks and relationships.",
+      "analogy": "A map of cities joined by roads. Some roads are one-way, some are longer than others, and you can usually reach a city by several routes.",
+      "real_world_example": "A navigation app treats junctions as nodes and roads as weighted edges, then searches the graph for the fastest route home.",
+      "confused_with": "Tree: a tree is a special graph with one root and no loops, while a general graph can have cycles and many paths between nodes.",
+      "related": [
+        "tree",
+        "recursion",
+        "greedy-algorithm"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A social app needs to suggest friends of friends. Which structure models the data most naturally?",
+        "options": [
+          "A graph with people as nodes and friendships as edges",
+          "A stack with the newest friendship always on top",
+          "An array with friends stored in sign-up order",
+          "A queue with the oldest friendship at the front"
+        ],
+        "answer_index": 0,
+        "explanation": "Friendships are connections between people, and walking two edges out finds friends of friends."
+      }
+    },
+    {
+      "id": "recursion",
+      "term": "Recursion",
+      "category": "algorithms",
+      "level": "intermediate",
+      "definition": "A technique where a function solves a problem by calling itself on a smaller version of the same problem. Each call gets closer to a base case, a version so small it can be answered directly. Without a base case the calls never end and the program crashes with a stack overflow.",
+      "summary": "A function that solves a problem by calling itself on a smaller piece.",
+      "analogy": "Russian nesting dolls. To reach the smallest doll you open one, then do the same thing to the doll inside, until there's nothing left to open.",
+      "real_world_example": "Calculating the total size of a folder: the size is its files plus the size of each subfolder, which is worked out the same way.",
+      "confused_with": "Iteration: a loop repeats steps with a counter or condition, while recursion repeats by calling itself, and many problems can be written either way.",
+      "related": [
+        "stack",
+        "tree",
+        "dynamic-programming"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A recursive function crashes with a stack overflow on every input. What is the most likely cause?",
+        "options": [
+          "It uses too few variables to store its results",
+          "It returns a value instead of printing the answer",
+          "It has no base case, so it keeps calling itself",
+          "It is called from inside a loop in the main program"
+        ],
+        "answer_index": 2,
+        "explanation": "Without a base case to stop on, each call adds another frame until the call stack runs out."
+      }
+    },
+    {
+      "id": "binary-search",
+      "term": "Binary Search",
+      "category": "algorithms",
+      "level": "beginner",
+      "definition": "An algorithm that finds an item in a sorted list by checking the middle and discarding the half that cannot contain it. It repeats on the remaining half until the item is found or nothing is left. A million items take only about twenty checks, but the list must already be sorted.",
+      "summary": "Find an item in a sorted list by halving the search space each step.",
+      "analogy": "Finding a word in a paper dictionary. You open near the middle, see you've gone too far, and keep halving until you land on the right page.",
+      "real_world_example": "Git's bisect command uses binary search over commit history, testing the middle commit each time to find which one introduced a bug.",
+      "confused_with": "Linear search: checking items one by one from the start, which works on unsorted data but takes far longer on large lists.",
+      "related": [
+        "big-o-notation",
+        "binary-search-tree",
+        "sorting-algorithms"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Binary search keeps returning wrong answers on a list of names. What should you check first?",
+        "options": [
+          "Whether the list has an even length",
+          "Whether the list is actually sorted",
+          "Whether the names are all lowercase",
+          "Whether the list has over 100 items"
+        ],
+        "answer_index": 1,
+        "explanation": "Binary search relies on sorted order to discard half the list; on unsorted data it discards the wrong half."
+      }
+    },
+    {
+      "id": "heap",
+      "term": "Heap",
+      "category": "data-structures",
+      "level": "advanced",
+      "definition": "A tree-shaped structure that always keeps the smallest, or largest, item at the top. Adding or removing an item takes only a few swaps to restore that order. It is the usual way to build a priority queue, where the most urgent item is always served next.",
+      "summary": "A structure that always keeps the most important item ready at the top.",
+      "analogy": "A hospital emergency room. Patients aren't seen in arrival order; whoever is most urgent is always next, even if they just walked in.",
+      "real_world_example": "An operating system's scheduler can keep tasks in a heap by priority, so the most important task is always picked to run next.",
+      "confused_with": "Memory heap: the region of memory where a program stores objects shares the name, but it is a different idea from this data structure.",
+      "related": [
+        "tree",
+        "queue",
+        "greedy-algorithm"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A delivery app must always hand out the order with the earliest deadline next, while new orders keep arriving. What fits best?",
+        "options": [
+          "A plain queue, serving orders strictly in arrival order",
+          "A stack, serving whichever order arrived most recently",
+          "An array, sorted again from scratch on every new order",
+          "A min-heap keyed on deadline, acting as a priority queue"
+        ],
+        "answer_index": 3,
+        "explanation": "A min-heap keeps the earliest deadline on top and updates cheaply as orders are added or removed."
+      }
+    },
+    {
+      "id": "sorting-algorithms",
+      "term": "Sorting Algorithms",
+      "category": "algorithms",
+      "level": "intermediate",
+      "definition": "Methods for putting items in order, such as quicksort, merge sort and insertion sort. Simple ones compare neighbours and take O(n squared) time, while efficient ones split the work and take about O(n log n). Real languages use tuned hybrids, so you rarely write your own, but knowing the trade-offs helps you choose.",
+      "summary": "Ways to put items in order, trading off speed, memory and stability.",
+      "analogy": "Sorting a hand of cards. You can slot each card into place one at a time, or split the deck into piles, sort each, and merge them back.",
+      "real_world_example": "Dart's List.sort and Python's sorted use fast hybrid algorithms, so sorting 100,000 products by price takes a fraction of a second.",
+      "confused_with": "Searching: sorting arranges the whole collection in order, while searching finds one item, though sorted data makes searching much faster.",
+      "related": [
+        "big-o-notation",
+        "binary-search",
+        "recursion"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "Why sort a large list once if you will search it thousands of times afterwards?",
+        "options": [
+          "So the list takes less memory once all of its items are in order",
+          "So new items can be added without ever needing to be compared",
+          "So the list can be saved to disk faster than an unsorted one",
+          "So each search can use fast binary search instead of a full scan"
+        ],
+        "answer_index": 3,
+        "explanation": "Sorting costs time once, then every search can halve the list instead of checking every item."
+      }
+    },
+    {
+      "id": "dynamic-programming",
+      "term": "Dynamic Programming",
+      "category": "algorithms",
+      "level": "advanced",
+      "definition": "A technique for problems that break into overlapping subproblems, where you solve each subproblem once and store its answer. Later steps reuse the stored answers instead of recalculating them. It can turn an exponentially slow solution into one that runs quickly.",
+      "summary": "Solve each small subproblem once, save the answer, and reuse it.",
+      "analogy": "Writing answers in the margin while doing homework. When the same sum comes up again, you copy your earlier answer instead of working it out again.",
+      "real_world_example": "Spell checkers measure how close two words are with a dynamic programming table, reusing smaller comparisons to suggest the right spelling.",
+      "confused_with": "Caching: both store results to reuse, but dynamic programming is an algorithm design for one problem, while caching is a general system technique.",
+      "related": [
+        "recursion",
+        "greedy-algorithm",
+        "caching"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "A recursive function recalculates the same subproblems millions of times. Which idea speeds it up most?",
+        "options": [
+          "Run the function on a faster computer with more processor cores",
+          "Store each subproblem's answer and reuse it, as in dynamic programming",
+          "Replace the recursion with a loop that recalculates each subproblem",
+          "Sort the input first so the subproblems are reached in a better order"
+        ],
+        "answer_index": 1,
+        "explanation": "Saving answers to repeated subproblems removes the duplicate work that made it slow."
+      }
+    },
+    {
+      "id": "greedy-algorithm",
+      "term": "Greedy Algorithm",
+      "category": "algorithms",
+      "level": "intermediate",
+      "definition": "An approach that builds a solution step by step, always taking the option that looks best right now. It never reconsiders earlier choices, which makes it simple and fast. It gives the best overall answer for some problems but only a decent one for others.",
+      "summary": "Always take the best-looking choice right now and never look back.",
+      "analogy": "Giving change with the biggest coins first. With normal coins it works perfectly, but with odd coin values it can use more coins than needed.",
+      "real_world_example": "Route planners find shortest paths with a greedy method that always expands the closest unvisited junction next, which is correct for road distances.",
+      "confused_with": "Dynamic programming: dynamic programming weighs many combinations of choices to guarantee the best answer, while greedy commits to one choice at each step.",
+      "related": [
+        "dynamic-programming",
+        "graph",
+        "heap"
+      ],
+      "needs_review": false,
+      "quiz": {
+        "question": "What is the main risk of using a greedy algorithm?",
+        "options": [
+          "It always takes far longer than trying every possible option",
+          "It needs the input to be sorted before it can run at all",
+          "Choices that look best now can miss the best overall answer",
+          "It uses a lot more memory than any other kind of algorithm"
+        ],
+        "answer_index": 2,
+        "explanation": "Greedy never revisits earlier choices, so a locally best step can lead to a worse final result."
+      }
+    }
+  ],
+  "daily_sets": [
+    {
+      "date": "2026-12-07",
+      "theme": "Data Structures & Algorithms",
+      "concept_ids": [
+        "big-o-notation",
+        "array",
+        "linked-list"
+      ]
+    },
+    {
+      "date": "2026-12-08",
+      "theme": "Data Structures & Algorithms",
+      "concept_ids": [
+        "stack",
+        "queue",
+        "hash-table"
+      ]
+    },
+    {
+      "date": "2026-12-09",
+      "theme": "Data Structures & Algorithms",
+      "concept_ids": [
+        "tree",
+        "binary-search-tree",
+        "graph"
+      ]
+    },
+    {
+      "date": "2026-12-10",
+      "theme": "Data Structures & Algorithms",
+      "concept_ids": [
+        "recursion",
+        "binary-search",
+        "heap"
+      ]
+    },
+    {
+      "date": "2026-12-11",
+      "theme": "Data Structures & Algorithms",
+      "concept_ids": [
+        "sorting-algorithms",
+        "dynamic-programming",
+        "greedy-algorithm"
+      ]
+    }
+  ]
+}
