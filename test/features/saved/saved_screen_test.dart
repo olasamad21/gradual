@@ -35,6 +35,17 @@ class FakeContentRepository implements ContentRepository {
 }
 
 class FakeUserRepository implements UserRepository {
+  final List<Map<String, dynamic>> reviewCallLog = [];
+
+  @override
+  Future<void> setReviewItem({
+    required String uid,
+    required String conceptId,
+    required Map<String, dynamic>? item,
+  }) async {
+    reviewCallLog.add({'uid': uid, 'conceptId': conceptId, 'item': item});
+  }
+
   final StreamController<AppUser?> userStreamController = StreamController<AppUser?>.broadcast();
   AppUser? currentUser;
   int setConceptSavedCalls = 0;

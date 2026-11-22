@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../services/streak_engine.dart';
+import 'review_item.dart';
 
 typedef ActivityLog = Map<String, ActivityLogEntry>;
 
@@ -236,6 +237,7 @@ class AppUser {
     required this.activityLog,
     this.rawActivityLog = const <String, dynamic>{},
     this.savedConcepts = const <String, int>{},
+    this.reviewItems = const <String, ReviewItem>{},
   });
 
   final String uid;
@@ -246,6 +248,9 @@ class AppUser {
   final ActivityLog activityLog;
   final Map<String, dynamic> rawActivityLog;
   final Map<String, int> savedConcepts;
+
+  /// Spaced-review progress per concept id.
+  final Map<String, ReviewItem> reviewItems;
 
   List<String> get savedConceptIdsNewestFirst {
     final entries = savedConcepts.entries.toList();
@@ -299,6 +304,15 @@ class AppUser {
       }
     }
 
+    final rawReview = json['review_items'];
+    final reviewItems = <String, ReviewItem>{};
+    if (rawReview is Map) {
+      for (final entry in rawReview.entries) {
+        final item = ReviewItem.fromJson(entry.value);
+        if (entry.key is String && item != null) reviewItems[entry.key as String] = item;
+      }
+    }
+
     return AppUser(
       uid: uid,
       email: json['email'] as String? ?? '',
@@ -309,6 +323,7 @@ class AppUser {
       activityLog: log,
       rawActivityLog: rawLog,
       savedConcepts: savedConcepts,
+      reviewItems: reviewItems,
     );
   }
 
@@ -332,6 +347,8 @@ class AppUser {
     Timestamp? lastActivityDate,
     ActivityLog? activityLog,
     Map<String, int>? savedConcepts,
+    Map<String, dynamic>? rawActivityLog,
+    Map<String, ReviewItem>? reviewItems,
   }) {
     return AppUser(
       uid: uid,
@@ -340,7 +357,10 @@ class AppUser {
       currentStreak: currentStreak ?? this.currentStreak,
       lastActivityDate: lastActivityDate ?? this.lastActivityDate,
       activityLog: activityLog ?? this.activityLog,
+      // Previously dropped, which emptied the streak data on any copy.
+      rawActivityLog: rawActivityLog ?? this.rawActivityLog,
       savedConcepts: savedConcepts ?? this.savedConcepts,
+      reviewItems: reviewItems ?? this.reviewItems,
     );
   }
 }

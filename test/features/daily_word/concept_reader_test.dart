@@ -25,6 +25,17 @@ class FakeTodayConceptsController extends TodayConceptsController {
 }
 
 class FakeUserRepositoryForReader implements UserRepository {
+  final List<Map<String, dynamic>> reviewCallLog = [];
+
+  @override
+  Future<void> setReviewItem({
+    required String uid,
+    required String conceptId,
+    required Map<String, dynamic>? item,
+  }) async {
+    reviewCallLog.add({'uid': uid, 'conceptId': conceptId, 'item': item});
+  }
+
   final List<String> toggledConceptIds = [];
 
   @override

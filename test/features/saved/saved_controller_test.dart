@@ -27,6 +27,17 @@ class RecordedSavedCall {
 }
 
 class FakeUserRepository implements UserRepository {
+  final List<Map<String, dynamic>> reviewCallLog = [];
+
+  @override
+  Future<void> setReviewItem({
+    required String uid,
+    required String conceptId,
+    required Map<String, dynamic>? item,
+  }) async {
+    reviewCallLog.add({'uid': uid, 'conceptId': conceptId, 'item': item});
+  }
+
   final List<RecordedSavedCall> savedCalls = [];
   bool throwException = false;
 

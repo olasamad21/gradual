@@ -117,6 +117,19 @@ class UserRepository {
     );
   }
 
+  /// Writes one word's review progress, or removes it when [item] is null.
+  Future<void> setReviewItem({
+    required String uid,
+    required String conceptId,
+    required Map<String, dynamic>? item,
+  }) async {
+    return FirestoreErrors.guardFuture(
+      _usersCollection.doc(uid).update({
+        FieldPath(['review_items', conceptId]): item ?? FieldValue.delete(),
+      }),
+    );
+  }
+
   Future<void> resetStatsIfNeeded(String uid) async {
     final doc = await FirestoreErrors.guardFuture(_usersCollection.doc(uid).get());
     if (!doc.exists) return;

@@ -8,6 +8,7 @@ import '../../core/theme/category_style.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../daily_word/concept_reader.dart';
 import '../daily_word/word_card.dart' show cardSummaryFor;
+import '../review/review_prompt.dart';
 import 'saved_controller.dart';
 import 'saved_filter.dart';
 
@@ -93,6 +94,10 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 4, 16, 4),
+                child: ReviewPrompt(),
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: SizedBox(

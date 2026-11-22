@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/firebase/firebase_providers.dart';
 import 'quiz_hub.dart';
+import '../review/review_controller.dart';
+import '../review/review_prompt.dart';
 import '../../core/services/haptics.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -116,6 +119,12 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       return;
     }
 
+    // Words answered wrong come back in review tomorrow.
+    unawaited(ref.read(reviewControllerProvider).recordMissed([
+      for (final a in answers)
+        if (!a.isCorrect) a.question.id,
+    ]));
+
     setState(() {
       _hasStarted = false;
       _currentIndex = 0;
@@ -185,6 +194,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
           status: status,
           primaryLabel: showPrimary ? (buttonState.isCompleted ? 'View Results' : 'Start Quiz') : null,
           onPrimary: showPrimary ? onPrimary : null,
+          practice: const ReviewPrompt(subtitleWhenDue: 'Your saved words and quiz misses'),
           banner: hasUnsaved
               ? UnsavedQuizCard(
                   isSaving: isSubmitting,

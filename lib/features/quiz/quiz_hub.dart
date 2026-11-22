@@ -40,6 +40,7 @@ class QuizHub extends StatefulWidget {
     required this.primaryLabel,
     required this.onPrimary,
     this.banner,
+    this.practice,
   });
 
   final AppUser? user;
@@ -52,6 +53,9 @@ class QuizHub extends StatefulWidget {
 
   /// Shown above the hero card, such as an unsaved-result notice.
   final Widget? banner;
+
+  /// Practice any day: the spaced-review prompt.
+  final Widget? practice;
 
   @override
   State<QuizHub> createState() => _QuizHubState();
@@ -100,6 +104,11 @@ class _QuizHubState extends State<QuizHub> {
           primaryLabel: widget.primaryLabel,
           onPrimary: widget.onPrimary,
         ),
+        if (widget.practice != null) ...[
+          const SizedBox(height: 28),
+          const SectionLabel('Practice any day'),
+          widget.practice!,
+        ],
         const SizedBox(height: 24),
         const _HowItWorks(),
         const SizedBox(height: 28),

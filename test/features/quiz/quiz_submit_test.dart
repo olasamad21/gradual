@@ -21,6 +21,17 @@ class FakeContentRepo implements ContentRepository {
 }
 
 class FakeUserRepository implements UserRepository {
+  final List<Map<String, dynamic>> reviewCallLog = [];
+
+  @override
+  Future<void> setReviewItem({
+    required String uid,
+    required String conceptId,
+    required Map<String, dynamic>? item,
+  }) async {
+    reviewCallLog.add({'uid': uid, 'conceptId': conceptId, 'item': item});
+  }
+
   int calls = 0;
   QuizSaveResult nextResult = QuizSaveResult.saved;
   Completer<QuizSaveResult>? completer;
