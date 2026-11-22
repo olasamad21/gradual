@@ -473,6 +473,8 @@ void main() {
 
     expect(find.text('6 saved words'), findsOneWidget);
     expect(find.text('Binary Search'), findsOneWidget);
+    // Rows are cards now, so the last one may sit below the test viewport.
+    await tester.scrollUntilVisible(find.text('Encapsulation'), 200, scrollable: find.byType(Scrollable).last);
     expect(find.text('Encapsulation'), findsOneWidget);
     expect(find.byTooltip('Clear search'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -521,6 +523,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('6 saved words'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Encapsulation'), 200, scrollable: find.byType(Scrollable).last);
     expect(find.text('Encapsulation'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -684,6 +687,45 @@ void main() {
     expect(fakeUser.savedCallLog[1]['conceptId'], 'c1');
     expect(fakeUser.savedCallLog[1]['savedAtMillis'], 55555);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('swiping a row left removes it and offers Undo', (tester) async {
+    final fakeUser = FakeUserRepository();
+    final fakeContent = FakeContentRepository()
+      ..conceptStore['c1'] = concept1
+      ..conceptStore['c2'] = concept2;
+    final container = makeTestContainer(fakeUserRepo: fakeUser, fakeContentRepo: fakeContent);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(createTestWidget(child: const SavedScreen(), container: container));
+    fakeUser.emitUser(createTestUser(savedConcepts: {'c1': 1, 'c2': 2}));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.drag(find.text('Encapsulation'), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Encapsulation'), findsNothing);
+    expect(find.text('Polymorphism'), findsOneWidget);
+    expect(find.text('Removed from saved'), findsOneWidget);
+    expect(fakeUser.savedCallLog.single['conceptId'], 'c1');
+    expect(fakeUser.savedCallLog.single['saved'], isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('rows show the summary and topic instead of the full definition', (tester) async {
+    final fakeUser = FakeUserRepository();
+    final fakeContent = FakeContentRepository()..conceptStore['c4'] = concept4;
+    final container = makeTestContainer(fakeUserRepo: fakeUser, fakeContentRepo: fakeContent);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(createTestWidget(child: const SavedScreen(), container: container));
+    fakeUser.emitUser(createTestUser(savedConcepts: {'c4': 1}));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Efficient algorithm to find an item in an ordered array.'), findsOneWidget);
+    expect(find.text('Algorithms · Beginner'), findsOneWidget);
   });
 
   testWidgets('text scale 1.3 throws nothing, all rows fit, and tappable controls have finite width > 0', (tester) async {

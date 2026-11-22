@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../shared/widgets/dot_pattern.dart';
 import '../../core/theme/app_colors.dart';
 import 'quiz_models.dart';
 
@@ -45,9 +44,8 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: CustomPaint(
-        painter: DotPatternPainter(color: context.colors.dotPattern),
-        child: SafeArea(
+      body: KeyedSubtree(
+child: SafeArea(
           child: widget.answers.isEmpty
               ? const Center(child: Text('No answers to review.'))
               : Column(

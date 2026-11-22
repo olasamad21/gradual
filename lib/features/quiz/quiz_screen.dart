@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../core/firebase/firebase_providers.dart';
+import 'quiz_hub.dart';
 import '../../core/services/haptics.dart';
-import '../../shared/widgets/dot_pattern.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -143,21 +144,49 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     final buttonState = ref.watch(quizButtonStateProvider(today));
     final unsavedInfo = ref.watch(unsavedQuizProvider).whenOrNull(data: (d) => d);
     final isSubmitting = ref.watch(quizControllerProvider).whenOrNull(data: (d) => d)?.isSubmitting ?? false;
+    final user = ref.watch(appUserProvider).asData?.value;
+    final status = user == null
+        ? const QuizStatus(QuizStatusType.notYetOpen)
+        : StreakEngine.quizStatus(user.rawActivityLog, today);
+    final hasUnsaved = unsavedInfo != null && unsavedInfo.hasUnsaved;
+    final showPrimary = buttonState.isEnabled && !(hasUnsaved && !buttonState.isCompleted);
+
+    Future<void> onPrimary() async {
+      if (buttonState.isCompleted) {
+        final result = await ref.read(completedQuizResultProvider.future);
+        if (!context.mounted) return;
+        if (result != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => QuizResultScreen(result: result)),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Couldn't load your results. Please try again.")),
+          );
+        }
+        return;
+      }
+      Haptics.medium();
+      setState(() {
+        _hasStarted = true;
+        _sessionDate = ref.read(todayProvider)();
+      });
+      ref.read(quizControllerProvider.notifier).generateQuiz(_sessionDate!);
+    }
 
     return Scaffold(
       backgroundColor: context.colors.background,
       body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.school_rounded, size: 64, color: context.colors.brand),
-              const SizedBox(height: 24),
-              const Text('Weekly Quiz', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              Text(buttonState.label, style: TextStyle(fontSize: 16, color: context.colors.textMuted)),
-              if (unsavedInfo != null && unsavedInfo.hasUnsaved)
-                UnsavedQuizCard(
+        bottom: false,
+        child: QuizHub(
+          user: user,
+          now: ref.read(todayProvider),
+          status: status,
+          primaryLabel: showPrimary ? (buttonState.isCompleted ? 'View Results' : 'Start Quiz') : null,
+          onPrimary: showPrimary ? onPrimary : null,
+          banner: hasUnsaved
+              ? UnsavedQuizCard(
                   isSaving: isSubmitting,
                   onRetry: () async {
                     final outcome = await ref.read(quizControllerProvider.notifier).retryPendingSave();
@@ -185,44 +214,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                       );
                     }
                   },
-                ),
-              const SizedBox(height: 32),
-              if (buttonState.isEnabled && !(unsavedInfo != null && unsavedInfo.hasUnsaved && !buttonState.isCompleted))
-                ElevatedButton(
-                  onPressed: () async {
-                    if (buttonState.isCompleted) {
-                      final result = await ref.read(completedQuizResultProvider.future);
-                      if (context.mounted) {
-                        if (result != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => QuizResultScreen(result: result),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Couldn't load your results. Please try again.")),
-                          );
-                        }
-                      }
-                      return;
-                    }
-                    setState(() {
-                      _hasStarted = true;
-                      _sessionDate = ref.read(todayProvider)();
-                    });
-                    ref.read(quizControllerProvider.notifier).generateQuiz(_sessionDate!);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: context.colors.brand,
-                    foregroundColor: context.colors.onBrand,
-                    minimumSize: const Size(200, 48),
-                  ),
-                  child: Text(buttonState.isCompleted ? 'View Results' : 'Start Quiz'),
-                ),
-            ],
-          ),
+                )
+              : null,
         ),
       ),
     );
@@ -258,9 +251,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
           return PopScope(
             canPop: !sessionState.isSubmitting,
             child: SafeArea(
-              child: CustomPaint(
-              painter: DotPatternPainter(color: context.colors.dotPattern),
-              child: Column(
+              child: KeyedSubtree(
+child: Column(
                 children: [
                   _buildHeader(context, displayQuestions.length, isSubmitting: sessionState.isSubmitting),
                   _buildProgressBar(displayQuestions.length),
@@ -642,9 +634,8 @@ class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
       },
       child: Scaffold(
         backgroundColor: context.colors.background,
-        body: CustomPaint(
-          painter: DotPatternPainter(color: context.colors.dotPattern),
-          child: SafeArea(
+        body: KeyedSubtree(
+child: SafeArea(
             child: Column(
               children: [
                 Padding(

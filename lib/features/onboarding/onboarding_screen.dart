@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../shared/widgets/dot_pattern.dart';
+import '../../shared/widgets/ambient_glow.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../shared/widgets/gradual_mark.dart';
@@ -26,11 +26,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body: Stack(
         children: [
           // 1. Background Logic
-          Positioned.fill(
-            child: CustomPaint(
-              painter: DotPatternPainter(color: context.colors.dotPattern),
-            ),
-          ),
+          const Positioned.fill(child: AmbientGlowLayer(height: 560)),
 
           SafeArea(
             child: Padding(

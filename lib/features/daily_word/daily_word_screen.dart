@@ -1,5 +1,5 @@
 import 'dart:async';
-import '../../shared/widgets/dot_pattern.dart';
+import '../../shared/widgets/ambient_glow.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/haptics.dart';
@@ -60,7 +60,8 @@ class DailyWordScreen extends ConsumerStatefulWidget {
   ConsumerState<DailyWordScreen> createState() => _DailyWordScreenState();
 }
 
-class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsBindingObserver {
+class _DailyWordScreenState extends ConsumerState<DailyWordScreen>
+    with WidgetsBindingObserver {
   final PageController _pageController = PageController(viewportFraction: 0.9);
   final Map<int, GlobalKey> _cardKeys = {};
   int _currentPage = 0;
@@ -104,7 +105,8 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       ref.read(readAloudControllerProvider.notifier).stop();
     }
   }
@@ -119,31 +121,38 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text('Fresh Start', style: TextStyle(fontWeight: FontWeight.w700)),
-            content: const Text('Streaks are now daily! Maintain your streak by marking at least 1 concept as read each day. A full set of 3 earns a perfect day star.', style: TextStyle(height: 1.5)),
+            title: const Text(
+              'Fresh Start',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            content: const Text(
+              'Streaks are now daily! Maintain your streak by marking at least 1 concept as read each day. A full set of 3 earns a perfect day star.',
+              style: TextStyle(height: 1.5),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Got it', style: TextStyle(fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Got it',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
             ],
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
         );
       }
     }
   }
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   }
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +166,9 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
           if (!next.hasError) {
             _retryTimer?.cancel();
             setState(() => _isRetrying = false);
-          } else if (previous != null && (previous.isLoading || previous.isReloading) && !next.isLoading) {
+          } else if (previous != null &&
+              (previous.isLoading || previous.isReloading) &&
+              !next.isLoading) {
             _retryTimer?.cancel();
             setState(() => _isRetrying = false);
           }
@@ -165,65 +176,64 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
       },
     );
 
-    ref.listen<AsyncValue<AppUser?>>(
-      appUserProvider,
-      (previous, next) async {
-        if (previous == null || previous.isLoading || !previous.hasValue || previous.value == null) {
-          return;
-        }
-        if (next.isLoading || !next.hasValue || next.value == null) {
-          return;
-        }
+    ref.listen<AsyncValue<AppUser?>>(appUserProvider, (previous, next) async {
+      if (previous == null ||
+          previous.isLoading ||
+          !previous.hasValue ||
+          previous.value == null) {
+        return;
+      }
+      if (next.isLoading || !next.hasValue || next.value == null) {
+        return;
+      }
 
-        final prevUser = previous.value!;
-        final nextUser = next.value!;
+      final prevUser = previous.value!;
+      final nextUser = next.value!;
 
-        final today = DateTime.now();
-        final todayId = DateUtilsGradual.todayLocalDateId();
+      final today = DateTime.now();
+      final todayId = DateUtilsGradual.todayLocalDateId();
 
-        final prevCount = _conceptCountForDate(prevUser.rawActivityLog, todayId);
-        final nextCount = _conceptCountForDate(nextUser.rawActivityLog, todayId);
+      final prevCount = _conceptCountForDate(prevUser.rawActivityLog, todayId);
+      final nextCount = _conceptCountForDate(nextUser.rawActivityLog, todayId);
 
-        if (nextCount <= prevCount) return;
+      if (nextCount <= prevCount) return;
 
-        final conceptsState = ref.read(todayConceptsControllerProvider).asData?.value;
-        final isFallback = conceptsState?.isFallback ?? false;
-        final isWeekendReview = conceptsState?.isWeekendReview ?? false;
+      final conceptsState = ref
+          .read(todayConceptsControllerProvider)
+          .asData
+          ?.value;
+      final isFallback = conceptsState?.isFallback ?? false;
+      final isWeekendReview = conceptsState?.isWeekendReview ?? false;
 
-        final reward = StreakEngine.dayReward(
-          nextUser.rawActivityLog,
-          todayId,
-          AppRules.conceptsPerDay,
-        );
+      final reward = StreakEngine.dayReward(
+        nextUser.rawActivityLog,
+        todayId,
+        AppRules.conceptsPerDay,
+      );
 
-        if (reward != DayReward.perfect) return;
+      if (reward != DayReward.perfect) return;
 
-        final tracker = RewardTracker();
-        final shouldShow = await tracker.shouldShow(reward, todayId);
+      final tracker = RewardTracker();
+      final shouldShow = await tracker.shouldShow(reward, todayId);
 
-        final trigger = shouldTriggerReward(
-          previousCount: prevCount,
-          newCount: nextCount,
-          reward: reward,
-          isFallback: isFallback,
-          isWeekendReview: isWeekendReview,
-          alreadyShown: !shouldShow,
-        );
+      final trigger = shouldTriggerReward(
+        previousCount: prevCount,
+        newCount: nextCount,
+        reward: reward,
+        isFallback: isFallback,
+        isWeekendReview: isWeekendReview,
+        alreadyShown: !shouldShow,
+      );
 
-        if (!trigger) return;
+      if (!trigger) return;
 
-        await tracker.markShown(reward, todayId);
+      await tracker.markShown(reward, todayId);
 
-        if (!mounted || !context.mounted) return;
+      if (!mounted || !context.mounted) return;
 
-        final streakCount = nextUser.streakAt(today);
-        DayRewardOverlay.show(
-          context,
-          reward: reward,
-          streakCount: streakCount,
-        );
-      },
-    );
+      final streakCount = nextUser.streakAt(today);
+      DayRewardOverlay.show(context, reward: reward, streakCount: streakCount);
+    });
     final cachedUser = userAsync.when(
       data: (d) => d,
       loading: () => null,
@@ -235,42 +245,49 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) SystemNavigator.pop();
       },
-      child: Scaffold(
-        backgroundColor: context.colors.background,
-        appBar: AppBar(
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const GradualMark(size: 26),
-              const SizedBox(width: 8),
-              Text(
-                'Gradual',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 22,
-                  letterSpacing: -0.5,
-                  color: context.colors.textPrimary,
-                ),
+      // Glow sits behind the whole screen, app bar included, so there is no seam.
+      child: ColoredBox(
+        color: context.colors.background,
+        child: AmbientGlow(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const GradualMark(size: 26),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Gradual',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22,
+                      letterSpacing: -0.5,
+                      color: context.colors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-            ],
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+            ),
+            body: KeyedSubtree(
+              child:
+                  userAsync.hasError &&
+                      FirestoreErrors.isPermissionDenied(userAsync.error)
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: FirestorePermissionWidget(),
+                    )
+                  : _buildBody(
+                      context,
+                      userAsync: userAsync,
+                      conceptsAsync: conceptsAsync,
+                      user: cachedUser,
+                    ),
+            ),
           ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-        ),
-        body: CustomPaint(
-          painter: DotPatternPainter(color: context.colors.dotPattern),
-          child: userAsync.hasError && FirestoreErrors.isPermissionDenied(userAsync.error)
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: FirestorePermissionWidget(),
-                )
-              : _buildBody(
-                  context,
-                  userAsync: userAsync,
-                  conceptsAsync: conceptsAsync,
-                  user: cachedUser,
-                ),
         ),
       ),
     );
@@ -305,7 +322,10 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
           child: TodayHeader(
             greeting: _getGreeting(),
-            firstName: firstNameFor(displayName: account.displayName, email: user?.email ?? ''),
+            firstName: firstNameFor(
+              displayName: account.displayName,
+              email: user?.email ?? '',
+            ),
             streak: user?.liveStreak ?? state.liveStreak,
             readCount: state.readCount,
             total: state.concepts.length,
@@ -324,12 +344,19 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.hourglass_empty_rounded, size: 48, color: context.colors.borderStrong),
+                      Icon(
+                        Icons.hourglass_empty_rounded,
+                        size: 48,
+                        color: context.colors.borderStrong,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'No concepts available.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: context.colors.textMuted, fontSize: 15),
+                        style: TextStyle(
+                          color: context.colors.textMuted,
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
@@ -375,7 +402,10 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
             _PageDots(
               count: pageCount,
               current: _currentPage.clamp(0, pageCount - 1),
-              readFlags: [for (final c in state.concepts) state.readConceptIds.contains(c.id)],
+              readFlags: [
+                for (final c in state.concepts)
+                  state.readConceptIds.contains(c.id),
+              ],
               hasCompletePage: allRead,
               onTap: (i) => _pageController.animateToPage(
                 i,
@@ -452,11 +482,16 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
     });
   }
 
-  Future<void> _openReader(TodayConceptsState state, int index, {GlobalKey? originKey}) async {
+  Future<void> _openReader(
+    TodayConceptsState state,
+    int index, {
+    GlobalKey? originKey,
+  }) async {
     ref.read(readAloudControllerProvider.notifier).stop();
     Rect? origin;
     final box = originKey?.currentContext?.findRenderObject() as RenderBox?;
-    final navBox = Navigator.of(context).context.findRenderObject() as RenderBox?;
+    final navBox =
+        Navigator.of(context).context.findRenderObject() as RenderBox?;
     if (box != null && box.hasSize && navBox != null) {
       origin = box.localToGlobal(Offset.zero, ancestor: navBox) & box.size;
     }
@@ -471,7 +506,11 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
       },
     );
     // Opened from a word card: land on the word the reader ended on.
-    if (originKey != null && targetIndex != null && mounted && _pageController.hasClients && targetIndex != _currentPage) {
+    if (originKey != null &&
+        targetIndex != null &&
+        mounted &&
+        _pageController.hasClients &&
+        targetIndex != _currentPage) {
       _pageController.jumpToPage(targetIndex);
     }
   }
@@ -481,7 +520,11 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen> with WidgetsB
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.wifi_off_rounded, size: 48, color: context.colors.borderStrong),
+          Icon(
+            Icons.wifi_off_rounded,
+            size: 48,
+            color: context.colors.borderStrong,
+          ),
           const SizedBox(height: 12),
           Text(
             "Failed to load today's concepts.",
@@ -516,14 +559,20 @@ int nextPageAfterRead({
 }) {
   if (conceptIds.every(readIds.contains)) return conceptIds.length;
   final next = index + 1;
-  if (next < conceptIds.length && !readIds.contains(conceptIds[next])) return next;
+  if (next < conceptIds.length && !readIds.contains(conceptIds[next])) {
+    return next;
+  }
   return conceptIds.indexWhere((id) => !readIds.contains(id));
 }
 
 /// Scales and fades neighbouring pages so the current card stands out and
 /// the next one peeks in from the side.
 class _CarouselPage extends StatelessWidget {
-  const _CarouselPage({required this.controller, required this.index, required this.child});
+  const _CarouselPage({
+    required this.controller,
+    required this.index,
+    required this.child,
+  });
 
   final PageController controller;
   final int index;
@@ -579,17 +628,28 @@ class _PageDots extends StatelessWidget {
         for (var i = 0; i < count; i++)
           Semantics(
             button: true,
-            label: hasCompletePage && i == count - 1 ? 'Day summary' : 'Word ${i + 1}',
+            label: hasCompletePage && i == count - 1
+                ? 'Day summary'
+                : 'Word ${i + 1}',
             selected: i == current,
             child: GestureDetector(
               onTap: () => onTap(i),
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 10,
+                ),
                 child: hasCompletePage && i == count - 1
-                    ? Icon(Icons.star_rounded, size: 16, color: i == current ? c.brand : c.borderStrong)
+                    ? Icon(
+                        Icons.star_rounded,
+                        size: 16,
+                        color: i == current ? c.brand : c.borderStrong,
+                      )
                     : AnimatedContainer(
-                        duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 250),
+                        duration: disableAnimations
+                            ? Duration.zero
+                            : const Duration(milliseconds: 250),
                         curve: Curves.easeOutCubic,
                         width: i == current ? 22 : 8,
                         height: 8,
@@ -597,8 +657,8 @@ class _PageDots extends StatelessWidget {
                           color: readFlags[i]
                               ? c.brand
                               : i == current
-                                  ? c.textSecondary
-                                  : c.borderStrong,
+                              ? c.textSecondary
+                              : c.borderStrong,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -618,10 +678,13 @@ class _TodaySkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final fill = context.colors.surfaceSunken;
     Widget block(double w, double h, [double r = 8]) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(r)),
-        );
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(r),
+      ),
+    );
     return Semantics(
       label: "Loading today's words",
       child: ExcludeSemantics(

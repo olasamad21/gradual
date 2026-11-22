@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/models/concept_model.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/category_style.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../daily_word/concept_reader.dart';
+import '../daily_word/word_card.dart' show cardSummaryFor;
 import 'saved_controller.dart';
 import 'saved_filter.dart';
 
@@ -127,15 +129,15 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 16),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
                           color: context.colors.brand,
                           width: 1.5,
@@ -251,12 +253,10 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                   child: ListView.separated(
                     keyboardDismissBehavior:
                         ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemCount: displayedConcepts.length,
-                    separatorBuilder: (context, index) => Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: context.colors.surfaceSunken,
-                    ),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final concept = displayedConcepts[index];
                       return _buildSavedRow(
@@ -282,10 +282,18 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.bookmark_border_rounded,
-              size: 64,
-              color: context.colors.textMuted,
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: context.colors.brand.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.bookmark_border_rounded,
+                size: 44,
+                color: context.colors.brand,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -306,6 +314,32 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: context.colors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: context.colors.border),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.lightbulb_outline_rounded,
+                      size: 18, color: context.colors.warning),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'Saved words come back in your weekend reviews.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: context.colors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -392,90 +426,142 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
     );
   }
 
+  void _remove(BuildContext context, Concept concept) {
+    Haptics.light();
+    final previousMillis =
+        ref.read(savedControllerProvider.notifier).toggle(concept.id);
+    if (previousMillis != null && context.mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Removed from saved'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () {
+              ref
+                  .read(savedControllerProvider.notifier)
+                  .restore(concept.id, previousMillis);
+            },
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildSavedRow(
     BuildContext context,
     Concept concept,
     List<Concept> displayedConcepts,
     int index,
   ) {
-    return InkWell(
-      onTap: () {
-        openConceptReader(
-          context: context,
-          concepts: displayedConcepts,
-          initialIndex: index,
-          showGotIt: false,
-          onMarkRead: (_) {},
-        );
-      },
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 64),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    concept.term,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: context.colors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    concept.definition,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: context.colors.textTertiary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+    final c = context.colors;
+    final accent = categoryColor(c, concept.category);
+    final meta = [
+      formatCategory(concept.category),
+      formatCategory(concept.level),
+    ].where((s) => s.isNotEmpty).join(' \u00b7 ');
+
+    return Dismissible(
+      key: ValueKey('saved_${concept.id}'),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => _remove(context, concept),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        decoration: BoxDecoration(
+          color: c.dangerSoft,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(Icons.bookmark_remove_rounded, color: c.danger),
+      ),
+      child: Material(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            openConceptReader(
+              context: context,
+              concepts: displayedConcepts,
+              initialIndex: index,
+              showGotIt: false,
+              onMarkRead: (_) {},
+            );
+          },
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 76),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: c.border.withValues(alpha: 0.6)),
             ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 48,
-              height: 48,
-              child: IconButton(
-                icon: Icon(
-                  Icons.bookmark_rounded,
-                  color: context.colors.brand,
+            padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(categoryIcon(concept.category),
+                      size: 21, color: accent),
                 ),
-                tooltip: 'Remove from saved',
-                onPressed: () {
-                  Haptics.light();
-                  final previousMillis = ref
-                      .read(savedControllerProvider.notifier)
-                      .toggle(concept.id);
-                  if (previousMillis != null && context.mounted) {
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Removed from saved'),
-                        action: SnackBarAction(
-                          label: 'Undo',
-                          onPressed: () {
-                            ref
-                                .read(savedControllerProvider.notifier)
-                                .restore(concept.id, previousMillis);
-                          },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        concept.term,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: c.textPrimary,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    );
-                  }
-                },
-              ),
+                      const SizedBox(height: 3),
+                      Text(
+                        cardSummaryFor(concept),
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: c.textTertiary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (meta.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          meta,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: accent,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: IconButton(
+                    icon: Icon(Icons.bookmark_rounded, color: c.brand),
+                    tooltip: 'Remove from saved',
+                    onPressed: () => _remove(context, concept),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

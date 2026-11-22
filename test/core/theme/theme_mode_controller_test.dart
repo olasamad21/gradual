@@ -58,7 +58,7 @@ void main() {
     });
   });
 
-  testWidgets('Profile appearance selector switches the theme mode', (tester) async {
+  testWidgets('Profile appearance sheet switches the theme mode', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final user = AppUser(
       uid: 'u1',
@@ -87,11 +87,15 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    final darkSegment = find.text('Dark');
-    await tester.scrollUntilVisible(darkSegment, 200, scrollable: find.byType(Scrollable).first);
-    await tester.tap(darkSegment);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    final appearanceRow = find.byKey(const ValueKey('appearance_row'));
+    await tester.scrollUntilVisible(appearanceRow, 200, scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(appearanceRow);
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: appearanceRow, matching: find.text('System')), findsOneWidget);
+    await tester.tap(appearanceRow);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
 
     expect(container.read(themeModeProvider), ThemeMode.dark);
     final context = tester.element(find.byType(ProfileScreen));

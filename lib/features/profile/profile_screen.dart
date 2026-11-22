@@ -1,24 +1,26 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
-import '../../core/theme/streak_colors.dart';
-import '../../shared/widgets/dot_pattern.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/theme_mode_controller.dart';
 import 'package:flutter/material.dart';
-import '../../core/services/haptics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../core/errors/firestore_errors.dart';
 import '../../core/firebase/firebase_providers.dart';
-import '../../router/app_router.dart';
 import '../../core/models/user_model.dart';
+import '../../core/services/haptics.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_mode_controller.dart';
 import '../../core/utils/display_name.dart';
-import '../../shared/widgets/loading_indicator.dart';
+import '../../router/app_router.dart';
 import '../../shared/widgets/error_state_widget.dart';
 import '../../shared/widgets/firestore_permission_widget.dart';
-import '../streak/streak_heatmap_widget.dart';
+import '../../shared/widgets/gradual_mark.dart';
+import '../../shared/widgets/loading_indicator.dart';
+import '../../shared/widgets/settings_group.dart';
+import '../reminders/reminder_card.dart';
+import '../saved/saved_filter.dart';
+import '../streak/activity_calendar.dart';
+import 'profile_insights.dart';
 import 'profile_providers.dart';
-import 'profile_quiz_stats.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -45,9 +47,7 @@ class ProfileScreen extends ConsumerWidget {
           }
           return ErrorStateWidget(
             message: 'Failed to load profile',
-            onRetry: FirestoreErrors.shouldRetry(error)
-                ? () => ref.invalidate(appUserProvider)
-                : null,
+            onRetry: FirestoreErrors.shouldRetry(error) ? () => ref.invalidate(appUserProvider) : null,
           );
         },
         data: (user) {
@@ -63,20 +63,667 @@ class ProfileScreen extends ConsumerWidget {
 
 class _ProfileBody extends ConsumerWidget {
   const _ProfileBody({required this.user});
+
   final AppUser user;
 
-  String _totalQuizzesDone(AppUser u) => totalQuizzesDone(u);
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ProfileStats.from(user, DateTime.now());
+    final achievements = achievementsFor(stats);
+    final unlocked = achievements.where((a) => a.unlocked).length;
 
-  String _allTimeCorrectPercent(AppUser u) => allTimeCorrectPercent(u);
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        children: [
+          _ProfileHeader(user: user, stats: stats),
+          const SizedBox(height: 20),
+          _StatsGrid(stats: stats),
+          const SizedBox(height: 28),
+          const SectionLabel('Activity'),
+          _Panel(
+            child: ActivityCalendar(rawActivityLog: user.rawActivityLog, today: DateTime.now()),
+          ),
+          const SizedBox(height: 28),
+          const SectionLabel('Topics'),
+          const _TopicsPanel(),
+          const SizedBox(height: 28),
+          SectionLabel('Achievements', trailing: '$unlocked of ${achievements.length}'),
+          _AchievementsPanel(achievements: achievements),
+          const SizedBox(height: 28),
+          const SectionLabel('Settings'),
+          _SettingsList(user: user),
+          const SizedBox(height: 20),
+          Center(
+            child: Text(
+              user.email,
+              style: TextStyle(fontSize: 12, color: context.colors.textMuted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// White rounded panel used by the profile sections.
+class _Panel extends StatelessWidget {
+  const _Panel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: c.border.withValues(alpha: 0.6)),
+      ),
+      child: child,
+    );
+  }
+}
+
+// ---- Header ----
+
+class _ProfileHeader extends ConsumerWidget {
+  const _ProfileHeader({required this.user, required this.stats});
+
+  final AppUser user;
+  final ProfileStats stats;
+
+  static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final account = ref.watch(accountProfileProvider);
+    final name = fullNameFor(displayName: account.displayName, email: user.email);
+    final level = levelFor(stats.wordsLearned);
+    final field = formatCategory(user.fieldOfStudy.replaceAll('_', '-'));
+    final since = stats.memberSince;
+    final subtitle = since == null
+        ? 'Learning $field'
+        : 'Learning $field since ${_months[since.month - 1]} ${since.year}';
+    final next = level.nextMinWords;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: c.border.withValues(alpha: 0.6)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // Banner with the avatar overlapping its bottom edge.
+          SizedBox(
+            height: 150,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 104,
+                  decoration: const BoxDecoration(gradient: gradualIconGradient),
+                ),
+                Positioned(
+                  right: -18,
+                  top: -10,
+                  child: Opacity(
+                    opacity: 0.16,
+                    child: GradualMark(size: 130, color: Colors.white),
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 58,
+                  child: Center(child: _Avatar(name: name, photoUrl: account.photoUrl)),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: Column(
+              children: [
+                Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.4),
+                ),
+                const SizedBox(height: 4),
+                Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: c.textTertiary)),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                  decoration: BoxDecoration(
+                    color: c.brand.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(color: c.brand, borderRadius: BorderRadius.circular(999)),
+                            child: Text(
+                              'LEVEL ${level.number}',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: c.onBrand),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(level.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: c.textPrimary)),
+                          const Spacer(),
+                          Text(
+                            next == null ? 'Top level' : '${stats.wordsLearned} / $next words',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.textTertiary),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _ProgressBar(value: level.progress(stats.wordsLearned)),
+                      if (next != null) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '${next - stats.wordsLearned} more to ${levelFor(next).name}',
+                            style: TextStyle(fontSize: 12, color: c.textTertiary),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.name, this.photoUrl});
+
+  final String name;
+  final String? photoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final initials = Center(
+      child: Text(
+        initialsFor(name),
+        style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: c.onBrand),
+      ),
+    );
+    return Container(
+      width: 92,
+      height: 92,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: c.surface,
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: c.shadow.withValues(alpha: 0.12), blurRadius: 16, offset: const Offset(0, 6))],
+      ),
+      child: ClipOval(
+        child: DecoratedBox(
+          decoration: const BoxDecoration(gradient: gradualIconGradient),
+          child: photoUrl == null
+              ? initials
+              : Image.network(
+                  photoUrl!,
+                  fit: BoxFit.cover,
+                  width: 84,
+                  height: 84,
+                  errorBuilder: (_, _, _) => initials,
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressBar extends StatelessWidget {
+  const _ProgressBar({required this.value, this.color});
+
+  final double value;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: value),
+        duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 700),
+        curve: Curves.easeOutCubic,
+        builder: (context, v, _) => LinearProgressIndicator(
+          value: v,
+          minHeight: 8,
+          backgroundColor: c.surfaceSunken,
+          color: color ?? c.brand,
+        ),
+      ),
+    );
+  }
+}
+
+// ---- Stats ----
+
+class _StatsGrid extends StatelessWidget {
+  const _StatsGrid({required this.stats});
+
+  final ProfileStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final accuracy = stats.quizAccuracy;
+    String days(int n) => n == 1 ? '1 day' : '$n days';
+    final tiles = [
+      _StatTile(icon: Icons.menu_book_rounded, color: c.info, value: '${stats.wordsLearned}', label: 'Words learned'),
+      _StatTile(
+        icon: Icons.local_fire_department_rounded,
+        color: c.caution,
+        value: days(stats.currentStreak),
+        label: 'Current streak',
+      ),
+      _StatTile(icon: Icons.emoji_events_rounded, color: c.warning, value: days(stats.bestStreak), label: 'Best streak'),
+      _StatTile(
+        icon: Icons.track_changes_rounded,
+        color: c.successBright,
+        value: accuracy == null ? '--' : '${(accuracy * 100).round()}%',
+        label: stats.quizzesTaken == 1 ? 'Quiz accuracy · 1 quiz' : 'Quiz accuracy · ${stats.quizzesTaken} quizzes',
+      ),
+    ];
+    return Column(
+      children: [
+        Row(children: [Expanded(child: tiles[0]), const SizedBox(width: 12), Expanded(child: tiles[1])]),
+        const SizedBox(height: 12),
+        Row(children: [Expanded(child: tiles[2]), const SizedBox(width: 12), Expanded(child: tiles[3])]),
+      ],
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({required this.icon, required this.color, required this.value, required this.label});
+
+  final IconData icon;
+  final Color color;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Semantics(
+      label: '$label: $value',
+      child: ExcludeSemantics(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: c.border.withValues(alpha: 0.6)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, size: 18, color: color),
+              ),
+              const SizedBox(height: 12),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: c.textTertiary),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---- Topics ----
+
+class _TopicsPanel extends ConsumerWidget {
+  const _TopicsPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final topics = ref.watch(learnedTopicsProvider);
+    return _Panel(
+      child: topics.when(
+        loading: () => const SizedBox(height: 60, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+        error: (_, _) => Text("Couldn't load your topics.", style: TextStyle(color: c.textMuted, fontSize: 13)),
+        data: (list) {
+          if (list.isEmpty) {
+            return Text(
+              'Read your first words to see your topics here.',
+              style: TextStyle(color: c.textMuted, fontSize: 13),
+            );
+          }
+          final max = list.first.$2;
+          return Column(
+            children: [
+              for (var i = 0; i < list.length && i < 6; i++) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        formatCategory(list[i].$1),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary),
+                      ),
+                    ),
+                    Text(
+                      list[i].$2 == 1 ? '1 word' : '${list[i].$2} words',
+                      style: TextStyle(fontSize: 12, color: c.textTertiary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                _ProgressBar(value: list[i].$2 / max, color: c.wordAccent(i)),
+                if (i < list.length - 1 && i < 5) const SizedBox(height: 14),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ---- Achievements ----
+
+class _AchievementsPanel extends StatelessWidget {
+  const _AchievementsPanel({required this.achievements});
+
+  final List<Achievement> achievements;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const columns = 4;
+          final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+          return Wrap(
+            spacing: 12,
+            runSpacing: 16,
+            children: [
+              for (final a in achievements) SizedBox(width: width, child: _Badge(achievement: a)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.achievement});
+
+  final Achievement achievement;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final a = achievement;
+    return Semantics(
+      button: true,
+      label: '${a.title}, ${a.unlocked ? 'unlocked' : 'locked'}. ${a.description}',
+      child: ExcludeSemantics(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showDetails(context),
+          child: Column(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: a.unlocked ? gradualIconGradient : null,
+                  color: a.unlocked ? null : c.surfaceSunken,
+                  boxShadow: a.unlocked
+                      ? [BoxShadow(color: c.brand.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4))]
+                      : null,
+                ),
+                child: Icon(
+                  a.unlocked ? a.icon : Icons.lock_rounded,
+                  size: a.unlocked ? 24 : 18,
+                  color: a.unlocked ? Colors.white : c.textMuted,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                a.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.2,
+                  fontWeight: FontWeight.w600,
+                  color: a.unlocked ? c.textPrimary : c.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDetails(BuildContext context) {
+    final c = context.colors;
+    final a = achievement;
+    Haptics.selection();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: a.unlocked ? gradualIconGradient : null,
+                  color: a.unlocked ? null : c.surfaceSunken,
+                ),
+                child: Icon(a.icon, size: 34, color: a.unlocked ? Colors.white : c.textMuted),
+              ),
+              const SizedBox(height: 14),
+              Text(a.title, style: Theme.of(sheet).textTheme.titleLarge),
+              const SizedBox(height: 4),
+              Text(a.description, style: TextStyle(color: c.textTertiary)),
+              const SizedBox(height: 16),
+              if (a.unlocked)
+                Text('Unlocked', style: TextStyle(fontWeight: FontWeight.w700, color: c.brand))
+              else ...[
+                _ProgressBar(value: a.progress),
+                const SizedBox(height: 8),
+                Text('${a.current.clamp(0, a.target)} / ${a.target}', style: TextStyle(fontSize: 12, color: c.textTertiary)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---- Settings ----
+
+class _SettingsList extends ConsumerWidget {
+  const _SettingsList({required this.user});
+
+  final AppUser user;
+
+  static const _fields = [
+    ('software_engineering', 'Software Engineering', true),
+    ('data_science', 'Data Science', false),
+    ('cybersecurity', 'Cybersecurity', false),
+    ('product_management', 'Product Management', false),
+    ('devops', 'DevOps', false),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final mode = ref.watch(themeModeProvider);
+    final fieldLabel = _fields.firstWhere((f) => f.$1 == user.fieldOfStudy, orElse: () => _fields.first).$2;
+
+    return SettingsGroup(
+      children: [
+        SettingsRow(
+          icon: Icons.school_rounded,
+          iconColor: c.info,
+          title: 'Field of study',
+          subtitle: fieldLabel,
+          onTap: () => _pickField(context, ref),
+        ),
+        const ReminderRows(),
+        SettingsRow(
+          key: const ValueKey('appearance_row'),
+          icon: Icons.contrast_rounded,
+          iconColor: c.accentPurple,
+          title: 'Appearance',
+          value: _modeLabel(mode),
+          onTap: () => _pickAppearance(context, ref),
+        ),
+        SettingsRow(
+          icon: Icons.logout_rounded,
+          iconColor: c.danger,
+          title: 'Sign out',
+          destructive: true,
+          onTap: () => _confirmSignOut(context, ref),
+        ),
+      ],
+    );
+  }
+
+  static String _modeLabel(ThemeMode mode) => switch (mode) {
+        ThemeMode.system => 'System',
+        ThemeMode.light => 'Light',
+        ThemeMode.dark => 'Dark',
+      };
+
+  void _pickAppearance(BuildContext context, WidgetRef ref) {
+    Haptics.selection();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => Consumer(
+        builder: (sheet, ref, _) {
+          final current = ref.watch(themeModeProvider);
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: Text('Appearance', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                ),
+                for (final (mode, icon) in const [
+                  (ThemeMode.system, Icons.brightness_auto_rounded),
+                  (ThemeMode.light, Icons.light_mode_rounded),
+                  (ThemeMode.dark, Icons.dark_mode_rounded),
+                ])
+                  ListTile(
+                    leading: Icon(icon),
+                    title: Text(_modeLabel(mode)),
+                    trailing: current == mode ? Icon(Icons.check_rounded, color: sheet.colors.brand) : null,
+                    onTap: () {
+                      Haptics.selection();
+                      ref.read(themeModeProvider.notifier).setMode(mode);
+                      Navigator.pop(sheet);
+                    },
+                  ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _pickField(BuildContext context, WidgetRef ref) {
+    Haptics.selection();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text('Field of study', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+            ),
+            for (final (id, label, available) in _fields)
+              ListTile(
+                enabled: available,
+                title: Text(label),
+                subtitle: available ? null : const Text('Coming soon'),
+                trailing: user.fieldOfStudy == id ? Icon(Icons.check_rounded, color: sheet.colors.brand) : null,
+                onTap: () async {
+                  Navigator.pop(sheet);
+                  if (id == user.fieldOfStudy) return;
+                  await ref.read(userRepositoryProvider).createOrUpdateUser(user.copyWith(fieldOfStudy: id));
+                  ref.invalidate(appUserProvider);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Sign out?', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: Text('You will be returned to the login screen.',
-            style: TextStyle(color: context.colors.textTertiary)),
+        content: Text('You will be returned to the login screen.', style: TextStyle(color: context.colors.textTertiary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -92,531 +739,7 @@ class _ProfileBody extends ConsumerWidget {
               await ref.read(firebaseAuthProvider).signOut();
               nav.pushNamedAndRemoveUntil(AppRoutes.root, (_) => false);
             },
-            child: Text('Sign Out',
-                style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final account = ref.watch(accountProfileProvider);
-    final username = fullNameFor(displayName: account.displayName, email: user.email);
-    final initials = initialsFor(username);
-    final photoUrl = account.photoUrl;
-
-    return CustomPaint(
-      painter: DotPatternPainter(color: context.colors.dotPattern),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              // Profile is a top-level tab, so no back button.
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text('Profile', style: Theme.of(context).textTheme.headlineMedium),
-              ),
-              const SizedBox(height: 20),
-
-              // Avatar card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: context.colors.surface,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 6))],
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 80, height: 80,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [context.colors.brand, context.colors.brandStrong],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: context.colors.brand.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
-                      ),
-                      child: ClipOval(
-                        child: photoUrl == null
-                            ? Center(
-                                child: Text(initials,
-                                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: context.colors.onBrand)),
-                              )
-                            : Image.network(
-                                photoUrl,
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => Center(
-                                  child: Text(initials,
-                                      style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: context.colors.onBrand)),
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(username,
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: context.colors.textPrimary, letterSpacing: -0.5)),
-                    const SizedBox(height: 4),
-                    Text(user.email, style: TextStyle(fontSize: 13, color: context.colors.textMuted)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Stat cards using liveStreak
-              Row(
-                children: [
-                  _StatCard(
-                    icon: Icons.local_fire_department_rounded,
-                    iconColor: context.colors.caution,
-                    label: 'Current Streak',
-                    value: user.liveStreak == 1
-                        ? '1 day'
-                        : '${user.liveStreak} days',
-                  ),
-                  const SizedBox(width: 12),
-                  _StatCard(
-                    icon: Icons.quiz_rounded,
-                    iconColor: context.colors.successBright,
-                    label: 'Quizzes Done',
-                    value: _totalQuizzesDone(user),
-                  ),
-                  const SizedBox(width: 12),
-                  _StatCard(
-                    icon: Icons.percent_rounded,
-                    iconColor: context.colors.warning,
-                    label: 'Correct Rate',
-                    value: _allTimeCorrectPercent(user),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Heatmap card passing liveStreak
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: context.colors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-                ),
-                child: StreakHeatmapWidget(
-                  rawActivityLog: user.rawActivityLog,
-                  liveStreak: user.liveStreak,
-                  today: DateTime.now(),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              _FieldOfStudyCard(user: user),
-              const SizedBox(height: 16),
-              const _AppearanceCard(),
-              const SizedBox(height: 16),
-              _QuizHistoryCard(user: user),
-              const SizedBox(height: 16),
-
-              // Sign out
-              SizedBox(
-                width: double.infinity, height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: () => _confirmSignOut(context, ref),
-                  icon: Icon(Icons.logout_rounded, color: context.colors.danger, size: 20),
-                  label: Text('Sign Out',
-                      style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w700, fontSize: 15)),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: context.colors.dangerBorder, width: 2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---- Stat Card ----
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.icon, required this.iconColor, required this.label, required this.value});
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: iconColor, size: 24),
-            const SizedBox(height: 8),
-            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: context.colors.textPrimary)),
-            const SizedBox(height: 2),
-            Text(label,
-                style: TextStyle(fontSize: 10, color: context.colors.textMuted, fontWeight: FontWeight.w500),
-                textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ---- Field of Study Card ----
-
-class _FieldOfStudyCard extends ConsumerStatefulWidget {
-  const _FieldOfStudyCard({required this.user});
-  final AppUser user;
-
-  @override
-  ConsumerState<_FieldOfStudyCard> createState() => _FieldOfStudyCardState();
-}
-
-class _FieldOfStudyCardState extends ConsumerState<_FieldOfStudyCard> {
-  bool _isEditing = false;
-  bool _isSaving = false;
-  String? _selected;
-
-  static const _fields = [
-    'software_engineering', 'data_science', 'cybersecurity', 'product_management', 'devops',
-  ];
-  static const _labels = {
-    'software_engineering': 'Software Engineering',
-    'data_science': 'Data Science',
-    'cybersecurity': 'Cybersecurity',
-    'product_management': 'Product Management',
-    'devops': 'DevOps',
-  };
-
-  @override
-  void initState() { super.initState(); _selected = widget.user.fieldOfStudy; }
-
-  Future<void> _save() async {
-    if (_selected == null) return;
-    setState(() => _isSaving = true);
-    try {
-      final repo = ref.read(userRepositoryProvider);
-      await repo.createOrUpdateUser(widget.user.copyWith(fieldOfStudy: _selected));
-      ref.invalidate(appUserProvider);
-      setState(() => _isEditing = false);
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.colors.surface, borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(color: context.colors.info.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(Icons.school_rounded, color: context.colors.info, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Text('Field of Study',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-              const Spacer(),
-              if (!_isEditing)
-                GestureDetector(
-                  onTap: () => setState(() => _isEditing = true),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: context.colors.brand.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-                    child: Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.colors.brand)),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          if (!_isEditing)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                  color: context.colors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: context.colors.border)),
-              child: Text(_labels[widget.user.fieldOfStudy] ?? widget.user.fieldOfStudy,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.colors.textBody)),
-            )
-          else ...[
-            ..._fields.map((field) {
-              final isSelected = _selected == field;
-              return GestureDetector(
-                onTap: () => setState(() => _selected = field),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isSelected ? context.colors.brand.withValues(alpha: 0.06) : context.colors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: isSelected ? context.colors.brand : context.colors.border,
-                        width: isSelected ? 2 : 1),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(_labels[field] ?? field,
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? context.colors.brand : context.colors.textBody)),
-                      ),
-                      if (isSelected) Icon(Icons.check_circle_rounded, color: context.colors.brand, size: 18),
-                    ],
-                  ),
-                ),
-              );
-            }),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isSaving ? null : () => setState(() { _isEditing = false; _selected = widget.user.fieldOfStudy; }),
-                    style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: context.colors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                    child: Text('Cancel', style: TextStyle(color: context.colors.textTertiary)),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colors.brand,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        elevation: 0),
-                    child: _isSaving
-                        ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: context.colors.onBrand, strokeWidth: 2))
-                        : Text('Save', style: TextStyle(color: context.colors.onBrand, fontWeight: FontWeight.w700)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ---- Quiz History Card ----
-
-class _QuizHistoryCard extends StatelessWidget {
-  const _QuizHistoryCard({required this.user});
-  final AppUser user;
-
-  @override
-  Widget build(BuildContext context) {
-    final entries = sortedQuizHistoryEntries(user);
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.colors.surface, borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(color: context.colors.accentPurple.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(Icons.history_rounded, color: context.colors.accentPurple, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Text('Quiz History',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-              const Spacer(),
-              Text('${entries.length} weeks',
-                  style: TextStyle(fontSize: 12, color: context.colors.textMuted)),
-            ],
-          ),
-          const SizedBox(height: 14),
-          if (entries.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Column(
-                  children: [
-                    Icon(Icons.quiz_outlined, size: 36, color: context.colors.borderStrong),
-                    const SizedBox(height: 8),
-                    Text('No quiz sessions yet.',
-                        style: TextStyle(color: context.colors.textMuted, fontSize: 13)),
-                  ],
-                ),
-              ),
-            )
-          else
-            ...entries.take(10).map((e) => _HistoryRow(dateId: e.key, entry: e.value)),
-          if (entries.length > 10)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Center(
-                child: Text('+ ${entries.length - 10} more',
-                    style: TextStyle(fontSize: 12, color: context.colors.textMuted)),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.dateId, required this.entry});
-  final String dateId;
-  final ActivityLogEntry entry;
-
-  Widget _badge(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(5)),
-      child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tier = entry.isWeeklyQuiz ? entry.tier : WeeklyScoreTier.legacy;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceMuted,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.colors.border),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(dateId,
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: context.colors.textBody)),
-                const SizedBox(height: 4),
-                _badge(tier.label, StreakColors.tierColor(tier, context.colors)),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.star_rounded, color: context.colors.warning, size: 14),
-                  const SizedBox(width: 3),
-                  Text('${entry.score}/${entry.totalQuestions}',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
-                ],
-              ),
-              Text(
-                '${entry.totalQuestions == 0 ? 0 : (entry.score / entry.totalQuestions * 100).round()}%',
-                style: TextStyle(fontSize: 11, color: context.colors.textMuted),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---- Appearance Card ----
-
-class _AppearanceCard extends ConsumerWidget {
-  const _AppearanceCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final mode = ref.watch(themeModeProvider);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: context.colors.shadow.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: context.colors.accentPurple.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.contrast_rounded, color: context.colors.accentPurple, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Text('Appearance',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: SegmentedButton<ThemeMode>(
-              key: const ValueKey('appearance_selector'),
-              showSelectedIcon: false,
-              segments: const [
-                ButtonSegment(value: ThemeMode.system, label: Text('System'), icon: Icon(Icons.brightness_auto_rounded, size: 18)),
-                ButtonSegment(value: ThemeMode.light, label: Text('Light'), icon: Icon(Icons.light_mode_rounded, size: 18)),
-                ButtonSegment(value: ThemeMode.dark, label: Text('Dark'), icon: Icon(Icons.dark_mode_rounded, size: 18)),
-              ],
-              selected: {mode},
-              onSelectionChanged: (s) {
-                Haptics.selection();
-                ref.read(themeModeProvider.notifier).setMode(s.first);
-              },
-              style: SegmentedButton.styleFrom(
-                foregroundColor: context.colors.textSecondary,
-                selectedForegroundColor: context.colors.brand,
-                selectedBackgroundColor: context.colors.brand.withValues(alpha: 0.12),
-                side: BorderSide(color: context.colors.border),
-                textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-            ),
+            child: Text('Sign Out', style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w700)),
           ),
         ],
       ),

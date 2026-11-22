@@ -42,7 +42,8 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.onInverseSurface,
     required this.heatmapEmpty,
     required this.shadow,
-    required this.dotPattern,
+    required this.glowPrimary,
+    required this.glowSecondary,
     required this.webBackdrop,
     required this.wordAccents,
   });
@@ -91,7 +92,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color onInverseSurface;
   final Color heatmapEmpty;
   final Color shadow;
-  final Color dotPattern;
+  /// Soft background wash at the top of screens; see AmbientGlow.
+  final Color glowPrimary;
+  final Color glowSecondary;
   final Color webBackdrop;
 
   /// Per-word accent colours on the concept cards, cycled by index.
@@ -135,7 +138,8 @@ class AppColors extends ThemeExtension<AppColors> {
     onInverseSurface: Color(0xFFFFFFFF),
     heatmapEmpty: Color(0xFFEAECEF),
     shadow: Color(0xFF000000),
-    dotPattern: Color(0x66D1D5DB),
+    glowPrimary: Color(0x2E4CAF50),
+    glowSecondary: Color(0x1A3B82F6),
     webBackdrop: Color(0xFFE5E7EB),
     wordAccents: [
       Color(0xFF1D4ED8), // blue
@@ -180,7 +184,8 @@ class AppColors extends ThemeExtension<AppColors> {
     onInverseSurface: Color(0xFF111827),
     heatmapEmpty: Color(0xFF262B35),
     shadow: Color(0xFF000000),
-    dotPattern: Color(0x33374151),
+    glowPrimary: Color(0x3843A047),
+    glowSecondary: Color(0x2260A5FA),
     webBackdrop: Color(0xFF08090B),
     wordAccents: [
       Color(0xFF60A5FA), // blue
@@ -232,7 +237,8 @@ class AppColors extends ThemeExtension<AppColors> {
       onInverseSurface: l(onInverseSurface, other.onInverseSurface),
       heatmapEmpty: l(heatmapEmpty, other.heatmapEmpty),
       shadow: l(shadow, other.shadow),
-      dotPattern: l(dotPattern, other.dotPattern),
+      glowPrimary: l(glowPrimary, other.glowPrimary),
+      glowSecondary: l(glowSecondary, other.glowSecondary),
       webBackdrop: l(webBackdrop, other.webBackdrop),
       wordAccents: [for (var i = 0; i < wordAccents.length; i++) l(wordAccents[i], other.wordAccents[i % other.wordAccents.length])],
     );
