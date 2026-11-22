@@ -7,6 +7,8 @@ import '../../features/profile/profile_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
 import '../../features/quiz/quiz_providers.dart';
 import '../../features/saved/saved_screen.dart';
+import '../../features/daily_word/today_concepts_controller.dart';
+import '../../features/reminders/reminder_controller.dart';
 import 'animated_quiz_icon.dart';
 
 class AppShellTabNotifier extends Notifier<int> {
@@ -36,7 +38,27 @@ class _AppShellState extends ConsumerState<AppShell> {
   bool _showQuizBubble = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Refresh the week of reminders each time the app opens.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(reminderControllerProvider.notifier).sync();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Keep today's reminder in step with progress: name the next unread
+    // word, or drop the reminder once the day is complete.
+    ref.listen<AsyncValue<TodayConceptsState>>(todayConceptsControllerProvider, (previous, next) {
+      final before = previous?.asData?.value;
+      final after = next.asData?.value;
+      if (after == null) return;
+      if (before == null || before.readCount != after.readCount || before.concepts.length != after.concepts.length) {
+        ref.read(reminderControllerProvider.notifier).sync();
+      }
+    });
+
     final currentIndex = ref.watch(appShellTabProvider);
     final quizState = ref.watch(quizButtonStateProvider(DateTime.now()));
     final isAvailable = quizState.isEnabled && !quizState.isCompleted;
