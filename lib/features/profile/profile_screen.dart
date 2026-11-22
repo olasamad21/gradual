@@ -16,6 +16,7 @@ import '../../shared/widgets/firestore_permission_widget.dart';
 import '../../shared/widgets/gradual_mark.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/settings_group.dart';
+import '../archive/archive_screen.dart';
 import '../reminders/reminder_card.dart';
 import '../saved/saved_filter.dart';
 import '../streak/activity_calendar.dart';
@@ -47,7 +48,9 @@ class ProfileScreen extends ConsumerWidget {
           }
           return ErrorStateWidget(
             message: 'Failed to load profile',
-            onRetry: FirestoreErrors.shouldRetry(error) ? () => ref.invalidate(appUserProvider) : null,
+            onRetry: FirestoreErrors.shouldRetry(error)
+                ? () => ref.invalidate(appUserProvider)
+                : null,
           );
         },
         data: (user) {
@@ -83,13 +86,19 @@ class _ProfileBody extends ConsumerWidget {
           const SizedBox(height: 28),
           const SectionLabel('Activity'),
           _Panel(
-            child: ActivityCalendar(rawActivityLog: user.rawActivityLog, today: DateTime.now()),
+            child: ActivityCalendar(
+              rawActivityLog: user.rawActivityLog,
+              today: DateTime.now(),
+            ),
           ),
           const SizedBox(height: 28),
           const SectionLabel('Topics'),
           const _TopicsPanel(),
           const SizedBox(height: 28),
-          SectionLabel('Achievements', trailing: '$unlocked of ${achievements.length}'),
+          SectionLabel(
+            'Achievements',
+            trailing: '$unlocked of ${achievements.length}',
+          ),
           _AchievementsPanel(achievements: achievements),
           const SizedBox(height: 28),
           const SectionLabel('Settings'),
@@ -137,13 +146,29 @@ class _ProfileHeader extends ConsumerWidget {
   final AppUser user;
   final ProfileStats stats;
 
-  static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  static const _months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final account = ref.watch(accountProfileProvider);
-    final name = fullNameFor(displayName: account.displayName, email: user.email);
+    final name = fullNameFor(
+      displayName: account.displayName,
+      email: user.email,
+    );
     final level = levelFor(stats.wordsLearned);
     final field = formatCategory(user.fieldOfStudy.replaceAll('_', '-'));
     final since = stats.memberSince;
@@ -169,7 +194,9 @@ class _ProfileHeader extends ConsumerWidget {
               children: [
                 Container(
                   height: 104,
-                  decoration: const BoxDecoration(gradient: gradualIconGradient),
+                  decoration: const BoxDecoration(
+                    gradient: gradualIconGradient,
+                  ),
                 ),
                 Positioned(
                   right: -18,
@@ -183,7 +210,9 @@ class _ProfileHeader extends ConsumerWidget {
                   left: 0,
                   right: 0,
                   top: 58,
-                  child: Center(child: _Avatar(name: name, photoUrl: account.photoUrl)),
+                  child: Center(
+                    child: _Avatar(name: name, photoUrl: account.photoUrl),
+                  ),
                 ),
               ],
             ),
@@ -197,10 +226,17 @@ class _ProfileHeader extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.4),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                  ),
                 ),
                 const SizedBox(height: 4),
-                Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: c.textTertiary)),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: c.textTertiary),
+                ),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -213,19 +249,43 @@ class _ProfileHeader extends ConsumerWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(color: c.brand, borderRadius: BorderRadius.circular(999)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: c.brand,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
                             child: Text(
                               'LEVEL ${level.number}',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: c.onBrand),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.6,
+                                color: c.onBrand,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(level.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: c.textPrimary)),
+                          Text(
+                            level.name,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: c.textPrimary,
+                            ),
+                          ),
                           const Spacer(),
                           Text(
-                            next == null ? 'Top level' : '${stats.wordsLearned} / $next words',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.textTertiary),
+                            next == null
+                                ? 'Top level'
+                                : '${stats.wordsLearned} / $next words',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: c.textTertiary,
+                            ),
                           ),
                         ],
                       ),
@@ -237,7 +297,10 @@ class _ProfileHeader extends ConsumerWidget {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             '${next - stats.wordsLearned} more to ${levelFor(next).name}',
-                            style: TextStyle(fontSize: 12, color: c.textTertiary),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: c.textTertiary,
+                            ),
                           ),
                         ),
                       ],
@@ -265,7 +328,11 @@ class _Avatar extends StatelessWidget {
     final initials = Center(
       child: Text(
         initialsFor(name),
-        style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: c.onBrand),
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w900,
+          color: c.onBrand,
+        ),
       ),
     );
     return Container(
@@ -275,7 +342,13 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         color: c.surface,
         shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: c.shadow.withValues(alpha: 0.12), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [
+          BoxShadow(
+            color: c.shadow.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: ClipOval(
         child: DecoratedBox(
@@ -308,7 +381,9 @@ class _ProgressBar extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       child: TweenAnimationBuilder<double>(
         tween: Tween(end: value),
-        duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 700),
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 700),
         curve: Curves.easeOutCubic,
         builder: (context, v, _) => LinearProgressIndicator(
           value: v,
@@ -334,78 +409,121 @@ class _StatsGrid extends StatelessWidget {
     final accuracy = stats.quizAccuracy;
     String days(int n) => n == 1 ? '1 day' : '$n days';
     final tiles = [
-      _StatTile(icon: Icons.menu_book_rounded, color: c.info, value: '${stats.wordsLearned}', label: 'Words learned'),
+      _StatTile(
+        icon: Icons.menu_book_rounded,
+        color: c.info,
+        value: '${stats.wordsLearned}',
+        label: 'Words learned',
+        onTap: () => openArchive(context),
+      ),
       _StatTile(
         icon: Icons.local_fire_department_rounded,
         color: c.caution,
         value: days(stats.currentStreak),
         label: 'Current streak',
       ),
-      _StatTile(icon: Icons.emoji_events_rounded, color: c.warning, value: days(stats.bestStreak), label: 'Best streak'),
+      _StatTile(
+        icon: Icons.emoji_events_rounded,
+        color: c.warning,
+        value: days(stats.bestStreak),
+        label: 'Best streak',
+      ),
       _StatTile(
         icon: Icons.track_changes_rounded,
         color: c.successBright,
         value: accuracy == null ? '--' : '${(accuracy * 100).round()}%',
-        label: stats.quizzesTaken == 1 ? 'Quiz accuracy · 1 quiz' : 'Quiz accuracy · ${stats.quizzesTaken} quizzes',
+        label: stats.quizzesTaken == 1
+            ? 'Quiz accuracy · 1 quiz'
+            : 'Quiz accuracy · ${stats.quizzesTaken} quizzes',
       ),
     ];
     return Column(
       children: [
-        Row(children: [Expanded(child: tiles[0]), const SizedBox(width: 12), Expanded(child: tiles[1])]),
+        Row(
+          children: [
+            Expanded(child: tiles[0]),
+            const SizedBox(width: 12),
+            Expanded(child: tiles[1]),
+          ],
+        ),
         const SizedBox(height: 12),
-        Row(children: [Expanded(child: tiles[2]), const SizedBox(width: 12), Expanded(child: tiles[3])]),
+        Row(
+          children: [
+            Expanded(child: tiles[2]),
+            const SizedBox(width: 12),
+            Expanded(child: tiles[3]),
+          ],
+        ),
       ],
     );
   }
 }
 
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.icon, required this.color, required this.value, required this.label});
+  const _StatTile({
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.label,
+    this.onTap,
+  });
 
   final IconData icon;
   final Color color;
   final String value;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     return Semantics(
       label: '$label: $value',
+      button: onTap != null,
       child: ExcludeSemantics(
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-          decoration: BoxDecoration(
-            color: c.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: c.border.withValues(alpha: 0.6)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, size: 18, color: color),
-              ),
-              const SizedBox(height: 12),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  value,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: c.border.withValues(alpha: 0.6)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 18, color: color),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: c.textTertiary),
-              ),
-            ],
+                const SizedBox(height: 12),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: c.textTertiary),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -424,8 +542,14 @@ class _TopicsPanel extends ConsumerWidget {
     final topics = ref.watch(learnedTopicsProvider);
     return _Panel(
       child: topics.when(
-        loading: () => const SizedBox(height: 60, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-        error: (_, _) => Text("Couldn't load your topics.", style: TextStyle(color: c.textMuted, fontSize: 13)),
+        loading: () => const SizedBox(
+          height: 60,
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        error: (_, _) => Text(
+          "Couldn't load your topics.",
+          style: TextStyle(color: c.textMuted, fontSize: 13),
+        ),
         data: (list) {
           if (list.isEmpty) {
             return Text(
@@ -435,6 +559,7 @@ class _TopicsPanel extends ConsumerWidget {
           }
           final max = list.first.$2;
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (var i = 0; i < list.length && i < 6; i++) ...[
                 Row(
@@ -442,7 +567,11 @@ class _TopicsPanel extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         formatCategory(list[i].$1),
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: c.textPrimary,
+                        ),
                       ),
                     ),
                     Text(
@@ -455,6 +584,16 @@ class _TopicsPanel extends ConsumerWidget {
                 _ProgressBar(value: list[i].$2 / max, color: c.wordAccent(i)),
                 if (i < list.length - 1 && i < 5) const SizedBox(height: 14),
               ],
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => openArchive(context),
+                  icon: const Icon(Icons.auto_stories_rounded, size: 18),
+                  label: const Text('See all words'),
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                ),
+              ),
             ],
           );
         },
@@ -481,7 +620,11 @@ class _AchievementsPanel extends StatelessWidget {
             spacing: 12,
             runSpacing: 16,
             children: [
-              for (final a in achievements) SizedBox(width: width, child: _Badge(achievement: a)),
+              for (final a in achievements)
+                SizedBox(
+                  width: width,
+                  child: _Badge(achievement: a),
+                ),
             ],
           );
         },
@@ -501,7 +644,8 @@ class _Badge extends StatelessWidget {
     final a = achievement;
     return Semantics(
       button: true,
-      label: '${a.title}, ${a.unlocked ? 'unlocked' : 'locked'}. ${a.description}',
+      label:
+          '${a.title}, ${a.unlocked ? 'unlocked' : 'locked'}. ${a.description}',
       child: ExcludeSemantics(
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -516,7 +660,13 @@ class _Badge extends StatelessWidget {
                   gradient: a.unlocked ? gradualIconGradient : null,
                   color: a.unlocked ? null : c.surfaceSunken,
                   boxShadow: a.unlocked
-                      ? [BoxShadow(color: c.brand.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4))]
+                      ? [
+                          BoxShadow(
+                            color: c.brand.withValues(alpha: 0.25),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
                       : null,
                 ),
                 child: Icon(
@@ -566,7 +716,11 @@ class _Badge extends StatelessWidget {
                   gradient: a.unlocked ? gradualIconGradient : null,
                   color: a.unlocked ? null : c.surfaceSunken,
                 ),
-                child: Icon(a.icon, size: 34, color: a.unlocked ? Colors.white : c.textMuted),
+                child: Icon(
+                  a.icon,
+                  size: 34,
+                  color: a.unlocked ? Colors.white : c.textMuted,
+                ),
               ),
               const SizedBox(height: 14),
               Text(a.title, style: Theme.of(sheet).textTheme.titleLarge),
@@ -574,11 +728,17 @@ class _Badge extends StatelessWidget {
               Text(a.description, style: TextStyle(color: c.textTertiary)),
               const SizedBox(height: 16),
               if (a.unlocked)
-                Text('Unlocked', style: TextStyle(fontWeight: FontWeight.w700, color: c.brand))
+                Text(
+                  'Unlocked',
+                  style: TextStyle(fontWeight: FontWeight.w700, color: c.brand),
+                )
               else ...[
                 _ProgressBar(value: a.progress),
                 const SizedBox(height: 8),
-                Text('${a.current.clamp(0, a.target)} / ${a.target}', style: TextStyle(fontSize: 12, color: c.textTertiary)),
+                Text(
+                  '${a.current.clamp(0, a.target)} / ${a.target}',
+                  style: TextStyle(fontSize: 12, color: c.textTertiary),
+                ),
               ],
             ],
           ),
@@ -607,7 +767,12 @@ class _SettingsList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final mode = ref.watch(themeModeProvider);
-    final fieldLabel = _fields.firstWhere((f) => f.$1 == user.fieldOfStudy, orElse: () => _fields.first).$2;
+    final fieldLabel = _fields
+        .firstWhere(
+          (f) => f.$1 == user.fieldOfStudy,
+          orElse: () => _fields.first,
+        )
+        .$2;
 
     return SettingsGroup(
       children: [
@@ -639,10 +804,10 @@ class _SettingsList extends ConsumerWidget {
   }
 
   static String _modeLabel(ThemeMode mode) => switch (mode) {
-        ThemeMode.system => 'System',
-        ThemeMode.light => 'Light',
-        ThemeMode.dark => 'Dark',
-      };
+    ThemeMode.system => 'System',
+    ThemeMode.light => 'Light',
+    ThemeMode.dark => 'Dark',
+  };
 
   void _pickAppearance(BuildContext context, WidgetRef ref) {
     Haptics.selection();
@@ -658,7 +823,10 @@ class _SettingsList extends ConsumerWidget {
               children: [
                 const Padding(
                   padding: EdgeInsets.only(bottom: 8),
-                  child: Text('Appearance', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    'Appearance',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                  ),
                 ),
                 for (final (mode, icon) in const [
                   (ThemeMode.system, Icons.brightness_auto_rounded),
@@ -668,7 +836,9 @@ class _SettingsList extends ConsumerWidget {
                   ListTile(
                     leading: Icon(icon),
                     title: Text(_modeLabel(mode)),
-                    trailing: current == mode ? Icon(Icons.check_rounded, color: sheet.colors.brand) : null,
+                    trailing: current == mode
+                        ? Icon(Icons.check_rounded, color: sheet.colors.brand)
+                        : null,
                     onTap: () {
                       Haptics.selection();
                       ref.read(themeModeProvider.notifier).setMode(mode);
@@ -695,18 +865,25 @@ class _SettingsList extends ConsumerWidget {
           children: [
             const Padding(
               padding: EdgeInsets.only(bottom: 8),
-              child: Text('Field of study', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+              child: Text(
+                'Field of study',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              ),
             ),
             for (final (id, label, available) in _fields)
               ListTile(
                 enabled: available,
                 title: Text(label),
                 subtitle: available ? null : const Text('Coming soon'),
-                trailing: user.fieldOfStudy == id ? Icon(Icons.check_rounded, color: sheet.colors.brand) : null,
+                trailing: user.fieldOfStudy == id
+                    ? Icon(Icons.check_rounded, color: sheet.colors.brand)
+                    : null,
                 onTap: () async {
                   Navigator.pop(sheet);
                   if (id == user.fieldOfStudy) return;
-                  await ref.read(userRepositoryProvider).createOrUpdateUser(user.copyWith(fieldOfStudy: id));
+                  await ref
+                      .read(userRepositoryProvider)
+                      .createOrUpdateUser(user.copyWith(fieldOfStudy: id));
                   ref.invalidate(appUserProvider);
                 },
               ),
@@ -722,12 +899,21 @@ class _SettingsList extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Sign out?', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: Text('You will be returned to the login screen.', style: TextStyle(color: context.colors.textTertiary)),
+        title: const Text(
+          'Sign out?',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: Text(
+          'You will be returned to the login screen.',
+          style: TextStyle(color: context.colors.textTertiary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: context.colors.textTertiary)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: context.colors.textTertiary),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -739,7 +925,13 @@ class _SettingsList extends ConsumerWidget {
               await ref.read(firebaseAuthProvider).signOut();
               nav.pushNamedAndRemoveUntil(AppRoutes.root, (_) => false);
             },
-            child: Text('Sign Out', style: TextStyle(color: context.colors.danger, fontWeight: FontWeight.w700)),
+            child: Text(
+              'Sign Out',
+              style: TextStyle(
+                color: context.colors.danger,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
