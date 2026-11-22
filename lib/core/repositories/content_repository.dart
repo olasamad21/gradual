@@ -10,12 +10,16 @@ class TodaysConceptsResult {
     this.concepts = const [],
     this.isFallback = false,
     this.isWeekendReview = false,
+    this.fromCache = false,
   });
 
   final DailySet? dailySet;
   final List<Concept> concepts;
   final bool isFallback;
   final bool isWeekendReview;
+
+  /// Loaded from the phone's saved copy because the network failed.
+  final bool fromCache;
 }
 
 class ContentRepository {

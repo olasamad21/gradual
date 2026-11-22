@@ -20,6 +20,7 @@ class TodayHeader extends StatelessWidget {
     required this.rawActivityLog,
     required this.today,
     this.isWeekendReview = false,
+    this.isOffline = false,
   });
 
   final String greeting;
@@ -30,6 +31,7 @@ class TodayHeader extends StatelessWidget {
   final Map<String, dynamic> rawActivityLog;
   final DateTime today;
   final bool isWeekendReview;
+  final bool isOffline;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +67,7 @@ class TodayHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
+            if (isOffline) ...[const _OfflineChip(), const SizedBox(width: 8)],
             StreakChip(streak: streak),
           ],
         ),
@@ -406,6 +409,41 @@ class WeekStrip extends StatelessWidget {
                           : context.colors.onBrand,
                     )
                   : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown while Today is using the copy saved on the phone.
+class _OfflineChip extends StatelessWidget {
+  const _OfflineChip();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Tooltip(
+      message: "You're offline. Showing today's words saved on your phone.",
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(9, 6, 11, 6),
+        decoration: BoxDecoration(
+          color: c.surfaceSunken,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off_rounded, size: 15, color: c.textTertiary),
+            const SizedBox(width: 5),
+            Text(
+              'Offline',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: c.textTertiary,
+              ),
             ),
           ],
         ),

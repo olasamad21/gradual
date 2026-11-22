@@ -15,6 +15,7 @@ class TodayConceptsState {
     this.isWeekendReview = false,
     required this.userUid,
     required this.liveStreak,
+    this.isOffline = false,
   });
 
   final List<Concept> concepts;
@@ -23,6 +24,9 @@ class TodayConceptsState {
   final bool isWeekendReview;
   final String? userUid;
   final int liveStreak;
+
+  /// Showing the phone's saved copy because there is no connection.
+  final bool isOffline;
 
   int get readCount => readConceptIds.length;
   bool get isPerfectDay => concepts.isNotEmpty && readCount >= concepts.length;
@@ -42,6 +46,7 @@ class TodayConceptsState {
       isWeekendReview: isWeekendReview ?? this.isWeekendReview,
       userUid: userUid ?? this.userUid,
       liveStreak: liveStreak ?? this.liveStreak,
+      isOffline: isOffline,
     );
   }
 }
@@ -73,6 +78,7 @@ class TodayConceptsController extends AsyncNotifier<TodayConceptsState> {
       readConceptIds: readIds,
       userUid: user?.uid,
       liveStreak: user?.liveStreak ?? 0,
+      isOffline: conceptsResult.fromCache,
     );
   }
 

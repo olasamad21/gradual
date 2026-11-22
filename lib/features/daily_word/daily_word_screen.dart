@@ -336,6 +336,7 @@ class _DailyWordScreenState extends ConsumerState<DailyWordScreen>
             rawActivityLog: user?.rawActivityLog ?? const {},
             today: today,
             isWeekendReview: state.isWeekendReview,
+            isOffline: state.isOffline,
           ),
         );
 

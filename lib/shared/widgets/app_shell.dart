@@ -9,6 +9,7 @@ import '../../features/quiz/quiz_providers.dart';
 import '../../features/saved/saved_screen.dart';
 import '../../features/daily_word/today_concepts_controller.dart';
 import '../../features/reminders/reminder_controller.dart';
+import '../../core/services/offline_content_cache.dart';
 import 'animated_quiz_icon.dart';
 
 class AppShellTabNotifier extends Notifier<int> {
@@ -42,7 +43,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     super.initState();
     // Refresh the week of reminders each time the app opens.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) ref.read(reminderControllerProvider.notifier).sync();
+      if (!mounted) return;
+      ref.read(reminderControllerProvider.notifier).sync();
+      // Save the coming week's words so Today works offline.
+      ref.read(contentPrefetcherProvider)();
     });
   }
 
